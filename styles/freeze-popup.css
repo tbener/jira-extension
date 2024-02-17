@@ -1,0 +1,13 @@
+/* title DIV when the card is open as popup */
+div[data-component-selector="jira.issue-view.issue-details.full-size-mode-column"] > div:first-child {
+    --tbener-bg-color: var(--ds-surface-overlay);
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--tbener-bg-color, #fff);
+
+    /* to cover a grey area on the left when scrolling while hovering the description */
+    border-left: var(--ds-space-100, 8px) solid var(--tbener-bg-color, rgba(9, 30, 66, 0.54));
+    margin-left: var(--ds-space-negative-100, -8px);
+}
