@@ -2,3 +2,12 @@ body {
     min-width: 23rem;
     padding: 0.5rem;
 }
+
+.info-link {
+    color: #808080; /* Grey color */
+    cursor: pointer; /* Pointer cursor to indicate it's clickable */
+    
+    &:hover {
+        text-decoration: underline; /* Underline to indicate a link */
+    }
+}
