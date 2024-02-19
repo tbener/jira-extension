@@ -3,6 +3,19 @@
     "name": "tbener Jira Extension",
     "version": "1.0",
     "description": "tbener extension for Jira",
+    "action": {
+        "default_popup": "pages/popup/popup.html",
+        "default_icon": "images/icon-32.png"
+    },
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Alt+Shift+J",
+                "mac": "Command+Shift+J"
+            }
+        }
+    },
+    "options_page": "pages/options/options.html",
     "content_scripts": [
         {
             "css": [
@@ -26,5 +39,8 @@
         "32": "images/icon-32.png",
         "48": "images/icon-96.png",
         "128": "images/icon-96.png"
-    }
+    },
+    "permissions": [
+        "storage"
+    ]
 }
