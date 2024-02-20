@@ -1,8 +1,9 @@
 {
     "manifest_version": 3,
-    "name": "tbener Jira Extension",
-    "version": "1.0",
-    "description": "tbener extension for Jira",
+    "name": "MDClone Jira Extension",
+    "version": "1.0.0",
+    "description": "MDClone extension for Jira ❤️ by Tal Bener",
+    "author": "tbener@gmail.com",
     "action": {
         "default_popup": "pages/popup/popup.html",
         "default_icon": "images/icon-32.png"
