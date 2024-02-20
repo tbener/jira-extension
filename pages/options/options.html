@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Options</title>
+    <!-- Include Bootstrap CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Additional custom styles -->
+    <style>
+        /* Add custom styles here */
+    </style>
+</head>
+
+<body>
+    <div class="container col-4">
+        <h1 class="mt-5 mb-4">Extension Options</h1>
+
+        <div class="mb-3">
+            <label for="customDomain" class="form-label">Jira Custom Domain Start</label>
+            <div class="input-group">
+                <span class="input-group-text">https://</span>
+                <input type="text" class="form-control" id="customDomain" placeholder="Your Jira custom domain start">
+                <span class="input-group-text">.atlassian.net</span>
+            </div>
+            <small class="form-text text-muted">Enter the start of your Jira custom domain (e.g., "example").</small>
+        </div>
+
+        <div class="mb-3">
+            <label for="defaultProjectKey" class="form-label">Default Project Key</label>
+            <input type="text" class="form-control" id="defaultProjectKey" placeholder="Your default project key">
+            <small class="form-text text-muted">Enter your default Jira project key (e.g., "PROJ").</small>
+        </div>
+
+        <div class="row mt-3 ms-1 align-items-baseline">
+            <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
+            <div class="form-text text-muted col-auto" id="status"></div>
+        </div>
+    </div>
+
+    <!-- Your custom script -->
+    <script src="options.js"></script>
+</body>
+
+</html>
