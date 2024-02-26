@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "MDClone Jira Extension",
+    "name": "TalTool Jira Extension",
     "version": "1.0.0",
-    "description": "MDClone extension for Jira, by Tal Bener",
+    "description": "TalTool extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     "action": {
         "default_popup": "pages/popup/popup.html",
