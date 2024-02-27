@@ -20,7 +20,7 @@ const saveOptions = () => {
 // stored in chrome.storage.
 const restoreOptions = () => {
     chrome.storage.sync.get(
-        { customDomain: 'mdclone', defaultProjectKey: 'adams' },
+        { customDomain: 'mdclone', defaultProjectKey: '' },
         (items) => {
             document.getElementById('customDomain').value = items.customDomain;
             document.getElementById('defaultProjectKey').value = items.defaultProjectKey;

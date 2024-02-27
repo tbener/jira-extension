@@ -1,6 +1,6 @@
 const navigateToIssue = () => {
     chrome.storage.sync.get(
-        { customDomain: 'mdclone', defaultProjectKey: '' },
+        { customDomain: 'mdclone', defaultProjectKey: 'adams' },
         (items) => {
             let issue = document.getElementById('issue').value;
             if (!isNaN(issue)) {
