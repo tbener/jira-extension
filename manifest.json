@@ -20,18 +20,20 @@
     "content_scripts": [
         {
             "js": [
-                "scripts/copy-link.js"
+                "jira-pages/main/add-copy-link.js", 
+                "jira-pages/common/copy-link.js"
             ],
             "css": [
-                "styles/freeze-main.css"
+                "jira-pages/main/freeze-title.css"
             ],
             "matches": [
                 "https://*.atlassian.net/browse/*"
-            ]
+            ],
+            "run_at": "document_idle"
         },
         {
             "css": [
-                "styles/freeze-popup.css"
+                "jira-pages/modal/freeze-title.css"
             ],
             "matches": [
                 "https://*.atlassian.net/jira/software/*"
