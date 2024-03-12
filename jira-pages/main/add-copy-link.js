@@ -1,98 +1,45 @@
-var elm;
 
+var maxRetries = 5
 
 window.addEventListener('load', function () {
-    retrySelectBreadcrumbs(3);
-    // setTimeout(() => {
-    //     const newElement = appendCopyLinkElementHover();
-
-    //     newElement?.addEventListener('click', () => {
-    //         const issueKey = window.location.pathname.split('/').pop();
-
-    //         const copyLink = new CopyLink();
-    //         copyLink.createLink(issueKey);
-    //     });
-
-    // }, 3000);
-
+    createCopyLinkElement();
 });
 
-function retrySelectBreadcrumbs(retryCount) {
-    console.log(`Searching for element`);
+function createCopyLinkElement(retryCount = 1) {
     const elmContainer = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
 
     if (!elmContainer) {
-        if (retryCount > 0) {
+        console.log(`Parent element in breadcrumbs not found, retry: ${retryCount}`);
+        if (retryCount < maxRetries) {
             // If breadcrumbs are not found and retries remaining, try again after a timeout
             setTimeout(function () {
-                retrySelectBreadcrumbs(retryCount - 1);
+                createCopyLinkElement(retryCount + 1);
             }, 2000); // Retry after 2 seconds
         } else {
-            console.log("Maximum retries exceeded. Breadcrumbs not found.");
+            console.log(`Maximum retries exceeded (${maxRetries}). Breadcrumbs not found.`);
         }
     } else {
-        // Breadcrumbs found, proceed with your code
-        console.log("Breadcrumbs found (after):", elmContainer);
-        // Proceed with your code that uses the breadcrumbs element
+        console.log(`Parent element in breadcrumbs found, retry: ${retryCount}`);
 
-        const buttonElement = elmContainer.querySelector('button');
-        const clonedButton = buttonElement.cloneNode(true);
-        const svgParent = clonedButton.querySelector('svg').parentNode;
-        svgParent.innerHTML = newSvg;
-        elmContainer.appendChild(clonedButton).appendChild;
+        // Parent element found, proceed...
+        createButton(elmContainer);
 
-        clonedButton?.addEventListener('click', () => {
-            const issueKey = window.location.pathname.split('/').pop();
-
-            const copyLink = new CopyLink();
-            copyLink.createLink(issueKey);
-        });
     }
 }
 
-function appendCopyLinkElement() {
-
-    const breadcrumbs = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child');
-
-    const newElement = document.createElement('span');
-    newElement.classList.add('copy-icon')
-    newElement.appendChild(document.createTextNode('Copy'))
-
-    breadcrumbs?.appendChild(newElement);
-    return newElement;
-}
-
-function getContainerElement(retries) {
-    for (let i = 0; i < retries; i++) {
-        console.log(`Try ${i + 1}`);
-        elm = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
-        if (elm) {
-            console.log(`Found element`);
-            return elm;
-        }
-
-        setTimeout(() => {
-            elm = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
-
-        }, 3000);
-    }
-}
-
-function appendCopyLinkElementHover() {
-
-    const elmContainer = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
-
-    if (!elmContainer) {
-        console.log("elmContainer wasn't found");
-        return;
-    }
-
-    const buttonElement = elmContainer.querySelector('button');
+function createButton(parentElement) {
+    const buttonElement = parentElement.querySelector('button');
     const clonedButton = buttonElement.cloneNode(true);
     const svgParent = clonedButton.querySelector('svg').parentNode;
     svgParent.innerHTML = newSvg;
-    elmContainer.appendChild(clonedButton).appendChild;
-    return clonedButton;
+    parentElement.appendChild(clonedButton).appendChild;
+
+    clonedButton?.addEventListener('click', () => {
+        const issueKey = window.location.pathname.split('/').pop();
+
+        const copyLink = new CopyLink();
+        copyLink.createLink(issueKey);
+    });
 }
 
 const newSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -107,17 +54,67 @@ const newSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmln
 </svg>
 `
 
-const orgSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g fill="currentColor" fill-rule="evenodd">
-  <!-- Original Path 1 -->
-  <path d="M12.856 5.457l-.937.92a1.002 1.002 0 000 1.437 1.047 1.047 0 001.463 0l.984-.966c.967-.95 2.542-1.135 3.602-.288a2.54 2.54 0 01.203 3.81l-2.903 2.852a2.646 2.646 0 01-3.696 0l-1.11-1.09L9 13.57l1.108 1.089c1.822 1.788 4.802 1.788 6.622 0l2.905-2.852a4.558 4.558 0 00-.357-6.82c-1.893-1.517-4.695-1.226-6.422.47"/>
-  <!-- Original Path 2 -->
-  <path d="M11.144 19.543l.937-.92a1.002 1.002 0 000-1.437 1.047 1.047 0 00-1.462 0l-.985.966c-.967.95-2.542 1.135-3.602.288a2.54 2.54 0 01-.203-3.81l2.903-2.852a2.646 2.646 0 013.696 0l1.11 1.09L15 11.43l-1.108-1.089c-1.822-1.788-4.802-1.788-6.622 0l-2.905 2.852a4.558 4.558 0 00.357 6.82c1.893 1.517 4.695 1.226 6.422-.47"/>
-  <!-- Plus Sign -->
-  <path d="M17 12H7m5-5v10" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-</svg>
-`;
+
+/////////////////////////////////////////////////////////////////////////////
+
+// function appendCopyLinkElement() {
+
+//     const breadcrumbs = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child');
+
+//     const newElement = document.createElement('span');
+//     newElement.classList.add('copy-icon')
+//     newElement.appendChild(document.createTextNode('Copy'))
+
+//     breadcrumbs?.appendChild(newElement);
+//     return newElement;
+// }
+
+// function getContainerElement(retries) {
+//     for (let i = 0; i < retries; i++) {
+//         console.log(`Try ${i + 1}`);
+//         elm = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
+//         if (elm) {
+//             console.log(`Found element`);
+//             return elm;
+//         }
+
+//         setTimeout(() => {
+//             elm = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
+
+//         }, 3000);
+//     }
+// }
+
+// function appendCopyLinkElementHover() {
+
+//     const elmContainer = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]');
+
+//     if (!elmContainer) {
+//         console.log("elmContainer wasn't found");
+//         return;
+//     }
+
+//     const buttonElement = elmContainer.querySelector('button');
+//     const clonedButton = buttonElement.cloneNode(true);
+//     const svgParent = clonedButton.querySelector('svg').parentNode;
+//     svgParent.innerHTML = newSvg;
+//     elmContainer.appendChild(clonedButton).appendChild;
+//     return clonedButton;
+// }
+
+
+
+// const orgSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+// <g fill="currentColor" fill-rule="evenodd">
+//   <!-- Original Path 1 -->
+//   <path d="M12.856 5.457l-.937.92a1.002 1.002 0 000 1.437 1.047 1.047 0 001.463 0l.984-.966c.967-.95 2.542-1.135 3.602-.288a2.54 2.54 0 01.203 3.81l-2.903 2.852a2.646 2.646 0 01-3.696 0l-1.11-1.09L9 13.57l1.108 1.089c1.822 1.788 4.802 1.788 6.622 0l2.905-2.852a4.558 4.558 0 00-.357-6.82c-1.893-1.517-4.695-1.226-6.422.47"/>
+//   <!-- Original Path 2 -->
+//   <path d="M11.144 19.543l.937-.92a1.002 1.002 0 000-1.437 1.047 1.047 0 00-1.462 0l-.985.966c-.967.95-2.542 1.135-3.602.288a2.54 2.54 0 01-.203-3.81l2.903-2.852a2.646 2.646 0 013.696 0l1.11 1.09L15 11.43l-1.108-1.089c-1.822-1.788-4.802-1.788-6.622 0l-2.905 2.852a4.558 4.558 0 00.357 6.82c1.893 1.517 4.695 1.226 6.422-.47"/>
+//   <!-- Plus Sign -->
+//   <path d="M17 12H7m5-5v10" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+// </g>
+// </svg>
+// `;
 
 
 
