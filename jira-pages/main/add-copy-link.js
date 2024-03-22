@@ -1,6 +1,6 @@
 
 window.addEventListener('load', function () {
-    new CopyLink(document.body, getIssue);
+    this.window.CopyIssueKeyWithTitle.init(document.body, getIssue);
 });
 
 function getIssue() {

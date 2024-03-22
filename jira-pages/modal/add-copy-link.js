@@ -1,6 +1,7 @@
 
 window.addEventListener('load', function () {
-    new CopyLink(document.querySelector('div.atlaskit-portal-container'), getIssue, true);
+    this.window.CopyIssueKeyWithTitle.init(document.querySelector('div.atlaskit-portal-container'), getIssue, true);
+    // new CopyLink(document.querySelector('div.atlaskit-portal-container'), getIssue, true);
 });
 
 function getIssue() {
