@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "MDClone Jira Extension",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "description": "MDClone extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     "action": {
@@ -19,16 +19,25 @@
     "options_page": "pages/options/options.html",
     "content_scripts": [
         {
+            "js": [
+                "jira-pages/main/add-copy-link.js", 
+                "jira-pages/common/copy-link.js"
+            ],
             "css": [
-                "styles/freeze-main.css"
+                "jira-pages/main/freeze-title.css"
             ],
             "matches": [
                 "https://*.atlassian.net/browse/*"
-            ]
+            ],
+            "run_at": "document_idle"
         },
         {
+            "js": [
+                "jira-pages/modal/add-copy-link.js", 
+                "jira-pages/common/copy-link.js"
+            ],
             "css": [
-                "styles/freeze-popup.css"
+                "jira-pages/modal/freeze-title.css"
             ],
             "matches": [
                 "https://*.atlassian.net/jira/software/*"

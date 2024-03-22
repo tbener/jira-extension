@@ -11,3 +11,8 @@
     border-left: var(--ds-space-100, 8px) solid var(--tbener-bg-color);
     margin-left: var(--ds-space-negative-100, -8px);
 } 
+
+.copy-icon {
+    margin-left: 6px;
+    margin-top: 2px;
+}

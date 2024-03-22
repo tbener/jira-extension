@@ -9,7 +9,7 @@ const navigateToIssue = () => {
             }
 
             const url = `https://${items.customDomain}.atlassian.net/browse/${issue}`;
-            
+
             // Navigate to the Jira issue page
             chrome.tabs.create({ url });
         }
