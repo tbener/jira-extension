@@ -26,14 +26,18 @@
                             autofocus>
                         <button class="btn btn-primary" type="submit" id="goButton">Go</button>
                     </div>
+                    <small class="form-text text-muted">Default project: <span id="default_project_key"></span></small>
                 </form>
             </div>
         </div>
-        <div class="row mt-2 info-link">
-            <a><span id="go-to-options">Options</span></a>
-        </div>
+        <hr>
+        <footer>
+            <span class="info-link" id="go-to-options">Options</span>
+            <small class="version" id="version"></small>
+        </footer>
     </div>
 
+    <script src="/common/settings.js"></script>
     <script src="popup.js"></script>
 </body>
 

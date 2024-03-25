@@ -3,11 +3,18 @@ body {
     padding: 0.5rem;
 }
 
-.info-link {
+footer {
     color: #808080; /* Grey color */
-    cursor: pointer; /* Pointer cursor to indicate it's clickable */
     
-    &:hover {
-        text-decoration: underline; /* Underline to indicate a link */
+    .info-link {
+        cursor: pointer; /* Pointer cursor to indicate it's clickable */
+
+        &:hover {
+            text-decoration: underline; /* Underline to indicate a link */
+        }
+    }
+
+    .version {
+        float: right;
     }
 }
