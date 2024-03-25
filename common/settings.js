@@ -24,8 +24,22 @@ const SettingsHandler = (() => {
         });
     };
 
+    const saveSettings = ({ customDomain, defaultProjectKey }) => {
+        return new Promise((resolve, reject) => {
+            chrome.storage.sync.set(
+                { customDomain, defaultProjectKey },
+                () => {
+                    updateSettings(customDomain, defaultProjectKey);
+                    console.log(`Default settings saved: ${customDomain}, ${defaultProjectKey}`);
+                    resolve(settings);
+                }
+            );
+        });
+    }
+
     return {
-        getSettings
+        getSettings,
+        saveSettings
     };
 
 })();

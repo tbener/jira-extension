@@ -23,8 +23,9 @@
     "content_scripts": [
         {
             "js": [
-                "jira-pages/main/add-copy-link.js",
-                "jira-pages/common/copy-link.js"
+                "common/settings.js",
+                "jira-pages/common/copy-link.js",
+                "jira-pages/main/add-copy-link.js"
             ],
             "css": [
                 "jira-pages/main/freeze-title.css"
@@ -36,8 +37,9 @@
         },
         {
             "js": [
-                "jira-pages/modal/add-copy-link.js",
-                "jira-pages/common/copy-link.js"
+                "common/settings.js",
+                "jira-pages/common/copy-link.js",
+                "jira-pages/modal/add-copy-link.js"
             ],
             "css": [
                 "jira-pages/modal/freeze-title.css"

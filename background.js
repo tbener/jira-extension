@@ -13,11 +13,8 @@ function saveDefaultSettings() {
     const customDomain = DEFAULT_CUSTOM_DOMAIN;
     const defaultProjectKey = DEFAULT_PROJECT_KEY;
 
-    chrome.storage.sync.set(
-        { customDomain, defaultProjectKey },
-        () => {
-            console.log(`Default settings saved: ${DEFAULT_CUSTOM_DOMAIN}, ${DEFAULT_PROJECT_KEY}`);
-        }
-    );
+    SettingsHandler.saveSettings({ customDomain, defaultProjectKey }).then(() => {
+        console.log(`Default settings saved: ${customDomain}, ${defaultProjectKey}`);
+    });
 }
 
