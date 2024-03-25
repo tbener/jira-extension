@@ -71,35 +71,32 @@ const CopyIssueKeyWithTitle = (() => {
     };
 
     const createLinkAndCopy = (issueKey) => {
-        chrome.storage.sync.get(
-            { customDomain: 'mdclone' },
-            (items) => {
+        SettingsHandler.getSettings().then(settings => {
 
-                const username = 'tbener@gmail.com'
-                const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
+            const username = 'tbener@gmail.com'
+            const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
 
-                const apiGetPath = `https://${items.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
+            const apiGetPath = `https://${settings.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
 
-                fetch(apiGetPath, {
-                    headers: {
-                        'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Replace with your Jira username and password or API token
-                    }
+            fetch(apiGetPath, {
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Replace with your Jira username and password or API token
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response data and display it in your extension UI
+                    // console.log('DATA: ', data);
+                    const issueSummary = data.fields.summary;
+                    const issueLink = `https://${settings.customDomain}.atlassian.net/browse/${issueKey}`;
+
+                    copyLinkToClipboard(issueLink, issueKey, issueSummary);
+
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Handle the response data and display it in your extension UI
-                        // console.log('DATA: ', data);
-                        const issueSummary = data.fields.summary;
-                        const issueLink = `https://${items.customDomain}.atlassian.net/browse/${issueKey}`;
-
-                        copyLinkToClipboard(issueLink, issueKey, issueSummary);
-
-                    })
-                    .catch(error => {
-                        console.error('Error fetching issue details:', error);
-                    });
-            }
-        );
+                .catch(error => {
+                    console.error('Error fetching issue details:', error);
+                });
+        });
     };
 
     const copyLinkToClipboard = (issueLink, issueKey, issueSummary) => {

@@ -3,29 +3,23 @@ const saveOptions = () => {
     const customDomain = document.getElementById('customDomain').value;
     const defaultProjectKey = document.getElementById('defaultProjectKey').value;
 
-    chrome.storage.sync.set(
-        { customDomain, defaultProjectKey },
-        () => {
-            // Update status to let user know options were saved.
-            const status = document.getElementById('status');
-            status.textContent = 'Options saved.';
-            setTimeout(() => {
-                status.textContent = '';
-            }, 3000);
-        }
-    );
+    SettingsHandler.saveSettings({ customDomain, defaultProjectKey }).then(() => {
+        const status = document.getElementById('status');
+        status.textContent = 'Options saved.';
+        setTimeout(() => {
+            status.textContent = '';
+        }, 3000);
+    })
 };
 
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 const restoreOptions = () => {
-    chrome.storage.sync.get(
-        { customDomain: 'mdclone', defaultProjectKey: 'adams' },
-        (items) => {
-            document.getElementById('customDomain').value = items.customDomain;
-            document.getElementById('defaultProjectKey').value = items.defaultProjectKey;
-        }
-    );
+    SettingsHandler.getSettings().then(settings => {
+        document.getElementById('customDomain').value = settings.customDomain;
+        document.getElementById('defaultProjectKey').value = settings.defaultProjectKey;
+        document.getElementById('version').textContent = settings.versionDisplay;
+    });
 };
 
 document.addEventListener('DOMContentLoaded', restoreOptions);
