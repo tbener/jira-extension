@@ -18,6 +18,7 @@ const restoreOptions = () => {
     SettingsHandler.getSettings().then(settings => {
         document.getElementById('customDomain').value = settings.customDomain;
         document.getElementById('defaultProjectKey').value = settings.defaultProjectKey;
+        document.getElementById('version').textContent = settings.versionDisplay;
     });
 };
 
