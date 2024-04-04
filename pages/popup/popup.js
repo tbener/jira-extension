@@ -6,7 +6,7 @@ SettingsHandler.getSettings().then(sett => {
     document.getElementById('version').textContent = settings.versionDisplay;
 });
 
-const navigateToIssue = () => {
+const navigateToIssue = (newWindow = true) => {
     let issue = document.getElementById('issue').value;
     if (!isNaN(issue)) {
         // only a number
@@ -16,11 +16,21 @@ const navigateToIssue = () => {
     const url = `https://${settings.customDomain}.atlassian.net/browse/${issue}`;
 
     // Navigate to the Jira issue page
-    chrome.tabs.create({ url });
+    if (newWindow) {
+        chrome.tabs.create({ url });
+    } else {
+        chrome.tabs.update({ url });
+        window.close();
+    }
 };
 
 document.getElementById('goButton').addEventListener('click', navigateToIssue);
 
+document.getElementById('issue').addEventListener('keydown', function (event) {
+    if (event.ctrlKey && event.key === 'Enter') {
+        navigateToIssue(false);
+    }
+});
 
 document.querySelector('#go-to-options').addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {

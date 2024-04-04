@@ -1,47 +1,47 @@
 const SettingsHandler = (() => {
-    let settings = {
+    // Define default settings
+    const defaultSettings = {
         customDomain: 'www',
-        defaultProjectKey: 'jira',
-        versionDisplay: `v${chrome.runtime.getManifest().version}`
+        defaultProjectKey: 'jira'
     };
 
+    const additionalSettings = {
+        versionDisplay: `v${chrome.runtime.getManifest().version}`
+    }
+
+    // Initialize settings with default values
+    let settings = { ...defaultSettings };
+
     // Function to update settings
-    const updateSettings = (customDomain, defaultProjectKey) => {
-        settings.customDomain = customDomain;
-        settings.defaultProjectKey = defaultProjectKey;
+    const updateSettings = (newSettings) => {
+        Object.assign(settings, newSettings);
     };
 
     // Function to retrieve settings asynchronously
     const getSettings = () => {
         return new Promise((resolve, reject) => {
-            chrome.storage.sync.get(
-                { customDomain: 'www', defaultProjectKey: 'jira' },
-                (items) => {
-                    updateSettings(items.customDomain, items.defaultProjectKey);
-                    resolve(settings);
-                }
-            );
+            chrome.storage.sync.get(defaultSettings, (items) => {
+                updateSettings(items);
+                resolve({ ...settings, ...additionalSettings });
+            });
         });
     };
 
-    const saveSettings = ({ customDomain, defaultProjectKey }) => {
+    // Function to save settings
+    const saveSettings = (newSettings) => {
         return new Promise((resolve, reject) => {
-            chrome.storage.sync.set(
-                { customDomain, defaultProjectKey },
-                () => {
-                    updateSettings(customDomain, defaultProjectKey);
-                    console.log(`Default settings saved: ${customDomain}, ${defaultProjectKey}`);
-                    resolve(settings);
-                }
-            );
+            chrome.storage.sync.set(newSettings, () => {
+                updateSettings(newSettings);
+                console.log(`Default settings saved: ${JSON.stringify(newSettings)}`);
+                resolve(settings);
+            });
         });
-    }
+    };
 
     return {
         getSettings,
         saveSettings
     };
-
 })();
 
 window.SettingsHandler = SettingsHandler;

@@ -18,19 +18,22 @@
                 <h1 class="d-inline-block"> Jira Issue Navigator</h1>
             </div>
         </div>
-        <div class="row mt-3">
+        <div class="row my-3">
             <div class="col">
                 <form>
-                    <div class="input-group mb-3">
+                    <div class="input-group">
                         <input type="text" class="form-control" placeholder="Enter issue number or ID" id="issue"
                             autofocus>
                         <button class="btn btn-primary" type="submit" id="goButton">Go</button>
                     </div>
-                    <small class="form-text text-muted">Default project: <span id="default_project_key"></span></small>
+                    <div class="text-muted hint">
+                        Ctrl+Enter to open on active tab
+                    </div>
                 </form>
             </div>
         </div>
-        <hr>
+        <small class="text-muted">Default project: <span id="default_project_key"></span></small>
+        <hr class="mt-1">
         <footer class="text-secondary">
             <span class="info-link" id="go-to-options">Options</span>
             <small class="float-end" id="version"></small>
