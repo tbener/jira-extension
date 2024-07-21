@@ -9,37 +9,49 @@
 </head>
 
 <body>
-    <div class="container mt-3">
-        <div class="row">
-            <div class="col-auto">
-                <img src="/images/icon-32.png" style="max-width: 50px;">
-            </div>
-            <div class="col">
-                <h1 class="d-inline-block"> Jira Issue Navigator</h1>
-            </div>
-        </div>
-        <div class="row my-3">
-            <div class="col">
-                <form>
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Enter issue number or ID" id="issue"
-                            autofocus>
-                        <button class="btn btn-primary" type="submit" id="goButton">Go</button>
+    <div class="wrapper">
+        <header class="mt-3">
+            <div class="container">
+                <div class="row">
+                    <div class="col-auto">
+                        <img src="/images/icon-32.png" style="max-width: 50px;">
                     </div>
-                    <div class="text-muted hint">
-                        Ctrl+Enter to open on active tab
+                    <div class="col">
+                        <h1 class="d-inline-block"> Jira Issue Navigator</h1>
                     </div>
-                    <div id="preview">
+                </div>
+            </div>
+        </header>
 
+        <main class="flex-grow-1">
+            <div class="container">
+                <div class="row my-3">
+                    <div class="col">
+                        <form>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Enter issue number or ID"
+                                    id="issue" autofocus>
+                                <button class="btn btn-primary" type="submit" id="goButton">Go</button>
+                            </div>
+                            <div class="text-muted hint">
+                                Ctrl+Enter to open on active tab
+                            </div>
+                            <div id="preview" class="mt-4">
+
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
-        <small class="text-muted">Default project: <span id="default_project_key"></span></small>
-        <hr class="mt-1">
+        </main>
+
         <footer class="text-secondary">
-            <span class="info-link" id="go-to-options">Options</span>
-            <small class="float-end" id="version"></small>
+            <div class="container mt-3">
+                <small class="text-muted">Default project: <span id="default_project_key"></span></small>
+                <hr class="mt-2 mb-2">
+                <span class="info-link" id="go-to-options">Options</span>
+                <small class="float-end" id="version"></small>
+            </div>
         </footer>
     </div>
 

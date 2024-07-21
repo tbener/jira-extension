@@ -3,9 +3,17 @@ body {
     padding: 0.5rem;
 }
 
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
 footer {
     color: #808080; /* Grey color */
-    
+    margin-top: auto;
+    height: fit-content;
+
     .info-link {
         cursor: pointer; /* Pointer cursor to indicate it's clickable */
 
