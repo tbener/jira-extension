@@ -1,27 +1,30 @@
 
-const username = 'tbener@gmail.com'
-const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
+// const username = 'tbener@gmail.com'
+// const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
 
-let settings = {};
+let settings1 = {};
 let typingTimer;
+let isProcessing = false;
+let cancelPreview = false;
+let latestRequest = 0;
 
 const issueInputElement = document.getElementById('issue');
 const previewElement = document.getElementById('preview');
 
 SettingsHandler.getSettings().then(sett => {
-    settings = sett;
-    document.getElementById('default_project_key').textContent = settings.defaultProjectKey;
-    document.getElementById('version').textContent = settings.versionDisplay;
+    settings1 = sett;
+    document.getElementById('default_project_key').textContent = settings1.defaultProjectKey;
+    document.getElementById('version').textContent = settings1.versionDisplay;
 });
 
 const navigateToIssue = (newWindow = true) => {
     let issue = document.getElementById('issue').value;
     if (!isNaN(issue)) {
         // only a number
-        issue = `${settings.defaultProjectKey}-${issue}`;
+        issue = `${settings1.defaultProjectKey}-${issue}`;
     }
 
-    const url = `https://${settings.customDomain}.atlassian.net/browse/${issue}`;
+    const url = `https://${settings1.customDomain}.atlassian.net/browse/${issue}`;
 
     // Navigate to the Jira issue page
     if (newWindow) {
@@ -42,18 +45,18 @@ const getIssueSummary = async () => {
             if (isNaN(issueKey)) {
                 // not a number and not in key format
                 return ''
-            } 
-            issueKey = `${settings.defaultProjectKey}-${issueKey}`;
+            }
+            issueKey = `${settings1.defaultProjectKey}-${issueKey}`;
         }
 
         console.log('ISSUE:', issueKey);
 
-        const apiGetPath = `https://${settings.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
+        const apiGetPath = `https://${settings1.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
 
         const response = await fetch(apiGetPath, {
             credentials: 'include',
             headers: {
-                'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Replace with your Jira username and password or API token
+                'Authorization': 'Basic ' + btoa(`${username}:${password}`)
             }
         });
 
@@ -63,8 +66,8 @@ const getIssueSummary = async () => {
 
         const data = await response.json();
         const summary = data.fields.summary;
-        return summary;
-            
+        return issueKey.toUpperCase() + ': ' + summary;
+
     } catch (e) {
         console.log('Error fetching issue details:', e);
         return '-'
@@ -72,16 +75,32 @@ const getIssueSummary = async () => {
 }
 
 const setPreview = async () => {
-    previewElement.textContent = await getIssueSummary();
-}
+    const currentRequest = ++latestRequest; // Increment and get the latest request number
+    const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
+    
+    try {
+        const issueText = await JiraService.fetchIssue(issueKey);
+        if (currentRequest === latestRequest) { // Ensure this is the latest request
+            previewElement.textContent = issueText;
+        }
+    } catch (error) {
+        if (currentRequest === latestRequest) { // Ensure this is the latest request
+            previewElement.textContent = 'Failed to load issue details';
+        }
+    }
+};
+
 const clearPreview = () => {
     previewElement.textContent = ''
 }
 
-issueInputElement.addEventListener('input', async function() {
-    clearPreview();
+issueInputElement.addEventListener('input', async function () {
+    JiraService.abort(); // Always abort the previous request
+
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(async function() {
+    clearPreview();
+
+    typingTimer = setTimeout(async () => {
         await setPreview();
     }, 200);
 });
