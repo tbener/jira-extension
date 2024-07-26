@@ -79,9 +79,10 @@ const setPreview = async () => {
     const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
     
     try {
-        const issueText = await JiraService.fetchIssue(issueKey);
+        const issue = await JiraService.fetchIssue(issueKey);
+        console.debug('ISSUE: ', issue);
         if (currentRequest === latestRequest) { // Ensure this is the latest request
-            previewElement.textContent = issueText;
+            previewElement.textContent = issue.error || `${issue.key.toUpperCase()}: ${issue.summary}`;
         }
     } catch (error) {
         if (currentRequest === latestRequest) { // Ensure this is the latest request

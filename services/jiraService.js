@@ -47,15 +47,16 @@ const JiraService = (() => {
 
         return responsePromise
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch issue details. Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.debug('DATA: ', data);
-                const summary = data.fields.summary;
-                return issueKey.toUpperCase() + ': ' + summary;
+                return getIssueFromResponse(response);
+            //     if (!response.ok) {
+            //         throw new Error(`Failed to fetch issue details. Status: ${response.status}`);
+            //     }
+            //     return response.json();
+            // })
+            // .then(data => {
+            //     console.debug('DATA: ', data);
+            //     const summary = data.fields.summary;
+            //     return issueKey.toUpperCase() + ': ' + summary;
             })
             .catch(error => {
                 if (error.name === 'AbortError') {
@@ -69,6 +70,26 @@ const JiraService = (() => {
     const abort = () => {
         if (this.abortController) {
             this.abortController.abort();
+        }
+    }
+
+    const getIssueFromResponse = (response) => {
+        if (!response.ok) {
+            if (response.status === 404) {
+                return {
+                    error: 'Not found'
+                }
+            } else {
+                return {
+                    error: `Status ${response.status}`
+                }
+            }
+        }
+        const data = response.json();
+        return {
+            key: data.key,
+            summary: data.fields.summary,
+            link: 'chrome:blank',
         }
     }
 
