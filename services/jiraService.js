@@ -1,14 +1,14 @@
-const username = 'tbener@gmail.com'
-const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
-
-let settings = {};
-
-SettingsHandler.getSettings().then(sett => {
-    settings = sett;
-});
 
 const JiraService = (() => {
-    let abortController = null
+    username = 'tbener@gmail.com'
+    password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
+
+    abortController = null
+    settings = {};
+
+    SettingsHandler.getSettings().then(sett => {
+        this.settings = sett;
+    });
 
     const getIssueKeyByInput = (input) => {
         if (input === '') return '';
@@ -24,8 +24,24 @@ const JiraService = (() => {
         }
 
         // input is only the number
-        return `${settings.defaultProjectKey}-${input}`;
+        return `${this.settings.defaultProjectKey}-${input}`;
     }
+
+    const getIssueLink = (issueKey) => {
+        return `https://${this.settings.customDomain}.atlassian.net/browse/${issueKey}`;
+    }
+
+    const navigateToIssue = (issueKey, newWindow = true) => {
+
+        const url = getIssueLink(issueKey);
+
+        // Navigate to the Jira issue page
+        if (newWindow) {
+            chrome.tabs.create({ url });
+        } else {
+            chrome.tabs.update({ url });
+        }
+    };
 
     const fetchIssue = (issueKey) => {
         if (this.abortController) {
@@ -35,12 +51,12 @@ const JiraService = (() => {
         abortController = new AbortController();
         const signal = abortController.signal;
 
-        const apiGetPath = `https://${settings.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
+        const apiGetPath = `https://${this.settings.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
 
         const responsePromise = fetch(apiGetPath, {
             credentials: 'include',
             headers: {
-                'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+                'Authorization': 'Basic ' + btoa(`${this.username}:${this.password}`)
             },
             signal: signal
         });
@@ -48,19 +64,10 @@ const JiraService = (() => {
         return responsePromise
             .then(response => {
                 return getIssueFromResponse(response);
-            //     if (!response.ok) {
-            //         throw new Error(`Failed to fetch issue details. Status: ${response.status}`);
-            //     }
-            //     return response.json();
-            // })
-            // .then(data => {
-            //     console.debug('DATA: ', data);
-            //     const summary = data.fields.summary;
-            //     return issueKey.toUpperCase() + ': ' + summary;
             })
             .catch(error => {
                 if (error.name === 'AbortError') {
-                    console.log('Fetch aborted');
+                    console.debug('Fetch aborted');
                 } else {
                     console.error('Fetch error:', error);
                 }
@@ -89,12 +96,13 @@ const JiraService = (() => {
         return {
             key: data.key,
             summary: data.fields.summary,
-            link: 'chrome:blank',
+            link: getIssueLink(data.key)
         }
     }
 
     return {
         getIssueKeyByInput,
+        navigateToIssue,
         fetchIssue,
         abort
     }
