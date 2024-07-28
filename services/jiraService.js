@@ -73,7 +73,7 @@ const JiraService = (() => {
         }
     }
 
-    const getIssueFromResponse = (response) => {
+    const getIssueFromResponse = async (response) => {
         if (!response.ok) {
             if (response.status === 404) {
                 return {
@@ -85,7 +85,7 @@ const JiraService = (() => {
                 }
             }
         }
-        const data = response.json();
+        const data = await response.json();
         return {
             key: data.key,
             summary: data.fields.summary,

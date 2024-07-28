@@ -77,6 +77,10 @@ const getIssueSummary = async () => {
 const setPreview = async () => {
     const currentRequest = ++latestRequest; // Increment and get the latest request number
     const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
+
+    if (issueKey === '') {
+        return;
+    }
     
     try {
         const issue = await JiraService.fetchIssue(issueKey);
