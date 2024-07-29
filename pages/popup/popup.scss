@@ -27,3 +27,14 @@ footer {
     margin-top: 0.25rem !important;
     font-size: 0.8rem;
 }
+
+a {
+    color: #21a3f3; 
+    text-decoration: none; 
+    transition: color 0.3s ease, text-decoration 0.3s ease; 
+  
+    &:hover {
+      color: #1e90ff; 
+      text-decoration: underline; 
+    }
+  }

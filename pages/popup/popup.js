@@ -30,6 +30,7 @@ const setPreview = async () => {
         console.debug('ISSUE: ', issue);
         if (currentRequest === latestRequest && issue) { // Ensure this is the latest request
             previewElement.textContent = issue.error || `${issue.key.toUpperCase()}: ${issue.summary}`;
+            previewElement.href = issue.error ? '#' : issue.link;
         }
     } catch (error) {
         // do nothing
@@ -37,7 +38,8 @@ const setPreview = async () => {
 };
 
 const clearPreview = () => {
-    previewElement.textContent = ''
+    previewElement.textContent = '';
+    previewElement.href = '#';
 }
 
 issueInputElement.addEventListener('input', async function () {
