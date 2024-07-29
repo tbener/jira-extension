@@ -2,7 +2,8 @@ let typingTimer;
 let latestRequest = 0;
 
 const issueInputElement = document.getElementById('issue');
-const previewElement = document.getElementById('preview');
+const previewElementLink = document.getElementById('preview-link');
+const previewElementError = document.getElementById('preview-error');
 
 SettingsHandler.getSettings().then(settings => {
     document.getElementById('default_project_key').textContent = settings.defaultProjectKey;
@@ -24,13 +25,17 @@ const setPreview = async () => {
     if (issueKey === '') {
         return;
     }
-    
+
     try {
         const issue = await JiraService.fetchIssue(issueKey);
         console.debug('ISSUE: ', issue);
         if (currentRequest === latestRequest && issue) { // Ensure this is the latest request
-            previewElement.textContent = issue.error || `${issue.key.toUpperCase()}: ${issue.summary}`;
-            previewElement.href = issue.error ? '#' : issue.link;
+            if (issue.error) {
+                previewElementError.textContent = issue.error;
+            } else {
+                previewElementLink.textContent = `${issue.key.toUpperCase()}: ${issue.summary}`;
+                previewElementLink.href = issue.link;
+            }
         }
     } catch (error) {
         // do nothing
@@ -38,8 +43,9 @@ const setPreview = async () => {
 };
 
 const clearPreview = () => {
-    previewElement.textContent = '';
-    previewElement.href = '#';
+    previewElementLink.textContent = '';
+    previewElementLink.href = '#';
+    previewElementError.textContent = '';
 }
 
 issueInputElement.addEventListener('input', async function () {
