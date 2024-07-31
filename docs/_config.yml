@@ -1,5 +1,5 @@
 remote_theme: pages-themes/architect@v0.2.0
 plugins:
 - jekyll-remote-theme
-title: Chrome Jira Extension Documentation
+title: MDClone Jira Extension
 description: Installation and Usage Guide for MDClone Chrome Jira Extension
