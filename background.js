@@ -1,5 +1,5 @@
 DEFAULT_CUSTOM_DOMAIN = 'mdclone';
-DEFAULT_PROJECT_KEY = 'adams';
+DEFAULT_PROJECT_KEY = 'ADAMS';
 
 chrome.runtime.onInstalled.addListener(function (details) {
     // Check if the extension is newly installed
