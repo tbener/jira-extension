@@ -2,17 +2,17 @@
 
 ## Installation Steps
 
-### Step 1: Open Chrome Extensions Page
+### Step 1: Download the Extension
+1. [Download the extension zip file](https://github.com/tbener/jira-extension/raw/develop/MDClone%20Jira%20Extension.zip).
+
+### Step 2: Open Chrome Extensions Page
 1. Open Google Chrome.
 2. Navigate to the extensions page by entering `chrome://extensions/` in the address bar.
 
-### Step 2: Enable Developer Mode
+### Step 3: Enable Developer Mode
 1. Switch to Developer Mode by toggling the switch at the top right corner of the extensions page.
 
 ![image](https://github.com/user-attachments/assets/5a18db38-6623-4571-b95e-af63620bbf71)
-
-### Step 3: Download the Extension
-1. [Download the latest extension zip file](https://github.com/tbener/jira-extension/raw/develop/MDClone%20Jira%20Extension.zip).
 
 ### Step 4: Install the Extension
 1. Drag and drop the downloaded zip file onto the extensions page to install it.
