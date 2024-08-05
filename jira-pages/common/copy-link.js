@@ -14,7 +14,7 @@ const CopyIssueKeyWithTitle = (() => {
             observer.observe(elementToObserve, { childList: true, subtree: true });
         }
         else {
-            console.debug("Jira Extension: Couldn't find [elementToObserve]. The Copy Link With Title feature will not be available")
+            console.warn("Jira Extension: Couldn't find [elementToObserve]. The Copy Link With Title feature will not be available")
         }
     };
 
