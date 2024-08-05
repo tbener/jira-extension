@@ -14,28 +14,27 @@ const CopyIssueKeyWithTitle = (() => {
             observer.observe(elementToObserve, { childList: true, subtree: true });
         }
         else {
-            console.log("Jira Extension: Couldn't find [elementToObserve]. The Copy Link With Title feature will not be available")
+            console.debug("Jira Extension: Couldn't find [elementToObserve]. The Copy Link With Title feature will not be available")
         }
     };
 
     const handleMutations = (mutationsList, observer) => {
-        console.log('Mutation detected!');
+        console.debug('Mutation detected!');
         if (this.found && !changedUrl()) return;
 
-        console.log(`handleMutations - URL changed or not found yet (found = ${this.found})`, this.saveUrl);
-        const issue = this.getIssueFunc();
-        console.log('handleMutations - issue:', issue);
-        if (!issue) return;
+        console.debug(`handleMutations - URL changed or not found yet (found = ${this.found})`, this.saveUrl);
+        // const issue = this.getIssueFunc();
+        // console.debug('handleMutations - issue:', issue);
+        // if (!issue) return;
 
-        console.log('handleMutations - issue exists');
+        // console.debug('handleMutations - issue exists');
 
         // Check if the element exists in the DOM
         const elmContainer = document.querySelector(parentElementSelector);
         if (elmContainer) {
             this.found = true;
-            // Your code to add elements to the popup
-            console.log('handleMutations - adding element...');
-            createButton(elmContainer, issue);
+            console.debug('handleMutations - adding element...');
+            createButton(elmContainer);
 
             // Disconnect the observer to avoid unnecessary checks
             if (!this.keepAlive) {
@@ -44,7 +43,7 @@ const CopyIssueKeyWithTitle = (() => {
         }
         else {
             this.found = false;
-            console.log('handleMutations - container element not found');
+            console.debug('handleMutations - container element not found');
         }
     }
 
@@ -56,7 +55,7 @@ const CopyIssueKeyWithTitle = (() => {
         return false;
     }
 
-    const createButton = (parentElement, issueKey) => {
+    const createButton = (parentElement) => {
         const buttonElement = parentElement.querySelector('button');
         const clonedButton = buttonElement.cloneNode(true);
         const svgParent = clonedButton.querySelector('svg').parentNode;
@@ -66,6 +65,7 @@ const CopyIssueKeyWithTitle = (() => {
         parentElement.appendChild(clonedButton).appendChild;
 
         clonedButton?.addEventListener('click', () => {
+            const issueKey = this.getIssueFunc();
             createLinkAndCopy(issueKey);
         });
     };
@@ -86,7 +86,7 @@ const CopyIssueKeyWithTitle = (() => {
                 .then(response => response.json())
                 .then(data => {
                     // Handle the response data and display it in your extension UI
-                    // console.log('DATA: ', data);
+                    // console.debug('DATA: ', data);
                     const issueSummary = data.fields.summary;
                     const issueLink = `https://${settings.customDomain}.atlassian.net/browse/${issueKey}`;
 
@@ -110,7 +110,7 @@ const CopyIssueKeyWithTitle = (() => {
             })
         ])
             .then(() => {
-                console.log('HTML content copied to clipboard:', htmlContent);
+                console.debug('HTML content copied to clipboard:', htmlContent);
             })
             .catch(error => {
                 console.error('Error copying HTML content to clipboard:', error);
