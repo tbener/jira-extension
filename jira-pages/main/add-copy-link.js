@@ -1,6 +1,6 @@
 
 window.addEventListener('load', function () {
-    this.window.CopyIssueKeyWithTitle.init(document.body, getIssue);
+    this.window.CopyIssueKeyWithTitle.init('', getIssue);
 });
 
 function getIssue() {

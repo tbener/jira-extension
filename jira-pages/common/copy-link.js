@@ -5,30 +5,45 @@ const CopyIssueKeyWithTitle = (() => {
     found = true;
     keepAlive = false;
     iconButton = null;
+    count = 0;
+    subElementToObserve = '';
 
     const init = (elementToObserve, getIssueFunc, keepAlive = false) => {
         this.getIssueFunc = getIssueFunc;
         this.keepAlive = keepAlive;
+        this.subElementToObserve = elementToObserve;
 
-        if (elementToObserve) {
-            const observer = new MutationObserver(handleMutations);
-            observer.observe(elementToObserve, { childList: true, subtree: true });
-        }
-        else {
-            console.warn("Jira Extension: Couldn't find [elementToObserve]. The Copy Link With Title feature will not be available")
-        }
+        // we start observing the body, until we find the subElement, if needed
+        startObserve(document.body);
     };
 
     const handleMutations = (mutationsList, observer) => {
-        console.debug('Mutation detected!');
+        if (this.subElementToObserve) {
+            console.debug(`subElementToObserve: ${this.subElementToObserve}`);
+            const element = document.querySelector(this.subElementToObserve);
+            if (element) {
+                console.debug(`Found inner element to observe. Disconnecting previous one`);
+                // found inner element to observe. Disconnecting previous one
+                observer.disconnect();
+                this.subElementToObserve = '';
+                startObserve(element);
+            }
+        }
+        else {
+            doCheck();
+        }
+    };
+
+    const startObserve = (element) => {
+        const observer = new MutationObserver(handleMutations);
+        observer.observe(element, { childList: true, subtree: true });
+    }
+
+    const doCheck = () => {
+        // console.debug(`Checking dom! (${++this.count})`);
         if (this.found && !changedUrl()) return;
 
-        console.debug(`handleMutations - URL changed or not found yet (found = ${this.found})`, this.saveUrl);
-        // const issue = this.getIssueFunc();
-        // console.debug('handleMutations - issue:', issue);
-        // if (!issue) return;
-
-        // console.debug('handleMutations - issue exists');
+        console.debug(`[handling] - URL changed or not found yet (found = ${this.found})`, this.saveUrl);
 
         // Check if the element exists in the DOM
         const elmContainer = document.querySelector(parentElementSelector);
@@ -39,6 +54,7 @@ const CopyIssueKeyWithTitle = (() => {
 
             // Disconnect the observer to avoid unnecessary checks
             if (!this.keepAlive) {
+                console.debug('Disconnecting observer');
                 observer.disconnect();
             }
         }
@@ -57,12 +73,16 @@ const CopyIssueKeyWithTitle = (() => {
     }
 
     const createButton = (parentElement) => {
+        if (parentElement.querySelector('.extension-copy-link-button')) {
+            return;
+        }
         const buttonElement = parentElement.querySelector('button');
         this.iconButton = buttonElement.cloneNode(true);
         const svgParent = this.iconButton.querySelector('svg').parentNode;
         svgParent.innerHTML = copyLinkSvg;
-        
+
         svgParent.style.marginLeft = '5px';
+        this.iconButton.classList.add('extension-copy-link-button');
         parentElement.appendChild(this.iconButton).appendChild;
 
         this.iconButton?.addEventListener('click', () => {

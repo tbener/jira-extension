@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "MDClone Jira Extension",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "MDClone extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     // "content_security_policy": "script-src 'self'; https://*.atlassian.net; object-src 'self'",
