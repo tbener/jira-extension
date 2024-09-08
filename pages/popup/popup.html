@@ -51,13 +51,17 @@
                 <small class="text-muted">Default project: <span id="default_project_key"></span></small>
                 <hr class="mt-2 mb-2">
                 <span class="info-link" id="go-to-options">Options</span>
-                <small class="float-end" id="version"></small>
+                <span class="float-end">
+                    <small id="version"></small>
+                    <span class="version-update-button" id="update">(update)</span>
+                </span>
             </div>
         </footer>
     </div>
 
     <script src="/common/settings.js"></script>
     <script src="/services/jiraService.js"></script>
+    <script src="/services/version-service.js"></script>
     <script src="popup.js"></script>
 </body>
 

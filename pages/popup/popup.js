@@ -4,6 +4,7 @@ let latestRequest = 0;
 const issueInputElement = document.getElementById('issue');
 const previewElementLink = document.getElementById('preview-link');
 const previewElementError = document.getElementById('preview-error');
+const versionUpdateElement = document.getElementById('update');
 
 SettingsHandler.getSettings().then(settings => {
     document.getElementById('default_project_key').textContent = settings.defaultProjectKey;
@@ -74,3 +75,9 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
         window.open(chrome.runtime.getURL('/pages/options/options.html'));
     }
 });
+
+if (VersionService.newerVersionExists()) {
+    versionUpdateElement.style.display = 'inline';
+    document.getElementById('update').addEventListener('click', VersionService.startUpdate);
+}
+
