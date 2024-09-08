@@ -76,8 +76,10 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
     }
 });
 
-if (VersionService.newerVersionExists()) {
-    versionUpdateElement.style.display = 'inline';
-    document.getElementById('update').addEventListener('click', VersionService.startUpdate);
-}
+VersionService.newerVersionExists().then(isNewVersion => {
+    if (isNewVersion) {
+        versionUpdateElement.style.display = 'inline';
+        document.getElementById('update').addEventListener('click', VersionService.startUpdate);
+    }
+});
 
