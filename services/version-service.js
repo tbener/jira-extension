@@ -5,6 +5,23 @@ const VersionService = (() => {
 
     const newerVersionExists = async () => {
         try {
+            const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+            const now = Date.now();
+
+            // Retrieve the last check time and result from chrome.storage.local
+            const data = await new Promise((resolve) => {
+                chrome.storage.local.get(['lastVersionCheckTime', 'versionCheckLastResult'], resolve);
+            });
+            const lastCheck = data.lastVersionCheckTime;
+            const lastResult = data.versionCheckLastResult;
+
+            // If the last check was done within the last hour, return the last result
+            if (lastCheck && (now - lastCheck <= oneHour)) {
+                console.log('Returning last result');
+                return lastResult; // Return the last result
+            }
+            console.log('Checking latest version...');
+
             // Fetch the manifest.json file from GitHub
             const response = await fetch(manifestUrl);
             if (!response.ok) throw new Error('Failed to fetch manifest from GitHub');
@@ -16,7 +33,16 @@ const VersionService = (() => {
             const localVersion = chrome.runtime.getManifest().version;
 
             // Compare versions and show update button if the GitHub version is newer
-            return isVersionNewer(githubVersion, localVersion);
+            const isNewerVersion = isVersionNewer(githubVersion, localVersion);
+
+            await new Promise((resolve) => {
+                chrome.storage.local.set({
+                    lastVersionCheckTime: now,
+                    versionCheckLastResult: isNewerVersion
+                }, resolve);
+            });
+    
+            return isNewerVersion;
         }
         catch (error) {
             console.log('Error checking for update:', error);

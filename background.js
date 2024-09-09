@@ -3,9 +3,17 @@ DEFAULT_PROJECT_KEY = 'ADAMS';
 
 chrome.runtime.onInstalled.addListener(function (details) {
     // Check if the extension is newly installed
-    if (details.reason === "install") {
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         // Save default settings or perform any necessary setup
         saveDefaultSettings();
+    } else if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
+        chrome.storage.local.clear(() => {
+            if (chrome.runtime.lastError) {
+                console.error('Error clearing storage:', chrome.runtime.lastError);
+            } else {
+                console.log('chrome.storage.local cleared after update.');
+            }
+        });
     }
 });
 
