@@ -88,7 +88,7 @@ const VersionService = (() => {
 
             if (gMajor > lMajor) return true;
             if (gMajor === lMajor && gMinor > lMinor) return true;
-            if (gMajor === lMajor && gMinor === lMinor && gPatch > lPatch) return true;
+            // if (gMajor === lMajor && gMinor === lMinor && gPatch > lPatch) return true;
 
         } catch (error) {
             console.log(error);
