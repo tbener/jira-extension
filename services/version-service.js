@@ -1,58 +1,59 @@
 const VersionService = (() => {
+    EXTENSIONS_PAGE_URL = 'chrome://extensions/';
+
     baseUrl = `https://raw.githubusercontent.com/tbener/jira-extension/main`;
     zipUrl = `${baseUrl}/MDClone%20Jira%20Extension.zip`;
     manifestUrl = `${baseUrl}/manifest.json`;
 
-    const newerVersionExists = async () => {
+    const checkLatestVersion = async () => {
         try {
             const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
             const now = Date.now();
 
             // Retrieve the last check time and result from chrome.storage.local
             const data = await new Promise((resolve) => {
-                chrome.storage.local.get(['lastVersionCheckTime', 'versionCheckLastResult'], resolve);
+                chrome.storage.local.get(['lastVersionCheckTime', 'versionCheckLastResult', 'remoteVersion'], resolve);
             });
             const lastCheck = data.lastVersionCheckTime;
             const lastResult = data.versionCheckLastResult;
+            let remoteVersion = data.remoteVersion;
 
             // If the last check was done within the last hour, return the last result
             if (lastCheck && (now - lastCheck <= oneHour)) {
-                console.log('Returning last result');
-                return lastResult; // Return the last result
+                console.debug('Returning last result');
+                return { isNewerVersion: lastResult, remoteVersion }
             }
-            console.log('Checking latest version...');
+            console.debug('Checking latest version...');
 
             // Fetch the manifest.json file from GitHub
             const response = await fetch(manifestUrl);
             if (!response.ok) throw new Error('Failed to fetch manifest from GitHub');
 
-            const githubManifest = await response.json();
-            const githubVersion = githubManifest.version;
-
-            // Get the local extension version
-            const localVersion = chrome.runtime.getManifest().version;
+            const remoteManifest = await response.json();
+            remoteVersion = remoteManifest.version;
 
             // Compare versions and show update button if the GitHub version is newer
-            const isNewerVersion = isVersionNewer(githubVersion, localVersion);
+            const isNewerVersion = isVersionNewer(remoteVersion);
 
             await new Promise((resolve) => {
                 chrome.storage.local.set({
                     lastVersionCheckTime: now,
-                    versionCheckLastResult: isNewerVersion
+                    versionCheckLastResult: isNewerVersion,
+                    remoteVersion
                 }, resolve);
             });
-    
-            return isNewerVersion;
+
+            return { isNewerVersion, remoteVersion };
         }
         catch (error) {
             console.log('Error checking for update:', error);
-            return false;
+            return { isNewerVersion: false };
         }
     }
 
-    const startUpdate = () => {
-        downloadZip();
-        // openExtensionsPage();
+    const startUpdate = (windowToClose) => {
+        downloadZip(windowToClose);
+        openExtensionsPage();
     }
 
     const downloadZip = () => {
@@ -62,13 +63,28 @@ const VersionService = (() => {
     }
 
     const openExtensionsPage = () => {
-        chrome.tabs.create({ url: "chrome://extensions/" });
+        chrome.tabs.query({ currentWindow: true }, function (tabs) {
+            console.log(tabs);
+            const extensionTab = tabs.find(tab => tab.url === this.EXTENSIONS_PAGE_URL);
+
+            if (extensionTab) {
+                console.log(extensionTab);
+
+                // If found, bring the tab to focus
+                chrome.tabs.update(extensionTab.id, { active: true });
+            } else {
+                // If not found, open a new tab
+                chrome.tabs.create({ url: this.EXTENSIONS_PAGE_URL });
+            }
+        });
     }
 
-    function isVersionNewer(githubVersion, localVersion) {
+    // Check if version is newer than the current version
+    function isVersionNewer(version) {
         try {
-            const [gMajor, gMinor, gPatch] = githubVersion.split('.').map(Number);
-            const [lMajor, lMinor, lPatch] = localVersion.split('.').map(Number);
+            const currentVersion = chrome.runtime.getManifest().version;
+            const [gMajor, gMinor, gPatch] = version.split('.').map(Number);
+            const [lMajor, lMinor, lPatch] = currentVersion.split('.').map(Number);
 
             if (gMajor > lMajor) return true;
             if (gMajor === lMajor && gMinor > lMinor) return true;
@@ -82,7 +98,7 @@ const VersionService = (() => {
     }
 
     return {
-        newerVersionExists,
+        checkLatestVersion,
         startUpdate
     }
 

@@ -10,9 +10,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
         chrome.storage.local.clear(() => {
             if (chrome.runtime.lastError) {
                 console.error('Error clearing storage:', chrome.runtime.lastError);
-            } else {
-                console.log('chrome.storage.local cleared after update.');
-            }
+            } 
         });
     }
 });

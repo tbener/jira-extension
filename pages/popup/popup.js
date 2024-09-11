@@ -11,6 +11,17 @@ SettingsHandler.getSettings().then(settings => {
     document.getElementById('version').textContent = settings.versionDisplay;
 });
 
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if a newer version exists
+    const versionInfo = await VersionService.checkLatestVersion();
+
+    if (versionInfo.isNewerVersion) {
+        versionUpdateElement.style.display = 'block'; // Show update notification
+        versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
+        versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+    }
+});
+
 const navigateToIssue = (newWindow = true) => {
     const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
     JiraService.navigateToIssue(issueKey, newWindow);
@@ -76,10 +87,4 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
     }
 });
 
-VersionService.newerVersionExists().then(isNewVersion => {
-    if (isNewVersion) {
-        versionUpdateElement.style.display = 'inline';
-        document.getElementById('update').addEventListener('click', VersionService.startUpdate);
-    }
-});
 
