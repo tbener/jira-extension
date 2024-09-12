@@ -4,10 +4,22 @@ let latestRequest = 0;
 const issueInputElement = document.getElementById('issue');
 const previewElementLink = document.getElementById('preview-link');
 const previewElementError = document.getElementById('preview-error');
+const versionUpdateElement = document.getElementById('update');
 
 SettingsHandler.getSettings().then(settings => {
     document.getElementById('default_project_key').textContent = settings.defaultProjectKey;
     document.getElementById('version').textContent = settings.versionDisplay;
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if a newer version exists
+    const versionInfo = await VersionService.checkLatestVersion();
+
+    if (versionInfo.isNewerVersion) {
+        versionUpdateElement.style.display = 'block'; // Show update notification
+        versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
+        versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+    }
 });
 
 const navigateToIssue = (newWindow = true) => {
@@ -74,3 +86,5 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
         window.open(chrome.runtime.getURL('/pages/options/options.html'));
     }
 });
+
+
