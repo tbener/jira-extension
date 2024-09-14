@@ -5,23 +5,25 @@ const VersionService = (() => {
     zipUrl = `${baseUrl}/MDClone%20Jira%20Extension.zip`;
     manifestUrl = `${baseUrl}/manifest.json`;
 
-    const checkLatestVersion = async () => {
+    const checkLatestVersion = async (force = false) => {
         try {
             const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
             const now = Date.now();
 
-            // Retrieve the last check time and result from chrome.storage.local
-            const data = await new Promise((resolve) => {
-                chrome.storage.local.get(['lastVersionCheckTime', 'versionCheckLastResult', 'remoteVersion'], resolve);
-            });
-            const lastCheck = data.lastVersionCheckTime;
-            const lastResult = data.versionCheckLastResult;
-            let remoteVersion = data.remoteVersion;
+            if (!force) {
+                // Retrieve the last check time and result from chrome.storage.local
+                const data = await new Promise((resolve) => {
+                    chrome.storage.local.get(['lastVersionCheckTime', 'versionCheckLastResult', 'remoteVersion'], resolve);
+                });
+                const lastCheck = data.lastVersionCheckTime;
+                const lastResult = data.versionCheckLastResult;
+                let remoteVersion = data.remoteVersion;
 
-            // If the last check was done within the last hour, return the last result
-            if (lastCheck && (now - lastCheck <= oneHour)) {
-                console.debug('Returning last result');
-                return { isNewerVersion: lastResult, remoteVersion }
+                // If the last check was done within the last hour, return the last result
+                if (lastCheck && (now - lastCheck <= oneHour)) {
+                    console.debug('Returning last result');
+                    return { isNewerVersion: lastResult, remoteVersion }
+                }
             }
             console.debug('Checking latest version...');
 
@@ -31,6 +33,7 @@ const VersionService = (() => {
 
             const remoteManifest = await response.json();
             remoteVersion = remoteManifest.version;
+            console.log(`Jira Extension latest version: ${remoteVersion}`);
 
             // Compare versions and show update button if the GitHub version is newer
             const isNewerVersion = isVersionNewer(remoteVersion);
@@ -64,12 +67,9 @@ const VersionService = (() => {
 
     const openExtensionsPage = () => {
         chrome.tabs.query({ currentWindow: true }, function (tabs) {
-            console.log(tabs);
             const extensionTab = tabs.find(tab => tab.url === this.EXTENSIONS_PAGE_URL);
 
             if (extensionTab) {
-                console.log(extensionTab);
-
                 // If found, bring the tab to focus
                 chrome.tabs.update(extensionTab.id, { active: true });
             } else {
@@ -88,10 +88,10 @@ const VersionService = (() => {
 
             if (gMajor > lMajor) return true;
             if (gMajor === lMajor && gMinor > lMinor) return true;
-            // if (gMajor === lMajor && gMinor === lMinor && gPatch > lPatch) return true;
+            if (gMajor === lMajor && gMinor === lMinor && gPatch > lPatch) return true;
 
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
 
         return false;

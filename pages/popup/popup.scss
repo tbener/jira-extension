@@ -67,22 +67,17 @@ a {
 }
 
 .update-notification {
-    display: none;  /* hide by default */
-    text-align: center; /* Center the notification */
-    margin-top: 10px; /* Add spacing between other elements */
-    padding: 8px 4px;
-    font-size: 12px;
+    display: none;
+    font-size: 14px;
     font-weight: bold;
-    color: #f39c12; /* Lighter orange text color */
-    background-color: #fff8e1; /* Lighter, soft orange background */
-    border: 2px solid #f57c00; /* Lighter orange border */
-    border-radius: 5px;
-    text-decoration: none;
+    color: #f39c12;
+    background-color: #fff8e1;
+    border: 1px solid #f57c00;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .update-notification:hover {
-    background-color: #fff3cb; /* Even lighter orange on hover */
+    background-color: #fff3cb;
     text-decoration: underline;
     cursor: pointer;
 }

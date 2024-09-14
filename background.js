@@ -22,7 +22,7 @@ function saveDefaultSettings() {
     chrome.storage.sync.set(
         { customDomain, defaultProjectKey },
         () => {
-            console.log(`Default settings saved: ${customDomain}, ${defaultProjectKey}`);
+            console.debug(`Default settings saved: ${customDomain}, ${defaultProjectKey}`);
         }
     );
 }
