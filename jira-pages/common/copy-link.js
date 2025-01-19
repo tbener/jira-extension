@@ -30,7 +30,7 @@ const CopyIssueKeyWithTitle = (() => {
             }
         }
         else {
-            doCheck();
+            doCheck(observer);
         }
     };
 
@@ -39,7 +39,7 @@ const CopyIssueKeyWithTitle = (() => {
         observer.observe(element, { childList: true, subtree: true });
     }
 
-    const doCheck = () => {
+    const doCheck = (observer) => {
         // console.debug(`Checking dom! (${++this.count})`);
         if (this.found && !changedUrl()) return;
 
