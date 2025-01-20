@@ -1,4 +1,5 @@
 const parentElementSelector = 'div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]';
+const parent = 'div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child';
 
 const CopyIssueKeyWithTitle = (() => {
     saveUrl = '';
@@ -7,6 +8,7 @@ const CopyIssueKeyWithTitle = (() => {
     iconButton = null;
     count = 0;
     subElementToObserve = '';
+    let debounceTimeout;
 
     const init = (elementToObserve, getIssueFunc, keepAlive = false) => {
         this.getIssueFunc = getIssueFunc;
@@ -20,23 +22,25 @@ const CopyIssueKeyWithTitle = (() => {
     const handleMutations = (mutationsList, observer) => {
         if (this.subElementToObserve) {
             console.debug(`subElementToObserve: ${this.subElementToObserve}`);
-            const element = document.querySelector(this.subElementToObserve);
-            if (element) {
-                console.debug(`Found inner element to observe. Disconnecting previous one`);
-                // found inner element to observe. Disconnecting previous one
-                observer.disconnect();
-                this.subElementToObserve = '';
-                startObserve(element);
-            }
-        }
-        else {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const element = document.querySelector(this.subElementToObserve);
+                if (element) {
+                    console.debug(`Found inner element to observe. Disconnecting previous one`);
+                    // found inner element to observe. Disconnecting previous one
+                    observer.disconnect();
+                    this.subElementToObserve = '';
+                    startObserve(element);
+                }
+            }, 100);
+        } else {
             doCheck(observer);
         }
     };
 
     const startObserve = (element) => {
         const observer = new MutationObserver(handleMutations);
-        observer.observe(element, { childList: true, subtree: true });
+        observer.observe(element, {childList: true, subtree: true});
     }
 
     const doCheck = (observer) => {
@@ -50,15 +54,14 @@ const CopyIssueKeyWithTitle = (() => {
         if (elmContainer) {
             this.found = true;
             console.debug('handleMutations - adding element...');
-            createButton(elmContainer);
+            createButton();
 
             // Disconnect the observer to avoid unnecessary checks
             if (!this.keepAlive) {
                 console.debug('Disconnecting observer');
                 observer.disconnect();
             }
-        }
-        else {
+        } else {
             this.found = false;
             console.debug('handleMutations - container element not found');
         }
@@ -72,23 +75,29 @@ const CopyIssueKeyWithTitle = (() => {
         return false;
     }
 
-    const createButton = (parentElement) => {
-        if (parentElement.querySelector('.extension-copy-link-button')) {
-            return;
-        }
-        const buttonElement = parentElement.querySelector('button');
-        this.iconButton = buttonElement.cloneNode(true);
-        const svgParent = this.iconButton.querySelector('svg').parentNode;
-        svgParent.innerHTML = copyLinkSvg;
+    const createButton = () => {
+        // clearTimeout(createButtonTimout);
+        setTimeout(() => {
+            const parentElement = document.querySelector(parentElementSelector);
+            if (parentElement.querySelector('.extension-copy-link-button')) {
+                return;
+            }
+            const buttonElement = parentElement.querySelector('button');
+            this.iconButton = buttonElement.cloneNode(true);
+            const svgParent = this.iconButton.querySelector('svg').parentNode;
+            svgParent.innerHTML = copyLinkSvg;
 
-        svgParent.style.marginLeft = '5px';
-        this.iconButton.classList.add('extension-copy-link-button');
-        parentElement.appendChild(this.iconButton).appendChild;
+            svgParent.style.marginLeft = '5px';
+            this.iconButton.classList.add('extension-copy-link-button');
+            parentElement.appendChild(this.iconButton);
 
-        this.iconButton?.addEventListener('click', () => {
-            const issueKey = this.getIssueFunc();
-            createLinkAndCopy(issueKey);
-        });
+            this.iconButton?.addEventListener('click', () => {
+                const issueKey = this.getIssueFunc();
+                createLinkAndCopy(issueKey);
+            });
+
+            console.debug('Copy-link button created');
+        }, 0);
     };
 
     const createLinkAndCopy = (issueKey) => {
@@ -126,8 +135,8 @@ const CopyIssueKeyWithTitle = (() => {
 
         navigator.clipboard.write([
             new ClipboardItem({
-                'text/html': new Blob([htmlContent], { type: 'text/html' }),
-                'text/plain': new Blob([textContent], { type: 'text/plain' })
+                'text/html': new Blob([htmlContent], {type: 'text/html'}),
+                'text/plain': new Blob([textContent], {type: 'text/plain'})
             })
         ])
             .then(() => {
