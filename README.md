@@ -44,6 +44,13 @@
 3. Click the yellow star icon to copy the issue key as a link followed by the issue title.
    - Example: `[ADAMS-2175](https://mdclone.atlassian.net/browse/ADAMS-2175) - Data Prep- Merge from DISCOVER WEB (UI)`
 
+# Dev Instructions
+## Steps to upgrade
+1. Update new version in manifest 
+2. Update necessary information in options.html ("Versions details" section)
+3. Run create_zip.py
+4. The actual download branch is ***main***. So make sure to merge to this branch ***both*** manifest.json and zip file 
+
 ## Additional Information
 For more details and updates, visit the [GitHub repository](https://github.com/tbener/jira-extension).
 
