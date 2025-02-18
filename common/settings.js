@@ -2,7 +2,8 @@ const SettingsHandler = (() => {
     // Define default settings
     const defaultSettings = {
         customDomain: 'www',
-        defaultProjectKey: 'jira'
+        defaultProjectKey: 'jira',
+        boardUrl: '',
     };
 
     const additionalSettings = {

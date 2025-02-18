@@ -2,6 +2,8 @@ const updateNotificationElement = document.getElementsByClassName('update-notifi
 const upToDateNotificationElement = document.getElementsByClassName('update-not-required')[0];
 const downloadUpdateElement = document.getElementById('download-update');
 const checkUpdateElement = document.getElementById('checkUpdateButton');
+const boardLinkElement = document.getElementById('boardLinkA');
+const boardLinkInputElement = document.getElementById('boardLinkInput');
 
 checkUpdateElement.addEventListener('click', async () => checkUpdate(true));
 
@@ -29,8 +31,9 @@ const checkUpdate = async (force = false) => {
 const saveOptions = () => {
     const customDomain = document.getElementById('customDomain').value;
     const defaultProjectKey = document.getElementById('defaultProjectKey').value;
+    const boardUrl = boardLinkInputElement.value
 
-    SettingsHandler.saveSettings({ customDomain, defaultProjectKey }).then(() => {
+    SettingsHandler.saveSettings({customDomain, defaultProjectKey, boardUrl}).then(() => {
         const status = document.getElementById('status');
         status.textContent = 'Options saved.';
         setTimeout(() => {
@@ -41,13 +44,44 @@ const saveOptions = () => {
 
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
-const restoreOptions = () => {
-    SettingsHandler.getSettings().then(settings => {
+const restoreOptions = async () => {
+    try {
+        const settings = await SettingsHandler.getSettings();
+
         document.getElementById('customDomain').value = settings.customDomain;
         document.getElementById('defaultProjectKey').value = settings.defaultProjectKey;
         document.getElementById('version').textContent = settings.versionDisplay;
-    });
+        boardLinkInputElement.value = settings.boardUrl;
+
+        await setBoardLink();
+
+    } catch (error) {
+        console.error('Error restoring options:', error);
+    }
 };
+
+const setBoardLink = async () => {
+    let boardLink = boardLinkInputElement.value;
+    if (boardLink === '') {
+        const domain = document.getElementById('customDomain').value;
+        const projectKey = document.getElementById('defaultProjectKey').value;
+        boardLinkElement.textContent = "Searching..."
+        boardLink = await JiraService.guessBoardLink(domain, projectKey);
+    }
+    boardLinkElement.href = boardLink;
+    boardLinkElement.textContent = boardLink;
+}
+
+const copyBoardLinkToInput = async () => {
+    boardLinkInputElement.value = boardLinkElement.textContent;
+}
 
 document.addEventListener('DOMContentLoaded', restoreOptions);
 document.getElementById('saveButton').addEventListener('click', saveOptions);
+document.getElementById('setBoardLink').addEventListener('click', copyBoardLinkToInput);
+
+document.querySelectorAll('input[type="text"]').forEach(input => {
+    input.addEventListener('input', async (event) => {
+        await setBoardLink();
+    });
+});

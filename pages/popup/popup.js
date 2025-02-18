@@ -5,9 +5,11 @@ const issueInputElement = document.getElementById('issue');
 const previewElementLink = document.getElementById('preview-link');
 const previewElementError = document.getElementById('preview-error');
 const versionUpdateElement = document.getElementById('update');
+const linkToProjectElement = document.getElementById('link-to-project');
 
-SettingsHandler.getSettings().then(settings => {
-    document.getElementById('default_project_key').textContent = settings.defaultProjectKey;
+SettingsHandler.getSettings().then(async settings => {
+    linkToProjectElement.textContent = settings.defaultProjectKey;
+    linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
     document.getElementById('version').textContent = settings.versionDisplay;
 });
 

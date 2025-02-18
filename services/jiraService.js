@@ -6,8 +6,14 @@ const JiraService = (() => {
     abortController = null
     settings = {};
 
+    let baseUrl = '';
+
     SettingsHandler.getSettings().then(sett => {
         this.settings = sett;
+
+        baseUrl = `https://${this.settings.customDomain}.atlassian.net`
+
+
     });
 
     const getIssueKeyByInput = (input) => {
@@ -26,6 +32,43 @@ const JiraService = (() => {
         // input is only the number
         return `${this.settings.defaultProjectKey}-${input}`;
     }
+
+    const getBoardLink = () => {
+        const r = guessBoardLink(this.settings.defaultProjectKey);
+        console.debug('getBoardLink', r);
+        return `https://${this.settings.customDomain}.atlassian.net/jira/software/c/projects/${this.settings.defaultProjectKey}/boards/183`
+    }
+
+    const guessBoardLink = async (domain, projectKey) => {
+        const baseUrl = `https://${domain}.atlassian.net`;
+        const apiGetPath = `${baseUrl}/rest/agile/1.0/board?projectKeyOrId=${projectKey}`;
+
+        try {
+            const response = await fetch(apiGetPath, {
+                credentials: 'include',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${this.username}:${this.password}`)
+                }
+            });
+
+            if (!response.ok) {
+                console.debug(`Failed to fetch boards: HTTP ${response.status} ${response.statusText}`);
+                return baseUrl;
+            }
+
+            const data = await response.json();
+            const board = data.values?.find(b => b.type === 'kanban' && b.location.projectKey === projectKey);
+
+            return board
+                ? `${baseUrl}/jira/software/c/projects/${projectKey}/boards/${board.id}`
+                : baseUrl; // Return base URL if no board is found
+
+        } catch (error) {
+            console.debug(`Error fetching board:`, error);
+            return baseUrl; // If fetch throws an error, return base URL silently
+        }
+    };
+
 
     const getIssueLink = (issueKey) => {
         return `https://${this.settings.customDomain}.atlassian.net/browse/${issueKey}`;
@@ -104,7 +147,8 @@ const JiraService = (() => {
         getIssueKeyByInput,
         navigateToIssue,
         fetchIssue,
-        abort
+        abort,
+        guessBoardLink
     }
 
 })();
