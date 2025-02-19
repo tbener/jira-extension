@@ -1,0 +1,16 @@
+# Compiled output
+dist/
+build/
+out-tsc/
+.tmp/
+
+# Node dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*.local
+
+# Compiled TypeScript
+*.d.ts
+*.js.map

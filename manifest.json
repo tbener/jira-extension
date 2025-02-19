@@ -2,16 +2,14 @@
     "manifest_version": 3,
     "name": "MDClone Jira Extension",
     "version": "1.0.12",
-    "key": "cahojkigicegnlnghbnoigeibdnicpap",
-    "update_url": "https://raw.githubusercontent.com/tbener/jira-extension/main/update.xml",
     "description": "MDClone Extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "src/background.js"
     },
     "action": {
-        "default_popup": "pages/popup/popup.html",
-        "default_icon": "images/icon-32.png"
+        "default_popup": "src/pages/popup/popup.html",
+        "default_icon": "src/images/icon-32.png"
     },
     "commands": {
         "_execute_action": {
@@ -21,16 +19,16 @@
             }
         }
     },
-    "options_page": "pages/options/options.html",
+    "options_page": "src/pages/options/options.html",
     "content_scripts": [
         {
             "js": [
-                "common/settings.js",
-                "jira-pages/common/copy-link.js",
-                "jira-pages/main/add-copy-link.js"
+                "src/common/settings.js",
+                "src/jira-pages/common/copy-link.js",
+                "src/jira-pages/main/add-copy-link.js"
             ],
             "css": [
-                "jira-pages/main/freeze-title.css"
+                "src/jira-pages/main/freeze-title.css"
             ],
             "matches": [
                 "https://*.atlassian.net/browse/*"
@@ -39,12 +37,12 @@
         },
         {
             "js": [
-                "common/settings.js",
-                "jira-pages/common/copy-link.js",
-                "jira-pages/modal/add-copy-link.js"
+                "src/common/settings.js",
+                "src/jira-pages/common/copy-link.js",
+                "src/jira-pages/modal/add-copy-link.js"
             ],
             "css": [
-                "jira-pages/modal/freeze-title.css"
+                "src/jira-pages/modal/freeze-title.css"
             ],
             "matches": [
                 "https://*.atlassian.net/jira/software/*"
@@ -52,10 +50,10 @@
         }
     ],
     "icons": {
-        "16": "images/icon-16.png",
-        "32": "images/icon-32.png",
-        "48": "images/icon-96.png",
-        "128": "images/icon-96.png"
+        "16": "src/images/icon-16.png",
+        "32": "src/images/icon-32.png",
+        "48": "src/images/icon-96.png",
+        "128": "src/images/icon-96.png"
     },
     "permissions": [
         "storage",
