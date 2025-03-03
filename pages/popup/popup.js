@@ -1,3 +1,5 @@
+import {NavigationService} from '../../services/navigationService.js';
+
 let typingTimer;
 let latestRequest = 0;
 
@@ -6,6 +8,8 @@ const previewElementLink = document.getElementById('preview-link');
 const previewElementError = document.getElementById('preview-error');
 const versionUpdateElement = document.getElementById('update');
 const linkToProjectElement = document.getElementById('link-to-project');
+
+const navigationService = new NavigationService();
 
 SettingsHandler.getSettings().then(async settings => {
     linkToProjectElement.textContent = settings.defaultProjectKey;
@@ -24,17 +28,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-const navigateToIssue = (newWindow = true) => {
-    const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
-    JiraService.navigateToIssue(issueKey, newWindow);
-    if (!newWindow) {
-        window.close();
-    }
+const navigateToIssue = (stayInCurrentTab = false) => {
+    const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
+    navigationService.navigateToIssue(issueKey, stayInCurrentTab);
+    window.close();
 };
+
+// Enter: navigate to issue on a new (or found) tab
+// Ctrl + Enter: navigate to the issue on the same tab
+issueInputElement.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        navigateToIssue(event.ctrlKey);
+    }
+});
+
+document.getElementById('goButton').addEventListener('click', () => navigateToIssue());
 
 const setPreview = async () => {
     const currentRequest = ++latestRequest; // Increment and get the latest request number
-    const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
+    const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
 
     if (issueKey === '') {
         return;
@@ -72,14 +84,6 @@ issueInputElement.addEventListener('input', async function () {
         await setPreview();
     }, 200);
 });
-
-issueInputElement.addEventListener('keydown', function (event) {
-    if (event.ctrlKey && event.key === 'Enter') {
-        navigateToIssue(false);
-    }
-});
-
-document.getElementById('goButton').addEventListener('click', navigateToIssue);
 
 document.querySelector('#go-to-options').addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {
