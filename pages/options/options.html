@@ -60,7 +60,7 @@
 
     <div class="mb-3">
         <label for="boardLinkInput" class="form-label">Default Board Link (leave blank for auto find)</label>
-<!--        <button type="button" id="findBoard" class="btn btn-outline-secondary btn-sm ms-2 mb-1">Auto find</button>-->
+        <!--        <button type="button" id="findBoard" class="btn btn-outline-secondary btn-sm ms-2 mb-1">Auto find</button>-->
         <input type="text" class="form-control" id="boardLinkInput" placeholder="(Auto)">
 
         <small class="form-text text-muted">
@@ -69,6 +69,16 @@
             <br>
             The URL to open when clicking on the project name.
         </small>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <label class="form-label fw-bold">Enable Smart Navigation</label>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="useSmartNavigation" checked>
+            <label class="form-check-label" for="useSmartNavigation">
+                When opening an issue, switch to an existing tab if it's already open instead of creating a new one.
+            </label>
+        </div>
     </div>
 
     <div class="row mt-3 ms-1 align-items-baseline">
@@ -101,9 +111,13 @@
         <li>Copy issue key as link + summary</li>
         <li>Popup for quick navigation</li>
         <li>Freeze issue summary</li>
+        <li>Smart navigation - reuse existing tabs when opening issues</li>
     </ul>
 
     <h5 class="mb-3 mt-5">Versions details</h5>
+    <ul>
+        <li>v1.2.0: (feature) added smart navigation</li>
+    </ul>
     <ul>
         <li>v1.0.13: (feature) added link to board</li>
         <li>v1.0.12: UI</li>
@@ -115,7 +129,6 @@
     </ul>
 </div>
 
-<!-- Your custom script -->
 <script src="/common/settings.js"></script>
 <script src="/services/versionService.js"></script>
 <script src="/services/jiraService.js"></script>

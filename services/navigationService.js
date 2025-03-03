@@ -3,14 +3,14 @@ import {TabsService} from './tabsService.js';
 export class NavigationService {
     baseUrl;
     tabsService;
-    useFindExistingTabFeature = true;
+    useSmartNavigation = true;
 
     constructor() {
         SettingsHandler.getSettings().then(settings => {
             this.baseUrl = `https://${settings.customDomain}.atlassian.net`;
-            this.useFindExistingTabFeature = true;
             this.tabsService = new TabsService(this.baseUrl);
-            if (this.useFindExistingTabFeature) {
+            this.useSmartNavigation = settings.useSmartNavigation;
+            if (this.useSmartNavigation) {
                 this.tabsService.init();
             }
         })
@@ -32,9 +32,8 @@ export class NavigationService {
     };
 
     navigateToIssue = (issueKey, stayInCurrentTab = false) => {
-
         // check if we should try to find whether this issue already open in another tab
-        const findExistingTab = this.useFindExistingTabFeature && !stayInCurrentTab;
+        const findExistingTab = this.useSmartNavigation && !stayInCurrentTab;
 
         if (findExistingTab) {
             if (this.tabsService.activateTabByIssue(issueKey)) {

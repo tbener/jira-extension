@@ -4,6 +4,7 @@ const SettingsHandler = (() => {
         customDomain: 'www',
         defaultProjectKey: 'jira',
         boardUrl: '',
+        useSmartNavigation: true
     };
 
     const additionalSettings = {
