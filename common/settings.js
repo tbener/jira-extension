@@ -4,6 +4,7 @@ const SettingsHandler = (() => {
         customDomain: 'www',
         defaultProjectKey: 'jira',
         boardUrl: '',
+        useSmartNavigation: true
     };
 
     const additionalSettings = {
@@ -33,7 +34,7 @@ const SettingsHandler = (() => {
         return new Promise((resolve, reject) => {
             chrome.storage.sync.set(newSettings, () => {
                 updateSettings(newSettings);
-                console.log(`Default settings saved: ${JSON.stringify(newSettings)}`);
+                console.log(`Settings saved: ${JSON.stringify(newSettings)}`);
                 resolve(settings);
             });
         });

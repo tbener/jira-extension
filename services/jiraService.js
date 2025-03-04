@@ -12,25 +12,23 @@ const JiraService = (() => {
         this.settings = sett;
 
         baseUrl = `https://${this.settings.customDomain}.atlassian.net`
-
-
     });
 
-    const getIssueKeyByInput = (input) => {
-        if (input === '') return '';
+    const getIssueKey = (issueNumberOrKey) => {
+        if (issueNumberOrKey === '') return '';
 
-        if (/^[A-Za-z]+-\d+$/.test(input)) {
+        if (/^[A-Za-z]+-\d+$/.test(issueNumberOrKey)) {
             // the input is in full format, return it as is
-            return input
+            return issueNumberOrKey
         }
 
-        if (isNaN(input)) {
+        if (isNaN(issueNumberOrKey)) {
             // not a number and not in key format
             return ''
         }
 
         // input is only the number
-        return `${this.settings.defaultProjectKey}-${input}`;
+        return `${this.settings.defaultProjectKey}-${issueNumberOrKey}`;
     }
 
     const getBoardLink = () => {
@@ -88,18 +86,6 @@ const JiraService = (() => {
         return `https://${this.settings.customDomain}.atlassian.net/browse/${issueKey}`;
     }
 
-    const navigateToIssue = (issueKey, newWindow = true) => {
-
-        const url = getIssueLink(issueKey);
-
-        // Navigate to the Jira issue page
-        if (newWindow) {
-            chrome.tabs.create({ url });
-        } else {
-            chrome.tabs.update({ url });
-        }
-    };
-
     const fetchIssue = (issueKey) => {
         if (this.abortController) {
             this.abortController.abort();
@@ -126,7 +112,7 @@ const JiraService = (() => {
                 if (error.name === 'AbortError') {
                     console.debug('Fetch aborted');
                 } else {
-                    console.error('Fetch error:', error);
+                    console.log('Fetch error:', apiGetPath, error.message || error.toString());
                 }
             });
     }
@@ -158,8 +144,8 @@ const JiraService = (() => {
     }
 
     return {
-        getIssueKeyByInput,
-        navigateToIssue,
+        getIssueKey,
+        getIssueLink,
         fetchIssue,
         abort,
         guessBoardLink

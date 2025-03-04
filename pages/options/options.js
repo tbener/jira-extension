@@ -29,11 +29,14 @@ const checkUpdate = async (force = false) => {
 
 // Saves options to chrome.storage
 const saveOptions = () => {
-    const customDomain = document.getElementById('customDomain').value;
-    const defaultProjectKey = document.getElementById('defaultProjectKey').value;
-    const boardUrl = boardLinkInputElement.value
+    const settings = {
+        customDomain: document.getElementById('customDomain').value,
+        defaultProjectKey: document.getElementById('defaultProjectKey').value,
+        useSmartNavigation: document.getElementById('useSmartNavigation').checked,
+        boardUrl: boardLinkInputElement.value
+    }
 
-    SettingsHandler.saveSettings({customDomain, defaultProjectKey, boardUrl}).then(() => {
+    SettingsHandler.saveSettings(settings).then(() => {
         const status = document.getElementById('status');
         status.textContent = 'Options saved.';
         setTimeout(() => {
@@ -51,6 +54,7 @@ const restoreOptions = async () => {
         document.getElementById('customDomain').value = settings.customDomain;
         document.getElementById('defaultProjectKey').value = settings.defaultProjectKey;
         document.getElementById('version').textContent = settings.versionDisplay;
+        document.getElementById('useSmartNavigation').checked = settings.useSmartNavigation;
         boardLinkInputElement.value = settings.boardUrl;
 
         await setBoardLink();

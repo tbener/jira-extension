@@ -42,10 +42,10 @@ header {
     }
 }
 
-form {
+.input-group {
     margin-block-end: unset;
 
-    input.form-control {
+    input {
         border: 1px solid #ccc;
         border-radius: 8px;
         padding: 0.5rem;
