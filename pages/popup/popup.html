@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link rel="stylesheet" href="popup.scss">
 </head>
 
@@ -39,17 +39,47 @@
                         <span id="preview-error" class="preview-error"></span>
                         <a href="#" target="_blank" id="preview-link"></a>
                     </div>
+                    <div>
+
+                        <div class="jira-popup">
+                            <div class="jira-issues">
+                                <div class="jira-issue">
+                                    <span class="jira-key">Loading...</span>
+                                    <span class="jira-summary"></span>
+                                    <span class="jira-status"></span>
+                                </div>
+                                <!--                                <div class="jira-issue jira-my-issue" onclick="window.open('https://jira.example.com/browse/PROJ-123', '_blank')">-->
+                                <!--                                    <span class="jira-key">PROJ-123</span>-->
+                                <!--                                    <span class="jira-summary">Fix login bug</span>-->
+                                <!--                                    <span class="jira-status">In Progress</span>-->
+                                <!--                                </div>-->
+                                <!--                                <div class="jira-issue jira-my-issue" onclick="window.open('https://jira.example.com/browse/PROJ-124', '_blank')">-->
+                                <!--                                    <span class="jira-key">PROJ-124</span>-->
+                                <!--                                    <span class="jira-summary">Improve dashboard UI</span>-->
+                                <!--                                    <span class="jira-status">Done</span>-->
+                                <!--                                </div>-->
+                                <!--                                <div class="jira-issue" onclick="window.open('https://jira.example.com/browse/PROJ-125', '_blank')">-->
+                                <!--                                    <span class="jira-key">PROJ-125</span>-->
+                                <!--                                    <span class="jira-summary">Update API documentation</span>-->
+                                <!--                                    <span class="jira-status">To Do</span>-->
+                                <!--                                </div>-->
+                            </div>
+                        </div>
+
+
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-        <footer class="text-secondary">
-            <div class="container">
-                <small class="text-muted">Default project: <a href="#" target="_blank" id="link-to-project" title="Open board"></a></small>
-                <hr class="mt-2 mb-2">
-                <span class="info-link" id="go-to-options">Options</span>
-                <span class="float-end">
+    <footer class="text-secondary">
+        <div class="container">
+            <small class="text-muted">Default project: <a href="#" target="_blank" id="link-to-project"
+                                                          title="Open board"></a></small>
+            <hr class="mt-2 mb-2">
+            <span class="info-link" id="go-to-options">Options</span>
+            <span class="float-end">
                     <small id="version"></small>
                 </span>
             <div class="alert alert-warning update-notification py-2 mt-2" id="update" role="alert"></div>

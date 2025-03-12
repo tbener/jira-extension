@@ -1,4 +1,6 @@
 import {NavigationService} from '../../services/navigationService.js';
+import {IssuesLists} from "../../services/issuesLists.js";
+import { fillIssuesTable } from "./fillTable.js";
 
 let typingTimer;
 let latestRequest = 0;
@@ -8,6 +10,7 @@ const previewElementLink = document.getElementById('preview-link');
 const previewElementError = document.getElementById('preview-error');
 const versionUpdateElement = document.getElementById('update');
 const linkToProjectElement = document.getElementById('link-to-project');
+const issuesTableElement = document.getElementsByClassName('jira-issues')[0];
 
 const navigationService = new NavigationService();
 
@@ -26,23 +29,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
         versionUpdateElement.addEventListener('click', VersionService.startUpdate);
     }
+
+    await fillTable();
 });
 
-const navigateToIssue = (stayInCurrentTab = false) => {
-    const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
+const navigateToIssue = (issueKey, stayInCurrentTab = false) => {
     navigationService.navigateToIssue(issueKey, stayInCurrentTab);
     window.close();
+};
+
+const navigateToInputIssue = (stayInCurrentTab = false) => {
+    const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
+    navigateToIssue(issueKey, stayInCurrentTab);
 };
 
 // Enter: navigate to issue on a new (or found) tab
 // Ctrl + Enter: navigate to the issue on the same tab
 issueInputElement.addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
-        navigateToIssue(event.ctrlKey);
+        navigateToInputIssue(event.ctrlKey);
     }
 });
 
-document.getElementById('goButton').addEventListener('click', () => navigateToIssue());
+document.getElementById('goButton').addEventListener('click', () => navigateToInputIssue());
 
 const setPreview = async () => {
     const currentRequest = ++latestRequest; // Increment and get the latest request number
@@ -93,4 +102,20 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
     }
 });
 
+const fillTable = async () => {
+    const issuesLists = new IssuesLists();
+    await issuesLists.init();
+    await issuesLists.addMyIssues();
 
+    fillIssuesTable(issuesLists.getList(), issuesTableElement);
+
+    issuesTableElement.addEventListener("click", event => {
+        const issueElement = event.target.closest(".jira-issue");
+        if (issueElement) {
+            const issueKey = issueElement.getAttribute("data-issue-key");
+            if (issueKey) {
+                navigateToIssue(issueKey);
+            }
+        }
+    });
+}
