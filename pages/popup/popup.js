@@ -111,6 +111,7 @@ const fillTable = async () => {
     const issuesLists = new IssuesLists();
     await issuesLists.init();
     await issuesLists.addMyIssues();
+    await issuesLists.addOpenTabsIssues();
 
     fillIssuesTable(issuesLists.getList(), issuesTableElement);
 

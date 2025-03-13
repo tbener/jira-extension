@@ -33,13 +33,13 @@ export class TabsService {
         const issueKey = this.extractIssueFromUrl(tab.url);
         if (issueKey) {
             this.tabs[issueKey] = tab;
-            console.log(`Added tab for issue ${issueKey}:`, tab);
+            console.debug(`Added tab for issue ${issueKey}:`, tab);
         }
     }
 
     updateTab(tabId, changeInfo, tab) {
         if (changeInfo.url) {
-            console.log("Tab Url updated:", changeInfo);
+            console.debug("Tab Url updated:", changeInfo);
             this.removeTab(tabId);
             this.checkAddTab(tab);
         }
@@ -50,8 +50,12 @@ export class TabsService {
 
         if (issueKey) {
             delete this.tabs[issueKey];
-            console.log(`Removed tab tracking for issue ${issueKey}`);
+            console.debug(`Removed tab tracking for issue ${issueKey}`);
         }
+    }
+
+    getIssuesList() {
+        return Object.keys(this.tabs);
     }
 
     extractIssueFromUrl = (url) => {

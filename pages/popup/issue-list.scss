@@ -12,13 +12,15 @@
 
 .jira-issue {
   display: grid;
-  grid-template-columns: max-content auto max-content;
+  grid-template-columns: max-content auto max-content max-content;
+  grid-auto-flow: column;
   align-items: center;
   padding: 2px;
   cursor: pointer;
   font-size: 12px;
   color: #4a90e2;
   transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
 
   &:hover {
     background: #f0f8ff; // Light blue hover background
@@ -61,5 +63,12 @@
   border-radius: 5px;
 }
 
+.jira-tab-icon {
+  display: none;
+  margin-left: 2px;
+  margin-right: 2px;
+}
 
-
+.has-open-tab .jira-tab-icon {
+  display: inline;
+}

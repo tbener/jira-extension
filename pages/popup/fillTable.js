@@ -32,6 +32,11 @@ export function fillIssuesTable(issuesList, containerElement) {
             issueElement.setAttribute("title", "Assigned to you");
         }
 
+        // If the issue has an open tab, add the class
+        if (issue.hasOpenTab) {
+            issueElement.classList.add("has-open-tab");
+        }
+
         // Append to container
         containerElement.appendChild(issueElement);
     });

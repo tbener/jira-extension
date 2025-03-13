@@ -33,21 +33,27 @@ function saveDefaultSettings() {
     );
 }
 
-
-(async () => {
+async function refreshSettings() {
     await settingsService.readSettings();
     await navigationService.init(settingsService);
+}
+
+(async () => {
+    await refreshSettings();
 
     // Listen for navigation requests
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        console.debug('Message received:', message.action);
         if (message.action === "navigateToIssue") {
-            console.log("Navigation request accepted to ", message.issueKey);
+            console.debug("Navigation request accepted to ", message.issueKey);
             navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
             sendResponse({status: "navigation_started"});
+        } else if (message.action === "settingsChanged") {
+            refreshSettings();
+        } else if (message.action === "getOpenTabsIssues") {
+            console.debug("Open tabs issues requested");
+            const openTabsIssues = navigationService.tabsService.getIssuesList();
+            sendResponse({issueKeys: openTabsIssues});
         }
-        // else if (message.action === "getOpenIssues") {
-        //     const openIssues = navigationService.getOpenIssues();
-        //     sendResponse({ openIssues });
-        // }
     });
 })();

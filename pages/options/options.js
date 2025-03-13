@@ -1,3 +1,5 @@
+import {SettingsService} from '../../services/settingsService.js';
+
 const updateNotificationElement = document.getElementsByClassName('update-notification')[0];
 const upToDateNotificationElement = document.getElementsByClassName('update-not-required')[0];
 const downloadUpdateElement = document.getElementById('download-update');
@@ -43,6 +45,9 @@ const saveOptions = () => {
             status.textContent = '';
         }, 3000);
     })
+
+    chrome.runtime.sendMessage({action: "settingsChanged"});
+
 };
 
 // Restores select box and checkbox state using the preferences

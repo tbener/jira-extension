@@ -24,9 +24,12 @@ export class JiraHttpService {
         this.jql = new JqlBuilder(settings.defaultProjectKey);
     }
 
-    fetchMyIssues = async () => {
-        return await this.fetchIssues(this.jql.myIssues());
-    }
+    fetchMyIssues = async () =>
+        await this.fetchIssues(this.jql.myIssues());
+
+
+    fetchByKeys = async (keys) =>
+        await this.fetchIssues(this.jql.byKeyList(keys));
 
     getJqlPath = (jql) => {
         return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${MAX_RESULTS}`;
