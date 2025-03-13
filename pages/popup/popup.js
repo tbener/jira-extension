@@ -1,6 +1,6 @@
-import {NavigationService} from '../../services/navigationService.js';
+import {SettingsService} from '../../services/settingsService.js';
 import {IssuesLists} from "../../services/issuesLists.js";
-import { fillIssuesTable } from "./fillTable.js";
+import {fillIssuesTable} from "./fillTable.js";
 
 let typingTimer;
 let latestRequest = 0;
@@ -11,17 +11,24 @@ const previewElementError = document.getElementById('preview-error');
 const versionUpdateElement = document.getElementById('update');
 const linkToProjectElement = document.getElementById('link-to-project');
 const issuesTableElement = document.getElementsByClassName('jira-issues')[0];
-
-const navigationService = new NavigationService();
-
-SettingsHandler.getSettings().then(async settings => {
-    linkToProjectElement.textContent = settings.defaultProjectKey;
-    linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
-    document.getElementById('version').textContent = settings.versionDisplay;
-});
+const versionElement = document.getElementById('version');
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if a newer version exists
+    const settingsService = new SettingsService();
+    const settings = await settingsService.readSettings();
+
+    await updateUIElements(settings);
+    await checkVersion();
+    await fillTable();
+});
+
+const updateUIElements = async (settings) => {
+    linkToProjectElement.textContent = settings.defaultProjectKey;
+    linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+    versionElement.textContent = settings.versionDisplay;
+}
+
+const checkVersion = async () => {
     const versionInfo = await VersionService.checkLatestVersion();
 
     if (versionInfo.isNewerVersion) {
@@ -29,12 +36,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
         versionUpdateElement.addEventListener('click', VersionService.startUpdate);
     }
-
-    await fillTable();
-});
+}
 
 const navigateToIssue = (issueKey, stayInCurrentTab = false) => {
-    navigationService.navigateToIssue(issueKey, stayInCurrentTab);
+    chrome.runtime.sendMessage({action: "navigateToIssue", issueKey, stayInCurrentTab});
     window.close();
 };
 

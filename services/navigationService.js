@@ -1,19 +1,20 @@
-import {TabsService} from './tabsService.js';
+import {TabsService} from "./tabsService.js";
 
 export class NavigationService {
-    baseUrl;
-    tabsService;
-    useSmartNavigation = true;
+    tabsService = new TabsService();
+    settingsService;
 
-    constructor() {
-        SettingsHandler.getSettings().then(settings => {
-            this.baseUrl = `https://${settings.customDomain}.atlassian.net`;
-            this.tabsService = new TabsService(this.baseUrl);
-            this.useSmartNavigation = settings.useSmartNavigation;
-            if (this.useSmartNavigation) {
-                this.tabsService.init();
-            }
-        })
+    init = async (settingsService) => {
+        this.settingsService = settingsService;
+        await this.tabsService.readTabs(this.baseUrl);
+    }
+
+    get settings() {
+        return this.settingsService.settings;
+    }
+
+    get baseUrl() {
+        return `https://${this.settings.customDomain}.atlassian.net`;
     }
 
     getIssueLink = (issueKey) => {
@@ -32,10 +33,8 @@ export class NavigationService {
     };
 
     navigateToIssue = (issueKey, stayInCurrentTab = false) => {
-        // check if we should try to find whether this issue already open in another tab
-        const findExistingTab = this.useSmartNavigation && !stayInCurrentTab;
-
-        if (findExistingTab) {
+        if (this.settings.useSmartNavigation) {
+            // smart navigation takes over stayInCurrentTab (otherwise we will lose the other tab)
             if (this.tabsService.activateTabByIssue(issueKey)) {
                 return;
             }

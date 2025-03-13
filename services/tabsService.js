@@ -2,16 +2,18 @@ export class TabsService {
     tabs = {};
     baseUrl = '';
 
-    constructor(baseUrl) {
-        this.baseUrl = baseUrl;
-    }
+    readTabs = async (baseUrl) => {
+        this.baseUrl = baseUrl.toLowerCase();
 
-    init = () => {
         chrome.tabs.query({}, (tabs) => {
             tabs.forEach((tab) => {
                 this.checkAddTab(tab);
             });
-        })
+        });
+
+        chrome.tabs.onCreated.addListener((tab) => this.checkAddTab(tab));
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.updateTab(tabId, changeInfo, tab));
+        chrome.tabs.onRemoved.addListener((tabId) => this.removeTab(tabId));
     }
 
     activateTabByIssue = (issueKey) => {
@@ -19,19 +21,36 @@ export class TabsService {
         if (!tab) {
             return false;
         }
-        chrome.tabs.update(tab.id, {active: true});
+
+        chrome.tabs.update(tab.id, { active: true }, () => {
+            chrome.windows.update(tab.windowId, { focused: true });
+        });
+
         return true;
     }
-
-    getTabByIssue = (issueKey) => {
-        return this.tabs[issueKey] || null;
-    };
 
     checkAddTab = (tab) => {
         const issueKey = this.extractIssueFromUrl(tab.url);
         if (issueKey) {
             this.tabs[issueKey] = tab;
-            // console.log(`Added tab for issue ${issueKey}:`, tab);
+            console.log(`Added tab for issue ${issueKey}:`, tab);
+        }
+    }
+
+    updateTab(tabId, changeInfo, tab) {
+        if (changeInfo.url) {
+            console.log("Tab Url updated:", changeInfo);
+            this.removeTab(tabId);
+            this.checkAddTab(tab);
+        }
+    }
+
+    removeTab(tabId) {
+        const issueKey = Object.keys(this.tabs).find(key => this.tabs[key].id === tabId);
+
+        if (issueKey) {
+            delete this.tabs[issueKey];
+            console.log(`Removed tab tracking for issue ${issueKey}`);
         }
     }
 
@@ -40,7 +59,7 @@ export class TabsService {
             const parsedUrl = new URL(url);
 
             // Ensure the URL belongs to the JIRA domain
-            if (parsedUrl.origin.toLowerCase() !== this.baseUrl.toLowerCase()) {
+            if (parsedUrl.origin.toLowerCase() !== this.baseUrl) {
                 return null; // Not a JIRA-related URL
             }
 
