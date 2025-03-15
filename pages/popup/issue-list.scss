@@ -6,44 +6,31 @@
 }
 
 .jira-issues {
-  display: grid;
-  gap: 2px;
-}
-
-.jira-issue {
-  display: grid;
-  grid-template-columns: max-content auto max-content max-content;
-  grid-auto-flow: column;
-  align-items: center;
-  padding: 2px;
-  cursor: pointer;
   font-size: 12px;
-  color: #4a90e2;
-  transition: background 0.2s, color 0.2s;
-  white-space: nowrap;
+  width: 100%;
+  border-collapse: collapse;
 
-  &:hover {
-    background: #f0f8ff; // Light blue hover background
-    color: #357abd; // Darker blue on hover
+  tbody tr {
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      background: #f0f8ff;
+      color: #357abd;
+    }
   }
-}
-
-.jira-key,
-.jira-summary,
-.jira-status {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .jira-key {
   font-weight: bold;
-  text-align: left;
+  white-space: nowrap;
 }
 
 .jira-summary {
-  text-align: left;
-  padding-left: 10px; // Ensures consistent start position
+  padding-left: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .jira-status {
@@ -51,24 +38,26 @@
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
-  color: #444;
-  text-align: center;
   font-weight: bold;
   max-width: 80px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .jira-my-issue {
-  background: #e3f2fd;
+  background: #e3f2fd !important;
   font-weight: bold;
   border-radius: 5px;
 }
 
-.jira-tab-icon {
-  display: none;
-  margin-left: 2px;
-  margin-right: 2px;
+.jira-tab-icon .tab-icon {
+  visibility: hidden;
 }
 
-.has-open-tab .jira-tab-icon {
-  display: inline;
+.has-open-tab .jira-tab-icon .tab-icon {
+  visibility: visible;
+}
+
+.d-none {
+  display: none;
 }

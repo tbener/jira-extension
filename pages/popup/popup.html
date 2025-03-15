@@ -42,12 +42,26 @@
                     <div>
 
                         <div class="jira-popup">
+                            <table class="table table-sm jira-issues">
+                                <tbody>
+                                    <tr class="jira-issue d-none">
+                                        <td class="jira-key">Loading...</td>
+                                        <td class="jira-summary"></td>
+                                        <td class="jira-tab-icon">
+                                            <svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 5h6l2 3h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 1-2V7a2 2 0 0 1 2-2z"></path>
+                                            </svg>
+                                        </td>
+                                        <td class="jira-status"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div class="jira-issues">
                                 <div class="jira-issue">
                                     <span class="jira-key">Loading...</span>
                                     <span class="jira-summary"></span>
                                     <span class="jira-tab-icon ms-2 me-2">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M3 5h6l2 3h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"></path>
                                         </svg>
                                     </span>
