@@ -130,6 +130,7 @@ export class IssuesLists {
             summary,
             status: status?.name || "Unknown",
             assignee: assignee?.displayName || null,
+            assigneeIconUrl: assignee.avatarUrls["16x16"],
             created,
             updated,
             assignedToMe: false,

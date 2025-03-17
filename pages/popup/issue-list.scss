@@ -37,6 +37,13 @@
   max-width: 1px;
 }
 
+.assignee-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .jira-status {
   background: #e0e0e0;
 

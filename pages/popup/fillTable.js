@@ -28,7 +28,7 @@ export function fillIssuesTable(issuesList, containerElement) {
 
     issuesList.forEach(issue => {
         let issueElement = tbody.querySelector(`[data-issue-key="${issue.key}"]`);
-        
+
         if (!issueElement) {
             issueElement = issueTemplate.cloneNode(true);
             issueElement.classList.remove("d-none");
@@ -39,6 +39,14 @@ export function fillIssuesTable(issuesList, containerElement) {
         issueElement.querySelector(".jira-key").textContent = issue.key;
         issueElement.querySelector(".jira-summary").textContent = issue.summary;
         issueElement.querySelector(".jira-status").textContent = issue.status;
+
+        const assigneeElement = issueElement.querySelector(".jira-assignee img");
+        if (issue.assigneeIconUrl) {
+            assigneeElement.src = issue.assigneeIconUrl;
+            assigneeElement.alt = issue.assignee;
+            assigneeElement.title = issue.assignee;
+            assigneeElement.classList.remove("d-none");
+        }
 
         if (issue.assignedToMe) {
             issueElement.classList.add("jira-my-issue");
