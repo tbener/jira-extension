@@ -42,11 +42,11 @@ export function fillIssuesTable(issuesList, containerElement) {
 
         if (issue.assignedToMe) {
             issueElement.classList.add("jira-my-issue");
-            issueElement.setAttribute("title", "Assigned to you");
+            issueElement.setAttribute("title", `${issue.summary} | (Assigned to you)`);
             tbody.insertBefore(issueElement, tbody.firstChild);
         } else {
             issueElement.classList.remove("jira-my-issue");
-            issueElement.removeAttribute("title");
+            issueElement.setAttribute("title", issue.summary);
         }
 
         if (issue.hasOpenTab) {
