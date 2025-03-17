@@ -1,4 +1,6 @@
 export function fillIssuesTable(issuesList, containerElement) {
+    console.debug("Filling issues table with:", issuesList);
+
     if (!containerElement) {
         console.error("Container element not found!");
         return;
@@ -16,13 +18,23 @@ export function fillIssuesTable(issuesList, containerElement) {
         return;
     }
 
-    tbody.innerHTML = "";
+    const existingRows = tbody.querySelectorAll(".jira-issue");
+    existingRows.forEach(row => {
+        const issueKey = row.getAttribute("data-issue-key");
+        if (!issuesList.some(issue => issue.key === issueKey)) {
+            row.remove();
+        }
+    });
 
     issuesList.forEach(issue => {
-        const issueElement = issueTemplate.cloneNode(true);
-        issueElement.classList.remove("d-none");
-
-        issueElement.setAttribute("data-issue-key", issue.key);
+        let issueElement = tbody.querySelector(`[data-issue-key="${issue.key}"]`);
+        
+        if (!issueElement) {
+            issueElement = issueTemplate.cloneNode(true);
+            issueElement.classList.remove("d-none");
+            issueElement.setAttribute("data-issue-key", issue.key);
+            tbody.appendChild(issueElement);
+        }
 
         issueElement.querySelector(".jira-key").textContent = issue.key;
         issueElement.querySelector(".jira-summary").textContent = issue.summary;
@@ -31,12 +43,17 @@ export function fillIssuesTable(issuesList, containerElement) {
         if (issue.assignedToMe) {
             issueElement.classList.add("jira-my-issue");
             issueElement.setAttribute("title", "Assigned to you");
+            tbody.insertBefore(issueElement, tbody.firstChild);
+        } else {
+            issueElement.classList.remove("jira-my-issue");
+            issueElement.removeAttribute("title");
         }
 
         if (issue.hasOpenTab) {
             issueElement.classList.add("has-open-tab");
+        } else {
+            issueElement.classList.remove("has-open-tab");
         }
-
-        tbody.appendChild(issueElement);
     });
+    console.debug("Issues table filled.");
 }

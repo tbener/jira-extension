@@ -1,6 +1,5 @@
-import {SettingsService} from '../../services/settingsService.js';
-import {IssuesLists} from "../../services/issuesLists.js";
-import {fillIssuesTable} from "./fillTable.js";
+import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
+import { fillIssuesTable } from "./fillTable.js";
 
 let typingTimer;
 let latestRequest = 0;
@@ -14,18 +13,34 @@ const issuesTableElement = document.getElementsByClassName('jira-issues')[0];
 const versionElement = document.getElementById('version');
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const settingsService = new SettingsService();
-    const settings = await settingsService.readSettings();
+    // Order is important here....
 
-    await updateUIElements(settings);
+    // 1. Display quick data
+    await initIssuesTableFromCache();
+    await updateProjectAndVersion();
+
+    // 2. Fetch data from server and update table
+    await updateIssuesFromServer();
+
+    // 3. Check for new version
     await checkVersion();
-    await fillTable();
 });
 
-const updateUIElements = async (settings) => {
+const updateProjectAndVersion = async () => {
+    // get settings from background
+    const settings = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: MessageActionTypes.GET_SETTIGNS }, response => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(response.settings);
+            }
+        });
+    });
+
+    versionElement.textContent = settings.versionDisplay;
     linkToProjectElement.textContent = settings.defaultProjectKey;
     linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
-    versionElement.textContent = settings.versionDisplay;
 }
 
 const checkVersion = async () => {
@@ -39,7 +54,7 @@ const checkVersion = async () => {
 }
 
 const navigateToIssue = (issueKey, stayInCurrentTab = false) => {
-    chrome.runtime.sendMessage({action: "navigateToIssue", issueKey, stayInCurrentTab});
+    chrome.runtime.sendMessage({ action: "navigateToIssue", issueKey, stayInCurrentTab });
     window.close();
 };
 
@@ -107,13 +122,21 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
     }
 });
 
-const fillTable = async () => {
-    const issuesLists = new IssuesLists();
-    await issuesLists.init();
-    await issuesLists.addMyIssues();
-    await issuesLists.addOpenTabsIssues();
+const initIssuesTableFromCache = async () => {
+    // send message to background to get issues list
+    const issuesList = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: "getIssuesList" }, response => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(response.issuesList);
+            }
+        });
+    });
 
-    fillIssuesTable(issuesLists.getList(), issuesTableElement);
+    console.debug("Issues list received:", issuesList);
+
+    fillIssuesTable(issuesList, issuesTableElement);
 
     issuesTableElement.addEventListener("click", event => {
         const issueElement = event.target.closest(".jira-issue");
@@ -124,4 +147,20 @@ const fillTable = async () => {
             }
         }
     });
+}
+
+const updateIssuesFromServer = async () => {
+    // send message to background to refresh issues list
+    const issuesList = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: "refreshIssuesList" }, response => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(response.issuesList);
+            }
+        });
+    });
+    console.debug("Issues list refreshed:", issuesList);
+
+    fillIssuesTable(issuesList, issuesTableElement);
 }

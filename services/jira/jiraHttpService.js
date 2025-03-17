@@ -1,4 +1,5 @@
-import {JqlBuilder} from "./jqlBuilder.js";
+import { JqlBuilder } from "./jqlBuilder.js";
+import { SettingsService } from '../settingsService.js';
 
 const MAX_RESULTS = 10;
 
@@ -13,7 +14,8 @@ export class JiraHttpService {
     jql;
 
     async init() {
-        const settings = await SettingsHandler.getSettings();
+        const settingsService = new SettingsService();
+        const settings = await settingsService.readSettings();
         this.baseUrl = `https://${settings.customDomain}.atlassian.net`;
         this.baseApiUrl = `${this.baseUrl}/rest/api/3/search`;
         this.authHeaders = {

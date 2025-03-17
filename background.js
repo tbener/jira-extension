@@ -1,11 +1,14 @@
-import {SettingsService} from './services/settingsService.js';
-import {NavigationService} from './services/navigationService.js';
+import { SettingsService } from './services/settingsService.js';
+import { NavigationService } from './services/navigationService.js';
+import { IssuesLists } from "./services/issuesLists.js";
+import { MessageActionTypes } from './enum/message-action-types.enum.js';
 
 const DEFAULT_CUSTOM_DOMAIN = 'mdclone';
 const DEFAULT_PROJECT_KEY = 'ADAMS';
 
 const settingsService = new SettingsService();
 const navigationService = new NavigationService();
+const issuesLists = new IssuesLists();
 
 chrome.runtime.onInstalled.addListener(function (details) {
     // Check if the extension is newly installed
@@ -26,7 +29,7 @@ function saveDefaultSettings() {
     const defaultProjectKey = DEFAULT_PROJECT_KEY;
 
     chrome.storage.sync.set(
-        {customDomain, defaultProjectKey},
+        { customDomain, defaultProjectKey },
         () => {
             console.debug(`Default settings saved: ${customDomain}, ${defaultProjectKey}`);
         }
@@ -38,22 +41,66 @@ async function refreshSettings() {
     await navigationService.init(settingsService);
 }
 
-(async () => {
-    await refreshSettings();
+async function initIssuesList() {
+    await issuesLists.init();
+    await issuesLists.addMyIssues();
+    await issuesLists.addIssues(navigationService.tabsService.getIssuesList(), true);
+}
 
-    // Listen for navigation requests
+function updateIssuesList() {
+    const openTabsIssues = navigationService.tabsService.getIssuesList();
+    issuesLists.mergeOpenTabsIssues(openTabsIssues);
+}
+
+async function listenToMessages() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.debug('Message received:', message.action);
-        if (message.action === "navigateToIssue") {
-            console.debug("Navigation request accepted to ", message.issueKey);
-            navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
-            sendResponse({status: "navigation_started"});
-        } else if (message.action === "settingsChanged") {
-            refreshSettings();
-        } else if (message.action === "getOpenTabsIssues") {
-            console.debug("Open tabs issues requested");
-            const openTabsIssues = navigationService.tabsService.getIssuesList();
-            sendResponse({issueKeys: openTabsIssues});
+
+        switch (message.action) {
+            case MessageActionTypes.NAVIGATE_TO_ISSUE:
+                console.debug("Navigation request accepted to ", message.issueKey);
+                navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
+                sendResponse({ status: "navigation_started" });
+                break;
+            case MessageActionTypes.GET_SETTIGNS:
+                console.debug("Settings requested");
+                sendResponse({ settings: settingsService.settings });
+                break;
+            case MessageActionTypes.SETTINGS_CHANGED:
+                refreshSettings();
+                sendResponse({ status: "settings_refreshed" });
+                break;
+            case MessageActionTypes.GET_OPEN_TABS_ISSUES:
+                console.debug("Open tabs issues requested");
+                const openTabsIssues = navigationService.tabsService.getIssuesList();
+                sendResponse({ issueKeys: openTabsIssues });
+                break;
+            case MessageActionTypes.GET_ISSUES_LIST:
+                console.debug("Issues list requested");
+                updateIssuesList();
+                sendResponse({ issuesList: issuesLists.getList() });
+                break;
+        }
+
+        // Return true to indicate that the response will be sent asynchronously
+        return true;
+    });
+
+    chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+        if (message.action === MessageActionTypes.REFRESH_ISSUES_LIST) {
+            console.debug("Issues list refresh requested");
+            await issuesLists.refreshIssues();
+            sendResponse({ issuesList: issuesLists.getList() });
         }
     });
+}
+
+(async () => {
+    await refreshSettings();
+    await initIssuesList();
+    console.log("Issues list initialized:", issuesLists.getList());
+
+    // Listen for navigation requests
+    await listenToMessages();
+
 })();
