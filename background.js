@@ -45,6 +45,7 @@ async function initIssuesList() {
     await issuesLists.init();
     await issuesLists.addMyIssues();
     await issuesLists.addIssues(navigationService.tabsService.getIssuesList(), true);
+    console.debug("Issues list initialized:", issuesLists.getList());
 }
 
 function updateIssuesList() {
@@ -53,6 +54,7 @@ function updateIssuesList() {
 }
 
 async function listenToMessages() {
+    console.debug("Listening to messages");
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.debug('Message received:', message.action);
 
@@ -86,6 +88,7 @@ async function listenToMessages() {
         return true;
     });
 
+    console.debug("Listening to refresh issues list messages");
     chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         if (message.action === MessageActionTypes.REFRESH_ISSUES_LIST) {
             console.debug("Issues list refresh requested");
@@ -96,11 +99,9 @@ async function listenToMessages() {
 }
 
 (async () => {
-    await refreshSettings();
-    await initIssuesList();
-    console.log("Issues list initialized:", issuesLists.getList());
-
-    // Listen for navigation requests
     await listenToMessages();
 
+    await refreshSettings();
+    await initIssuesList();
+    console.log("Background script initialized.");
 })();
