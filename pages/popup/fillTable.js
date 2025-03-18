@@ -1,24 +1,16 @@
 export function fillIssuesTable(issuesList, containerElement) {
     console.debug("Filling issues table with:", issuesList);
-
-    if (!containerElement) {
-        console.error("Container element not found!");
-        return;
-    }
+    console.debug("Container element:", containerElement);
 
     const tbody = containerElement.querySelector("tbody");
-    if (!tbody) {
-        console.error("Tbody not found in table!");
-        return;
-    }
 
-    const issueTemplate = tbody.querySelector(".jira-issue");
+    const issueTemplate = tbody.querySelector(".jira-issue[data-template]");
     if (!issueTemplate) {
         console.error("Issue template row not found!");
         return;
     }
 
-    const existingRows = tbody.querySelectorAll(".jira-issue");
+    const existingRows = tbody.querySelectorAll(".jira-issue:not([data-template])");
     existingRows.forEach(row => {
         const issueKey = row.getAttribute("data-issue-key");
         if (!issuesList.some(issue => issue.key === issueKey)) {
@@ -30,8 +22,7 @@ export function fillIssuesTable(issuesList, containerElement) {
         let issueElement = tbody.querySelector(`[data-issue-key="${issue.key}"]`);
 
         if (!issueElement) {
-            issueElement = issueTemplate.cloneNode(true);
-            issueElement.classList.remove("d-none");
+            issueElement = createIssueElement(issueTemplate);
             issueElement.setAttribute("data-issue-key", issue.key);
             tbody.appendChild(issueElement);
         }
@@ -64,4 +55,11 @@ export function fillIssuesTable(issuesList, containerElement) {
         }
     });
     console.debug("Issues table filled.");
+}
+
+function createIssueElement(templateElement) {
+    const issueElement = templateElement.cloneNode(true);
+    issueElement.classList.remove("d-none");
+    issueElement.removeAttribute("data-template");
+    return issueElement;
 }

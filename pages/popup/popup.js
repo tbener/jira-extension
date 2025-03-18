@@ -9,7 +9,8 @@ const previewElementLink = document.getElementById('preview-link');
 const previewElementError = document.getElementById('preview-error');
 const versionUpdateElement = document.getElementById('update');
 const linkToProjectElement = document.getElementById('link-to-project');
-const issuesTableElement = document.getElementsByClassName('jira-issues')[0];
+const issuesTableElement = document.getElementById('issues-table');
+const placeholdersTableElement = document.getElementById('issues-table-placeholders');
 const versionElement = document.getElementById('version');
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -136,6 +137,9 @@ const initIssuesTableFromCache = async () => {
 
     console.debug("Issues list received:", issuesList);
 
+    // if no issues in cache, show placeholders
+    showPlaceholders(issuesList.length === 0);
+
     fillIssuesTable(issuesList, issuesTableElement);
 
     issuesTableElement.addEventListener("click", event => {
@@ -163,4 +167,10 @@ const updateIssuesFromServer = async () => {
     console.debug("Issues list refreshed:", issuesList);
 
     fillIssuesTable(issuesList, issuesTableElement);
+    showPlaceholders(false);
+}
+
+const showPlaceholders = (show) => {
+    placeholdersTableElement.style.display = show ? 'block' : 'none';
+    issuesTableElement.style.display = show ? 'none' : 'block';
 }

@@ -73,3 +73,38 @@
 .has-open-tab .jira-tab-icon .tab-icon {
   visibility: visible;
 }
+
+/* placeholders */
+
+.placeholders {
+  .jira-key span {
+    width: 55px;
+    white-space: nowrap;
+
+    span.placeholder {
+      display: block;
+      height: 1em;
+    }
+  }
+
+  .jira-summary {
+    width: 100%;
+
+    span.placeholder {
+      display: block;
+      height: 1em;
+    }
+  }
+
+  .jira-issue:nth-child(1) .jira-summary span.placeholder {
+    width: 70%;
+  }
+
+  .jira-issue:nth-child(2) .jira-summary span.placeholder {
+    width: 50%;
+  }
+
+  .jira-issue:nth-child(3) .jira-summary span.placeholder {
+    width: 40%;
+  }
+}
