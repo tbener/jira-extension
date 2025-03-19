@@ -53,8 +53,12 @@ export class IssuesLists {
     }
 
 
-    refreshIssues = async () => {
-        console.debug("Refreshing issues from server. Current:", this.issuesList);
+    /**
+     * Refreshes the issues list from the server.
+     * Fetches my issues and open tabs issues from the server and updates the list.
+     */
+    updateIssuesList = async () => {
+        console.debug("Updating issues list from server. Current:", this.issuesList);
         const openTabsKeys = Object.keys(this.issuesList).filter(key => this.issuesList[key].hasOpenTab);
         const [myIssues, openTabsIssues] = await Promise.all([
             this.jiraHttpService.fetchMyIssues(),
@@ -66,49 +70,49 @@ export class IssuesLists {
         this.issuesList = {};
         this._addIssues(myIssues, this.customProperties.AssignedToMe);
         this._addIssues(openTabsIssues, this.customProperties.OpenTabs);
-        console.debug("Issues refreshed and stored.", this.issuesList);
+        console.debug("Issues updated and stored.", this.issuesList);
     }
 
 
-    addMyIssues = async () => {
-        const issues = await this.jiraHttpService.fetchMyIssues();
-        this._addIssues(issues, { assignedToMe: true });
-        console.debug("Assigned issues fetched and stored.", this.issuesList);
-    }
+    // addMyIssues = async () => {
+    //     const issues = await this.jiraHttpService.fetchMyIssues();
+    //     this._addIssues(issues, { assignedToMe: true });
+    //     console.debug("Assigned issues fetched and stored.", this.issuesList);
+    // }
 
-    addIssues = async (issueKeys, hasOpenTab) => {
-        const issues = await this.jiraHttpService.fetchByKeys(issueKeys);
-        const overrideFields = hasOpenTab ? { hasOpenTab: true } : {};
-        this._addIssues(issues, overrideFields);
-        console.debug("Issues fetched and stored.", this.issuesList);
-    }
+    // addIssues = async (issueKeys, hasOpenTab) => {
+    //     const issues = await this.jiraHttpService.fetchByKeys(issueKeys);
+    //     const overrideFields = hasOpenTab ? { hasOpenTab: true } : {};
+    //     this._addIssues(issues, overrideFields);
+    //     console.debug("Issues fetched and stored.", this.issuesList);
+    // }
 
-    addOpenTabsIssues = async () => {
-        const { issueKeys } = await new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage({ action: "getOpenTabsIssues" }, response => {
-                if (chrome.runtime.lastError) {
-                    reject(chrome.runtime.lastError);
-                } else {
-                    resolve(response);
-                }
-            });
-        });
+    // addOpenTabsIssues = async () => {
+    //     const { issueKeys } = await new Promise((resolve, reject) => {
+    //         chrome.runtime.sendMessage({ action: "getOpenTabsIssues" }, response => {
+    //             if (chrome.runtime.lastError) {
+    //                 reject(chrome.runtime.lastError);
+    //             } else {
+    //                 resolve(response);
+    //             }
+    //         });
+    //     });
 
-        // remove existing keys from issuekeys
-        const existingKeys = issueKeys.filter(key => this.issuesList[key]);
-        const newKeys = issueKeys.filter(key => !existingKeys.includes(key));
+    //     // remove existing keys from issuekeys
+    //     const existingKeys = issueKeys.filter(key => this.issuesList[key]);
+    //     const newKeys = issueKeys.filter(key => !existingKeys.includes(key));
 
-        const openTabField = { hasOpenTab: true };
+    //     const openTabField = { hasOpenTab: true };
 
-        existingKeys.forEach(key => {
-            // set hasOpenTab
-            Object.assign(this.issuesList[key], openTabField);
-        });
+    //     existingKeys.forEach(key => {
+    //         // set hasOpenTab
+    //         Object.assign(this.issuesList[key], openTabField);
+    //     });
 
-        const issues = await this.jiraHttpService.fetchByKeys(newKeys);
-        this._addIssues(issues, openTabField);
-        console.debug("Open tabs issues fetched and stored.", this.issuesList);
-    }
+    //     const issues = await this.jiraHttpService.fetchByKeys(newKeys);
+    //     this._addIssues(issues, openTabField);
+    //     console.debug("Open tabs issues fetched and stored.", this.issuesList);
+    // }
 
     getList = () => Object.values(this.issuesList);
 

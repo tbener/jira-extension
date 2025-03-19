@@ -1,0 +1,5 @@
+export const CONFIG = {
+    USERNAME: 'tbener@gmail.com',
+    PASSWORD: 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9',
+    MAX_RESULTS: 10
+};

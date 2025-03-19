@@ -43,12 +43,14 @@ async function refreshSettings() {
 
 async function initIssuesList() {
     await issuesLists.init();
-    await issuesLists.addMyIssues();
-    await issuesLists.addIssues(navigationService.tabsService.getIssuesList(), true);
+    // await issuesLists.addMyIssues();
+    // await issuesLists.addIssues(navigationService.tabsService.getIssuesList(), true);
+    updateOpenTabs();
+    await issuesLists.updateIssuesList();
     console.debug("Issues list initialized:", issuesLists.getList());
 }
 
-function updateIssuesList() {
+function updateOpenTabs() {
     const openTabsIssues = navigationService.tabsService.getIssuesList();
     issuesLists.mergeOpenTabsIssues(openTabsIssues);
 }
@@ -80,13 +82,13 @@ async function listenToMessages() {
                 break;
             case MessageActionTypes.GET_ISSUES_LIST:
                 console.debug("Issues list requested");
-                updateIssuesList();
+                updateOpenTabs();
                 sendResponse({ issuesList: issuesLists.getList() });
                 break;
             case MessageActionTypes.REFRESH_ISSUES_LIST:
                 (async () => {
                     console.debug("Issues list refresh requested");
-                    await issuesLists.refreshIssues();
+                    await issuesLists.updateIssuesList();
                     sendResponse({ issuesList: issuesLists.getList() });
                 })();
                 return true; // Indicate an async response

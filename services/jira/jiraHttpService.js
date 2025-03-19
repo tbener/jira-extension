@@ -1,18 +1,20 @@
 import { JqlBuilder } from "./jqlBuilder.js";
 import { SettingsService } from '../settingsService.js';
-
-const MAX_RESULTS = 10;
+import { CONFIG } from '../../config.js';
 
 export class JiraHttpService {
-    username = 'tbener@gmail.com'
-    password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
+    constructor() {
+        this.username = CONFIG.USERNAME;
+        this.password = CONFIG.PASSWORD;
+        this.baseUrl = '';
+        this.baseApiUrl = '';
+        this.authHeaders = {};
+        this.jql = null;
+    }
 
-    baseUrl;
-    baseApiUrl;
-    authHeaders;
-
-    jql;
-
+    /**
+     * Initializes the JiraHttpService with settings.
+     */
     async init() {
         const settingsService = new SettingsService();
         const settings = await settingsService.readSettings();
@@ -21,28 +23,66 @@ export class JiraHttpService {
         this.authHeaders = {
             Authorization: "Basic " + btoa(`${this.username}:${this.password}`),
             "Content-Type": "application/json",
-        }
+        };
 
         this.jql = new JqlBuilder(settings.defaultProjectKey);
     }
 
-    fetchMyIssues = async () =>
-        await this.fetchIssues(this.jql.myIssues());
+    /**
+     * Fetches issues assigned to the current user.
+     * @returns {Promise<Array>} List of issues.
+     */
+    async fetchMyIssues() {
+        if (!this.ensureInitialized()) {
+            return [];
+        }
+        return await this.fetchIssues(this.jql.myIssues());
+    }
 
-
-    fetchByKeys = async (keys) => {
+    /**
+     * Fetches issues by their keys.
+     * @param {Array<string>} keys - List of issue keys.
+     * @returns {Promise<Array>} List of issues.
+     */
+    async fetchByKeys(keys) {
+        if (!this.ensureInitialized()) {
+            return [];
+        }
         if (!keys || keys.length === 0) {
             console.debug("fetchByKeys - No keys provided. Returning empty list.");
             return [];
         }
+        this.ensureInitialized();
         return await this.fetchIssues(this.jql.byKeyList(keys));
-    };
-
-    getJqlPath = (jql) => {
-        return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${MAX_RESULTS}`;
     }
 
-    fetchIssues = async (jql) => {
+    /**
+     * Ensures that the service is initialized.
+     * @throws {Error} If the service is not initialized.
+     */
+    ensureInitialized() {
+        if (!this.jql) {
+            console.log("ERROR: JiraHttpService not initialized. Call init() first.");
+            throw new Error("JiraHttpService not initialized. Call init() first.");
+        }
+        return true;
+    }
+
+    /**
+     * Constructs the JQL API path.
+     * @param {string} jql - The JQL query.
+     * @returns {string} The API path.
+     */
+    getJqlPath(jql) {
+        return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${CONFIG.MAX_RESULTS}`;
+    }
+
+    /**
+     * Fetches issues based on the JQL query.
+     * @param {string} jql - The JQL query.
+     * @returns {Promise<Array>} List of issues.
+     */
+    async fetchIssues(jql) {
         try {
             const apiPath = this.getJqlPath(jql);
             console.log(`Fetching ${apiPath}`);
@@ -54,6 +94,7 @@ export class JiraHttpService {
 
             if (!response.ok) {
                 console.log(`ERROR: Failed to fetch issues: ${response.status} ${response.statusText}\nJQL: ${jql}`);
+                return [];
             }
 
             const data = await response.json();
