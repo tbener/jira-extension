@@ -1,35 +1,43 @@
 import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
 import { fillIssuesTable } from "./fillTable.js";
 
+const ELEMENT_IDS = {
+    ISSUE_INPUT: 'issue',
+    PREVIEW_LINK: 'preview-link',
+    PREVIEW_ERROR: 'preview-error',
+    VERSION_UPDATE: 'update',
+    LINK_TO_PROJECT: 'link-to-project',
+    ISSUES_TABLE: 'issues-table',
+    PLACEHOLDERS_TABLE: 'issues-table-placeholders',
+    VERSION: 'version',
+    GO_BUTTON: 'goButton',
+    GO_TO_OPTIONS: 'go-to-options'
+};
+
 let typingTimer;
 let latestRequest = 0;
 
-const issueInputElement = document.getElementById('issue');
-const previewElementLink = document.getElementById('preview-link');
-const previewElementError = document.getElementById('preview-error');
-const versionUpdateElement = document.getElementById('update');
-const linkToProjectElement = document.getElementById('link-to-project');
-const issuesTableElement = document.getElementById('issues-table');
-const placeholdersTableElement = document.getElementById('issues-table-placeholders');
-const versionElement = document.getElementById('version');
+const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
+const previewElementLink = document.getElementById(ELEMENT_IDS.PREVIEW_LINK);
+const previewElementError = document.getElementById(ELEMENT_IDS.PREVIEW_ERROR);
+const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
+const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT);
+const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
+const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
+const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Order is important here....
-
-    // 1. Display quick data
-    await initIssuesTableFromCache();
-    await updateProjectAndVersion();
-
-    // 2. Fetch data from server and update table
-    await updateIssuesFromServer();
-
-    // 3. Check for new version
-    await checkVersion();
+    togglePlaceholdersVisibility(true);
+    await initializeIssuesTableFromCache();
+    await Promise.all([
+        refreshIssuesTableFromServer(),
+        fetchAndDisplayProjectAndVersion(),
+        checkAndDisplayVersionUpdate()
+    ]);
 });
 
-const updateProjectAndVersion = async () => {
-    // get settings from background
-    const settings = await new Promise((resolve, reject) => {
+const fetchSettings = async () => {
+    return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: MessageActionTypes.GET_SETTIGNS }, response => {
             if (chrome.runtime.lastError) {
                 reject(chrome.runtime.lastError);
@@ -38,44 +46,52 @@ const updateProjectAndVersion = async () => {
             }
         });
     });
+};
 
-    versionElement.textContent = settings.versionDisplay;
-    linkToProjectElement.textContent = settings.defaultProjectKey;
-    linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
-}
-
-const checkVersion = async () => {
-    const versionInfo = await VersionService.checkLatestVersion();
-
-    if (versionInfo.isNewerVersion) {
-        versionUpdateElement.style.display = 'block'; // Show update notification
-        versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
-        versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+const fetchAndDisplayProjectAndVersion = async () => {
+    try {
+        const settings = await fetchSettings();
+        versionElement.textContent = settings.versionDisplay;
+        linkToProjectElement.textContent = settings.defaultProjectKey;
+        linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+    } catch (error) {
+        console.log('Error fetching project and version:', error);
     }
-}
+};
 
-const navigateToIssue = (issueKey, stayInCurrentTab = false) => {
+const checkAndDisplayVersionUpdate = async () => {
+    try {
+        const versionInfo = await VersionService.checkLatestVersion();
+        if (versionInfo.isNewerVersion) {
+            versionUpdateElement.style.display = 'block';
+            versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
+            versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+        }
+    } catch (error) {
+        console.log('Error checking version update:', error);
+    }
+};
+
+const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
     chrome.runtime.sendMessage({ action: "navigateToIssue", issueKey, stayInCurrentTab });
     window.close();
 };
 
-const navigateToInputIssue = (stayInCurrentTab = false) => {
+const navigateToIssueFromInput = (stayInCurrentTab = false) => {
     const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
-    navigateToIssue(issueKey, stayInCurrentTab);
+    sendNavigateToIssueMessage(issueKey, stayInCurrentTab);
 };
 
-// Enter: navigate to issue on a new (or found) tab
-// Ctrl + Enter: navigate to the issue on the same tab
 issueInputElement.addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
-        navigateToInputIssue(event.ctrlKey);
+        navigateToIssueFromInput(event.ctrlKey);
     }
 });
 
-document.getElementById('goButton').addEventListener('click', () => navigateToInputIssue());
+document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => navigateToIssueFromInput());
 
-const setPreview = async () => {
-    const currentRequest = ++latestRequest; // Increment and get the latest request number
+const fetchAndDisplayIssuePreview = async () => {
+    const currentRequest = ++latestRequest;
     const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
 
     if (issueKey === '') {
@@ -84,8 +100,7 @@ const setPreview = async () => {
 
     try {
         const issue = await JiraService.fetchIssue(issueKey);
-        console.debug('ISSUE: ', issue);
-        if (currentRequest === latestRequest && issue) { // Ensure this is the latest request
+        if (currentRequest === latestRequest && issue) {
             if (issue.error) {
                 previewElementError.textContent = issue.error;
             } else {
@@ -94,28 +109,27 @@ const setPreview = async () => {
             }
         }
     } catch (error) {
-        // do nothing
+        console.log('Error fetching issue preview:', error);
     }
 };
 
-const clearPreview = () => {
+const clearIssuePreview = () => {
     previewElementLink.textContent = '';
     previewElementLink.href = '#';
     previewElementError.textContent = '';
-}
+};
 
 issueInputElement.addEventListener('input', async function () {
-    JiraService.abort(); // Always abort the previous request
-
+    JiraService.abort();
     clearTimeout(typingTimer);
-    clearPreview();
+    clearIssuePreview();
 
     typingTimer = setTimeout(async () => {
-        await setPreview();
+        await fetchAndDisplayIssuePreview();
     }, 200);
 });
 
-document.querySelector('#go-to-options').addEventListener('click', function () {
+document.querySelector(`#${ELEMENT_IDS.GO_TO_OPTIONS}`).addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {
         chrome.runtime.openOptionsPage();
     } else {
@@ -123,10 +137,9 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
     }
 });
 
-const initIssuesTableFromCache = async () => {
-    // send message to background to get issues list
-    const issuesList = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: "getIssuesList" }, response => {
+const fetchIssuesList = async (actionType) => {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: actionType }, response => {
             if (chrome.runtime.lastError) {
                 reject(chrome.runtime.lastError);
             } else {
@@ -134,43 +147,38 @@ const initIssuesTableFromCache = async () => {
             }
         });
     });
+};
 
-    console.debug("Issues list received:", issuesList);
-
-    // if no issues in cache, show placeholders
-    showPlaceholders(issuesList.length === 0);
-
-    fillIssuesTable(issuesList, issuesTableElement);
-
-    issuesTableElement.addEventListener("click", event => {
-        const issueElement = event.target.closest(".jira-issue");
-        if (issueElement) {
-            const issueKey = issueElement.getAttribute("data-issue-key");
-            if (issueKey) {
-                navigateToIssue(issueKey);
-            }
-        }
-    });
-}
-
-const updateIssuesFromServer = async () => {
-    // send message to background to refresh issues list
-    const issuesList = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: "refreshIssuesList" }, response => {
-            if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-            } else {
-                resolve(response.issuesList);
+const initializeIssuesTableFromCache = async () => {
+    try {
+        const issuesList = await fetchIssuesList("getIssuesList");
+        togglePlaceholdersVisibility(issuesList.length === 0);
+        fillIssuesTable(issuesList, issuesTableElement);
+        issuesTableElement.addEventListener("click", event => {
+            const issueElement = event.target.closest(".jira-issue");
+            if (issueElement) {
+                const issueKey = issueElement.getAttribute("data-issue-key");
+                if (issueKey) {
+                    sendNavigateToIssueMessage(issueKey);
+                }
             }
         });
-    });
-    console.debug("Issues list refreshed:", issuesList);
+    } catch (error) {
+        console.log('Error initializing issues table from cache:', error);
+    }
+};
 
-    fillIssuesTable(issuesList, issuesTableElement);
-    showPlaceholders(false);
-}
+const refreshIssuesTableFromServer = async () => {
+    try {
+        const issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
+        fillIssuesTable(issuesList, issuesTableElement);
+        togglePlaceholdersVisibility(false);
+    } catch (error) {
+        console.log('Error refreshing issues table from server:', error);
+    }
+};
 
-const showPlaceholders = (show) => {
+const togglePlaceholdersVisibility = (show) => {
     placeholdersTableElement.style.display = show ? 'block' : 'none';
     issuesTableElement.style.display = show ? 'none' : 'block';
-}
+};

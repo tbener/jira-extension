@@ -30,8 +30,13 @@ export class JiraHttpService {
         await this.fetchIssues(this.jql.myIssues());
 
 
-    fetchByKeys = async (keys) =>
-        await this.fetchIssues(this.jql.byKeyList(keys));
+    fetchByKeys = async (keys) => {
+        if (!keys || keys.length === 0) {
+            console.debug("fetchByKeys - No keys provided. Returning empty list.");
+            return [];
+        }
+        return await this.fetchIssues(this.jql.byKeyList(keys));
+    };
 
     getJqlPath = (jql) => {
         return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${MAX_RESULTS}`;

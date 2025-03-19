@@ -55,6 +55,7 @@ function updateIssuesList() {
 
 async function listenToMessages() {
     console.debug("Listening to messages");
+
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.debug('Message received:', message.action);
 
@@ -82,21 +83,19 @@ async function listenToMessages() {
                 updateIssuesList();
                 sendResponse({ issuesList: issuesLists.getList() });
                 break;
+            case MessageActionTypes.REFRESH_ISSUES_LIST:
+                (async () => {
+                    console.debug("Issues list refresh requested");
+                    await issuesLists.refreshIssues();
+                    sendResponse({ issuesList: issuesLists.getList() });
+                })();
+                return true; // Indicate an async response
         }
 
-        // Return true to indicate that the response will be sent asynchronously
-        return true;
-    });
-
-    console.debug("Listening to refresh issues list messages");
-    chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-        if (message.action === MessageActionTypes.REFRESH_ISSUES_LIST) {
-            console.debug("Issues list refresh requested");
-            await issuesLists.refreshIssues();
-            sendResponse({ issuesList: issuesLists.getList() });
-        }
+        return true; // Ensure async handling
     });
 }
+
 
 (async () => {
     await listenToMessages();

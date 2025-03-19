@@ -21,6 +21,7 @@ export class IssuesLists {
     // if a key from newoOpenTabsKeys is NOT in this.issuesList, add it with hasOpenTab to true, isUpdated to false
     // if a key is in this.issuesList but not in newoOpenTabsKeys, if it's not assigned to me, remove it from the this.issuesList
     mergeOpenTabsIssues = (newoOpenTabsKeys) => {
+        console.debug("Merging open tabs issues to list.", newoOpenTabsKeys, this.issuesList);
         const existingKeys = newoOpenTabsKeys.filter(key => this.issuesList[key]);
         console.debug("Existing keys:", existingKeys);
         const newKeys = newoOpenTabsKeys.filter(key => !existingKeys.includes(key));
@@ -39,8 +40,12 @@ export class IssuesLists {
 
         // remove issues that are not in newoOpenTabsKeys and not assigned to me
         Object.keys(this.issuesList).forEach(key => {
-            if (!newoOpenTabsKeys.includes(key) && !this.issuesList[key].assignedToMe) {
-                delete this.issuesList[key];
+            if (!newoOpenTabsKeys.includes(key)) {
+                if (this.issuesList[key].assignedToMe) {
+                    this.issuesList[key].hasOpenTab = false;
+                } else {
+                    delete this.issuesList[key];
+                }
             }
         });
 
@@ -49,6 +54,7 @@ export class IssuesLists {
 
 
     refreshIssues = async () => {
+        console.debug("Refreshing issues from server. Current:", this.issuesList);
         const openTabsKeys = Object.keys(this.issuesList).filter(key => this.issuesList[key].hasOpenTab);
         const [myIssues, openTabsIssues] = await Promise.all([
             this.jiraHttpService.fetchMyIssues(),
@@ -57,11 +63,12 @@ export class IssuesLists {
 
         console.debug("Issues fetched from server.", myIssues, openTabsIssues);
 
+        this.issuesList = {};
         this._addIssues(myIssues, this.customProperties.AssignedToMe);
         this._addIssues(openTabsIssues, this.customProperties.OpenTabs);
         console.debug("Issues refreshed and stored.", this.issuesList);
     }
-        
+
 
     addMyIssues = async () => {
         const issues = await this.jiraHttpService.fetchMyIssues();
@@ -69,15 +76,15 @@ export class IssuesLists {
         console.debug("Assigned issues fetched and stored.", this.issuesList);
     }
 
-    addIssues = async (issueKeys, hasOpenTabs) => {
+    addIssues = async (issueKeys, hasOpenTab) => {
         const issues = await this.jiraHttpService.fetchByKeys(issueKeys);
-        const overrideFields = hasOpenTabs ? { hasOpenTab: true } : {};
+        const overrideFields = hasOpenTab ? { hasOpenTab: true } : {};
         this._addIssues(issues, overrideFields);
         console.debug("Issues fetched and stored.", this.issuesList);
     }
 
     addOpenTabsIssues = async () => {
-        const {issueKeys} = await new Promise((resolve, reject) => {
+        const { issueKeys } = await new Promise((resolve, reject) => {
             chrome.runtime.sendMessage({ action: "getOpenTabsIssues" }, response => {
                 if (chrome.runtime.lastError) {
                     reject(chrome.runtime.lastError);
@@ -111,17 +118,24 @@ export class IssuesLists {
         });
     }
 
-    _setIssue(issue, overrideFields) {
-        const mappedIssue = this._mapIssue(issue, overrideFields);
+    _setIssue(issue, overrideFields = {}) {
+        console.log("Setting issue:", issue, overrideFields);
         if (this.issuesList[issue.key]) {
-            Object.assign(this.issuesList[issue.key], mappedIssue);
+            console.log("Issue already exists, updating.");
+            this.issuesList[issue.key] = {
+                ...this.issuesList[issue.key],
+                ...issue,
+                ...overrideFields,
+            };
         } else {
-            this.issuesList[issue.key] = mappedIssue;
+            console.log("Issue is new, adding.");
+            this.issuesList[issue.key] = this._mapIssue(issue, overrideFields);
         }
+        console.log("Issue set:", this.issuesList[issue.key]);
     }
 
     _mapIssue(issue, overrideFields) {
-        const { id = '', key, fields = {} } = issue;
+        const { id = '', key, assignedToMe = false, hasOpenTab = false, fields = {} } = issue;
         const { summary = '', status = null, assignee = null, created = null, updated = null } = fields;
 
         return {
@@ -133,8 +147,8 @@ export class IssuesLists {
             assigneeIconUrl: assignee?.avatarUrls?.["16x16"],
             created,
             updated,
-            assignedToMe: false,
-            hasOpenTab: false,
+            assignedToMe,
+            hasOpenTab,
             isUpdated: true,
 
             ...overrideFields,
