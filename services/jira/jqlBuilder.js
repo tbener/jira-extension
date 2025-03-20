@@ -8,7 +8,6 @@ export class JqlBuilder {
 
     constructor(project) {
         this.project = project;
-        console.log(`Project: ${this.project}`);
     }
 
     myIssues() {
