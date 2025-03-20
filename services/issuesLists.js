@@ -10,9 +10,11 @@ export class IssuesLists {
         AssignedToMe: { assignedToMe: true },
     };
 
-
     init = async () => {
         await this.jiraHttpService.init();
+
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] IssuesLists initialized!!!`);
     }
 
     // newoOpenTabsKeys are the currently open tabs - merge them to the list without fetching from server

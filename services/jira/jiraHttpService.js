@@ -10,6 +10,7 @@ export class JiraHttpService {
         this.baseApiUrl = '';
         this.authHeaders = {};
         this.jql = null;
+        this.timestamp = 'nooone'
     }
 
     /**
@@ -26,6 +27,9 @@ export class JiraHttpService {
         };
 
         this.jql = new JqlBuilder(settings.defaultProjectKey);
+     
+        this.timestamp = new Date().toISOString();
+        console.log(`[${this.timestamp}] JiraHttpService initialized!!!`);
     }
 
     /**
@@ -33,9 +37,7 @@ export class JiraHttpService {
      * @returns {Promise<Array>} List of issues.
      */
     async fetchMyIssues() {
-        if (!this.ensureInitialized()) {
-            return [];
-        }
+        console.log('TIMESTAMP INIT (fetchMyIssues):', this.timestamp);
         return await this.fetchIssues(this.jql.myIssues());
     }
 
@@ -45,27 +47,11 @@ export class JiraHttpService {
      * @returns {Promise<Array>} List of issues.
      */
     async fetchByKeys(keys) {
-        if (!this.ensureInitialized()) {
-            return [];
-        }
         if (!keys || keys.length === 0) {
             console.debug("fetchByKeys - No keys provided. Returning empty list.");
             return [];
         }
-        this.ensureInitialized();
         return await this.fetchIssues(this.jql.byKeyList(keys));
-    }
-
-    /**
-     * Ensures that the service is initialized.
-     * @throws {Error} If the service is not initialized.
-     */
-    ensureInitialized() {
-        if (!this.jql) {
-            console.log("ERROR: JiraHttpService not initialized. Call init() first.");
-            throw new Error("JiraHttpService not initialized. Call init() first.");
-        }
-        return true;
     }
 
     /**
