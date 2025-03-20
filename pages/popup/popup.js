@@ -11,7 +11,8 @@ const ELEMENT_IDS = {
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
     GO_BUTTON: 'goButton',
-    GO_TO_OPTIONS: 'go-to-options'
+    GO_TO_OPTIONS: 'go-to-options',
+    LOADING_BAR: 'loading-bar',
 };
 
 let typingTimer;
@@ -25,6 +26,7 @@ const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
+const loadingBarElement = document.getElementById(ELEMENT_IDS.LOADING_BAR);
 
 document.addEventListener('DOMContentLoaded', async () => {
     togglePlaceholdersVisibility(true);
@@ -170,6 +172,7 @@ const initializeIssuesTableFromCache = async () => {
 
 const refreshIssuesTableFromServer = async () => {
     try {
+        loadingBarElement.style.display = 'block';
         const issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
         fillIssuesTable(issuesList, issuesTableElement);
         togglePlaceholdersVisibility(false);
@@ -181,4 +184,7 @@ const refreshIssuesTableFromServer = async () => {
 const togglePlaceholdersVisibility = (show) => {
     placeholdersTableElement.style.display = show ? 'block' : 'none';
     issuesTableElement.style.display = show ? 'none' : 'block';
+    if (!show) {
+        loadingBarElement.style.display = 'none';
+    }
 };

@@ -28,8 +28,8 @@
                 <div class="row my-3">
                     <div class="col">
                         <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Enter issue number or ID"
-                               id="issue" autofocus>
+                            <input type="text" class="form-control" placeholder="Enter issue number or ID" id="issue"
+                                autofocus>
                             <button class="btn btn-primary go-button" id="goButton">Go</button>
                         </div>
                         <div class="text-muted hint">
@@ -39,47 +39,54 @@
                             <span id="preview-error" class="preview-error"></span>
                             <a href="#" target="_blank" id="preview-link"></a>
                         </div>
-                        <div>
 
-                            <div class="jira-popup">
-                                <!-- loading placeholders -->
-                                <table id="issues-table-placeholders" class="table-sm jira-issues placeholders">
-                                    <tbody>
-                                        <tr class="jira-issue placeholder-glow">
-                                            <td class="jira-key"><span class="placeholder"></span></td>
-                                            <td class="jira-summary"><span class="placeholder"></span></td>
-                                        </tr>
-                                        <tr class="jira-issue placeholder-glow">
-                                            <td class="jira-key"><span class="placeholder"></span></td>
-                                            <td class="jira-summary"><span class="placeholder"></span></td>
-                                        </tr>
-                                        <tr class="jira-issue placeholder-glow">
-                                            <td class="jira-key"><span class="placeholder"></span></td>
-                                            <td class="jira-summary"><span class="placeholder"></span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
 
-                                <table id="issues-table" class="table-sm jira-issues">
-                                    <tbody>
-                                        <!-- Template Row for Issues -->
-                                        <tr class="jira-issue d-none" data-template="true">
-                                            <td class="jira-key"></td>
-                                            <td class="jira-summary"></td>
-                                            <td class="jira-assignee">
-                                                <img src="" alt="" class="assignee-icon d-none">
-                                            </td>
-                                        <td class="jira-tab-icon" title="This issue is already open in a tab. Click to activate.">
-                                            <svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M3 5h6l2 3h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"></path>
-                                                </svg>
-                                            </td>
-                                            <td class="jira-status"></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="jira-popup">
+                            <div id="loading-bar" class="jira-loading-bar"></div>
+
+                            <!-- loading placeholders -->
+                            <table id="issues-table-placeholders" class="table-sm jira-issues placeholders">
+                                <tbody>
+                                    <tr class="jira-issue placeholder-glow">
+                                        <td class="jira-key"><span class="placeholder"></span></td>
+                                        <td class="jira-summary"><span class="placeholder"></span></td>
+                                    </tr>
+                                    <tr class="jira-issue placeholder-glow">
+                                        <td class="jira-key"><span class="placeholder"></span></td>
+                                        <td class="jira-summary"><span class="placeholder"></span></td>
+                                    </tr>
+                                    <tr class="jira-issue placeholder-glow">
+                                        <td class="jira-key"><span class="placeholder"></span></td>
+                                        <td class="jira-summary"><span class="placeholder"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table id="issues-table" class="table-sm jira-issues">
+                                <tbody>
+                                    <!-- Template Row for Issues -->
+                                    <tr class="jira-issue d-none" data-template="true">
+                                        <td class="jira-key"></td>
+                                        <td class="jira-summary"></td>
+                                        <td class="jira-assignee">
+                                            <img src="" alt="" class="assignee-icon d-none">
+                                        </td>
+                                        <td class="jira-tab-icon"
+                                            title="This issue is already open in a tab. Click to activate.">
+                                            <svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="#888" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path
+                                                    d="M3 5h6l2 3h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z">
+                                                </path>
+                                            </svg>
+                                        </td>
+                                        <td class="jira-status"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
+
                     </div>
                 </div>
             </div>
