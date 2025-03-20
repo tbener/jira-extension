@@ -36,7 +36,7 @@ function saveDefaultSettings() {
     );
 }
 
-async function refreshSettings() {
+async function readSettings() {
     await settingsService.readSettings();
     await navigationService.init(settingsService);
 }
@@ -46,7 +46,7 @@ async function initIssuesList() {
     // await issuesLists.addMyIssues();
     // await issuesLists.addIssues(navigationService.tabsService.getIssuesList(), true);
     updateOpenTabs();
-    await issuesLists.updateIssuesList();
+    // await issuesLists.updateIssuesList();
     console.debug("Issues list initialized:", issuesLists.getList());
 }
 
@@ -67,12 +67,12 @@ async function listenToMessages() {
                 navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
                 sendResponse({ status: "navigation_started" });
                 break;
-            case MessageActionTypes.GET_SETTIGNS:
+            case MessageActionTypes.GET_SETTINGS:
                 console.debug("Settings requested");
                 sendResponse({ settings: settingsService.settings });
                 break;
             case MessageActionTypes.SETTINGS_CHANGED:
-                refreshSettings();
+                readSettings();
                 sendResponse({ status: "settings_refreshed" });
                 break;
             case MessageActionTypes.GET_OPEN_TABS_ISSUES:
@@ -102,7 +102,7 @@ async function listenToMessages() {
 (async () => {
     await listenToMessages();
 
-    await refreshSettings();
+    await readSettings();
     await initIssuesList();
     console.log("Background script initialized.");
 })();

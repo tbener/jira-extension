@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 const fetchSettings = async () => {
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: MessageActionTypes.GET_SETTIGNS }, response => {
+        chrome.runtime.sendMessage({ action: MessageActionTypes.GET_SETTINGS }, response => {
             if (chrome.runtime.lastError) {
                 reject(chrome.runtime.lastError);
             } else {
