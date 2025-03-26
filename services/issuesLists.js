@@ -1,4 +1,4 @@
-import { JiraHttpService } from "./jira/JiraHttpService.js";
+import { JiraHttpService } from "./jira/jiraHttpService.js";
 
 export class IssuesLists {
     issuesList = {};

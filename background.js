@@ -86,11 +86,18 @@ async function listenToMessages() {
                 sendResponse({ issuesList: issuesLists.getList() });
                 break;
             case MessageActionTypes.REFRESH_ISSUES_LIST:
+
                 (async () => {
-                    console.debug("Issues list refresh requested");
-                    await issuesLists.updateIssuesList();
-                    sendResponse({ issuesList: issuesLists.getList() });
+                    try {
+                        console.debug("Issues list refresh requested");
+                        await issuesLists.updateIssuesList();
+                        sendResponse({ issuesList: issuesLists.getList() });
+                    } catch (error) {
+                        console.warn("Error refreshing issues list:", error);
+                        sendResponse({ error: "Failed to refresh issues list" });
+                    }
                 })();
+
                 return true; // Indicate an async response
         }
 

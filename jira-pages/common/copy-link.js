@@ -1,51 +1,59 @@
+import { fetchSettingsFromBackground } from '/common/utils.js';
+import { JiraHttpService } from '../../services/jira/jiraHttpService.js';
+
 const parentElementSelector = 'div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]';
-const parent = 'div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child';
 
-const CopyIssueKeyWithTitle = (() => {
-    saveUrl = '';
-    found = true;
-    keepAlive = false;
-    iconButton = null;
-    count = 0;
-    subElementToObserve = '';
-    let debounceTimeout;
+export class CopyIssueKeyWithTitle {
+    fetchSettings = async () => {
+        return new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: "getSettings" }, response => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(response.settings);
+                }
+            });
+        });
+    };
 
-    const init = (elementToObserve, getIssueFunc, keepAlive = false) => {
+    async init(elementToObserve, getIssueFunc, keepAlive = false) {
+        console.debug('CopyIssueKeyWithTitle - initializing...');
+
         this.getIssueFunc = getIssueFunc;
         this.keepAlive = keepAlive;
         this.subElementToObserve = elementToObserve;
 
         // we start observing the body, until we find the subElement, if needed
-        startObserve(document.body);
-    };
+        this.startObserve(document.body);
+    }
 
-    const handleMutations = (mutationsList, observer) => {
+    handleMutations(mutationsList, observer) {
         if (this.subElementToObserve) {
             console.debug(`subElementToObserve: ${this.subElementToObserve}`);
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => {
+            clearTimeout(this.debounceTimeout);
+            this.debounceTimeout = setTimeout(() => {
                 const element = document.querySelector(this.subElementToObserve);
                 if (element) {
                     console.debug(`Found inner element to observe. Disconnecting previous one`);
                     // found inner element to observe. Disconnecting previous one
                     observer.disconnect();
                     this.subElementToObserve = '';
-                    startObserve(element);
+                    this.startObserve(element);
                 }
             }, 100);
         } else {
-            doCheck(observer);
+            this.doCheck(observer);
         }
-    };
-
-    const startObserve = (element) => {
-        const observer = new MutationObserver(handleMutations);
-        observer.observe(element, {childList: true, subtree: true});
     }
 
-    const doCheck = (observer) => {
+    startObserve(element) {
+        const observer = new MutationObserver(this.handleMutations.bind(this));
+        observer.observe(element, { childList: true, subtree: true });
+    }
+
+    doCheck(observer) {
         // console.debug(`Checking dom! (${++this.count})`);
-        if (this.found && !changedUrl()) return;
+        if (this.found && !this.changedUrl()) return;
 
         console.debug(`[handling] - URL changed or not found yet (found = ${this.found})`, this.saveUrl);
 
@@ -54,7 +62,7 @@ const CopyIssueKeyWithTitle = (() => {
         if (elmContainer) {
             this.found = true;
             console.debug('handleMutations - adding element...');
-            createButton();
+            this.createButton();
 
             // Disconnect the observer to avoid unnecessary checks
             if (!this.keepAlive) {
@@ -67,7 +75,7 @@ const CopyIssueKeyWithTitle = (() => {
         }
     }
 
-    const changedUrl = () => {
+    changedUrl() {
         if (this.saveUrl !== window.location.href) {
             this.saveUrl = window.location.href;
             return true;
@@ -75,7 +83,7 @@ const CopyIssueKeyWithTitle = (() => {
         return false;
     }
 
-    const createButton = () => {
+    createButton() {
         // clearTimeout(createButtonTimout);
         setTimeout(() => {
             const parentElement = document.querySelector(parentElementSelector);
@@ -93,63 +101,67 @@ const CopyIssueKeyWithTitle = (() => {
 
             this.iconButton?.addEventListener('click', () => {
                 const issueKey = this.getIssueFunc();
-                createLinkAndCopy(issueKey);
+                this.createLinkAndCopy(issueKey);
             });
 
             console.debug('Copy-link button created');
         }, 0);
-    };
+    }
 
-    const createLinkAndCopy = (issueKey) => {
-        SettingsHandler.getSettings().then(settings => {
+    async createLinkAndCopy(issueKey) {
+        //TODO: Implement JiraHttpService!!!
+        
+        // const jiraHttpService = new JiraHttpService();
+        // await jiraHttpService.fetchIssue(issueKey);
 
-            const username = 'tbener@gmail.com'
-            const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
+        const settings = await fetchSettingsFromBackground();
 
-            const apiGetPath = `https://${settings.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
+        const username = 'tbener@gmail.com'
+        const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
 
-            fetch(apiGetPath, {
-                headers: {
-                    'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Replace with your Jira username and password or API token
-                }
+        const apiGetPath = `https://${settings.customDomain}.atlassian.net/rest/api/3/issue/${issueKey}`;
+
+        fetch(apiGetPath, {
+            headers: {
+                'Authorization': 'Basic ' + btoa(`${username}:${password}`) // Replace with your Jira username and password or API token
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response data and display it in your extension UI
+                // console.debug('DATA: ', data);
+                const issueSummary = data.fields.summary;
+                const issueLink = `https://${settings.customDomain}.atlassian.net/browse/${issueKey}`;
+
+                this.copyLinkToClipboard(issueLink, issueKey, issueSummary);
+
             })
-                .then(response => response.json())
-                .then(data => {
-                    // Handle the response data and display it in your extension UI
-                    // console.debug('DATA: ', data);
-                    const issueSummary = data.fields.summary;
-                    const issueLink = `https://${settings.customDomain}.atlassian.net/browse/${issueKey}`;
+            .catch(error => {
+                console.error('Error fetching issue details:', error);
+            });
+    }
 
-                    copyLinkToClipboard(issueLink, issueKey, issueSummary);
-
-                })
-                .catch(error => {
-                    console.error('Error fetching issue details:', error);
-                });
-        });
-    };
-
-    const copyLinkToClipboard = (issueLink, issueKey, issueSummary) => {
+    copyLinkToClipboard(issueLink, issueKey, issueSummary) {
         const htmlContent = `<a href="${issueLink}">${issueKey}</a> - ${issueSummary}`;
         const textContent = `${issueKey} - ${issueSummary}`;
 
         navigator.clipboard.write([
             new ClipboardItem({
-                'text/html': new Blob([htmlContent], {type: 'text/html'}),
-                'text/plain': new Blob([textContent], {type: 'text/plain'})
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
             })
         ])
             .then(() => {
-                showResultIcon(true);
+                this.showResultIcon(true);
                 console.debug('HTML content copied to clipboard:', htmlContent);
             })
             .catch(error => {
-                showResultIcon(false);
+                this.showResultIcon(false);
                 console.error('Error copying HTML content to clipboard:', error);
             });
     }
 
-    const showResultIcon = (isSuccess) => {
+    showResultIcon(isSuccess) {
         const svgParent = this.iconButton.querySelector('svg').parentNode;
         svgParent.innerHTML = isSuccess ? checkmarkSvg : errorSvg;
 
@@ -158,14 +170,8 @@ const CopyIssueKeyWithTitle = (() => {
             svgParent.innerHTML = copyLinkSvg;
         }, 2000);
     }
+}
 
-    return {
-        init // Expose the init function
-    };
-
-})();
-
-window.CopyIssueKeyWithTitle = CopyIssueKeyWithTitle;
 
 const copyLinkSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g transform="translate(0 -1028.4)">

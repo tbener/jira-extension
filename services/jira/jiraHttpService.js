@@ -1,5 +1,6 @@
 import { JqlBuilder } from "./jqlBuilder.js";
 import { SettingsService } from '../settingsService.js';
+import { fetchSettingsFromBackground, formatString } from '/common/utils.js';
 import { CONFIG } from '../../config.js';
 
 export class JiraHttpService {
@@ -10,20 +11,43 @@ export class JiraHttpService {
             Authorization: "Basic " + btoa(`${CONFIG.USERNAME}:${CONFIG.PASSWORD}`),
             "Content-Type": "application/json",
         };
+        this.settings = {};
     }
+
+    API_PATH = {
+        JQL: 'rest/api/3/search',
+        ISSUE: 'rest/api/3/issue/{0}'
+    };
 
     async init() {
         const settingsService = new SettingsService();
-        const settings = await settingsService.readSettings();
-        const baseUrl = `https://${settings.customDomain}.atlassian.net`;
+        this.settings = await settingsService.readSettings();
+        const baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
         this.baseApiUrl = `${baseUrl}/rest/api/3/search`;
 
         console.debug(`JiraHttpService initialized!!!`);
     }
 
+    getApiPath(apiPath, ...args) {
+        const baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
+        return formatString(`${baseUrl}/${apiPath}`, ...args);
+    }
+
+    //TODO: Implement fetchIssue method
+    async fetchIssue(key) {
+        const apiPath = this.getApiPath(this.API_PATH.ISSUE, key);
+        console.log(`API Path: ${apiPath}`);
+        // Add fetch logic here
+    }
+
     async fetchMyIssues() {
-        const jql = await JqlBuilder.jqlMyIssues();
-        return await this.fetchIssues(jql);
+        console.debug("Fetching my issues.");
+
+        const jql = await JqlBuilder.jqlMyIssues(this.settings.defaultProjectKey);
+        console.debug("Fetching my issues with JQL:", jql);
+        const apiPath = this.getJqlPath(jql);
+        const response = await this.fetch(apiPath);
+        return response?.issues ?? [];
     }
 
     async fetchByKeys(keys) {
@@ -32,16 +56,17 @@ export class JiraHttpService {
             return [];
         }
         const jql = await JqlBuilder.jqlByKeyList(keys);
-        return await this.fetchIssues(jql);
+        const apiPath = this.getJqlPath(jql);
+        const response = await this.fetch(apiPath);
+        return response?.issues ?? [];
     }
 
     getJqlPath(jql) {
         return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${CONFIG.MAX_RESULTS}`;
     }
 
-    async fetchIssues(jql) {
+    async fetch(apiPath) {
         try {
-            const apiPath = this.getJqlPath(jql);
             console.log(`Fetching ${apiPath}`);
 
             const response = await fetch(apiPath, {
@@ -50,15 +75,14 @@ export class JiraHttpService {
             });
 
             if (!response.ok) {
-                console.log(`ERROR: Failed to fetch issues: ${response.status} ${response.statusText}\nJQL: ${jql}`);
-                return [];
+                console.log(`ERROR: Failed to fetch: ${response.status} ${response.statusText}`);
+                return null;
             }
 
-            const data = await response.json();
-            return data.issues || [];
+            return await response.json();
         } catch (error) {
-            console.log("Error fetching issues:", error);
-            return [];
+            console.log("Error fetching issue(s):", error);
+            return null;
         }
     }
 }
