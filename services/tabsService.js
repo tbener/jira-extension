@@ -2,18 +2,22 @@ export class TabsService {
     tabs = {};
     baseUrl = '';
 
-    readTabs = async (baseUrl) => {
+    async readTabs(baseUrl) {
         this.baseUrl = baseUrl.toLowerCase();
 
+        this.scanTabs();
+
+        chrome.tabs.onCreated.addListener((tab) => this.checkAddTab(tab));
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.updateTab(tabId, changeInfo, tab));
+        chrome.tabs.onRemoved.addListener((tabId) => this.removeTab(tabId));
+    }
+
+    scanTabs() {
         chrome.tabs.query({}, (tabs) => {
             tabs.forEach((tab) => {
                 this.checkAddTab(tab);
             });
         });
-
-        chrome.tabs.onCreated.addListener((tab) => this.checkAddTab(tab));
-        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.updateTab(tabId, changeInfo, tab));
-        chrome.tabs.onRemoved.addListener((tabId) => this.removeTab(tabId));
     }
 
     activateTabByIssue = (issueKey) => {
@@ -52,6 +56,9 @@ export class TabsService {
             delete this.tabs[issueKey];
             console.debug(`Removed tab tracking for issue ${issueKey}`);
         }
+
+        this.scanTabs();
+        console.debug("Tabs after removal:", this.tabs);
     }
 
     getIssuesList() {
@@ -60,6 +67,10 @@ export class TabsService {
 
     extractIssueFromUrl = (url) => {
         try {
+            if (!url) {
+                return null;
+            }
+            
             const parsedUrl = new URL(url);
 
             // Ensure the URL belongs to the JIRA domain
