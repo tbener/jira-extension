@@ -125,19 +125,19 @@ export class IssuesLists {
     }
 
     _setIssue(issue, overrideFields = {}) {
-        console.log("Setting issue:", issue, overrideFields);
+        console.debug("Saving issue in issueList.","issue:" , issue, "overrideFields:", overrideFields);
         if (this.issuesList[issue.key]) {
-            console.log("Issue already exists, updating.");
+            console.debug("Issue already exists, updating.");
             this.issuesList[issue.key] = {
                 ...this.issuesList[issue.key],
                 ...issue,
                 ...overrideFields,
             };
         } else {
-            console.log("Issue is new, adding.");
+            console.debug("Issue is new, adding.");
             this.issuesList[issue.key] = this._mapIssue(issue, overrideFields);
         }
-        console.log("Issue set:", this.issuesList[issue.key]);
+        console.debug("Issue saved:", this.issuesList[issue.key]);
     }
 
     _mapIssue(issue, overrideFields) {

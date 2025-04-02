@@ -51,6 +51,8 @@ export class JiraHttpService {
     }
 
     async fetchByKeys(keys) {
+        console.debug("Fetching issues by keys:", keys);
+
         if (!keys || keys.length === 0) {
             console.debug("fetchByKeys - No keys provided. Returning empty list.");
             return [];
@@ -74,14 +76,22 @@ export class JiraHttpService {
                 headers: this.authHeaders,
             });
 
+            console.debug("Response:", response);
+
             if (!response.ok) {
                 console.log(`ERROR: Failed to fetch: ${response.status} ${response.statusText}`);
                 return null;
             }
 
-            return await response.json();
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                return await response.json();
+            } else {
+                console.warn("Response is not JSON:", response);
+                return null;
+            }
         } catch (error) {
-            console.log("Error fetching issue(s):", error);
+            console.warn("Error fetching issue(s):", error, "Path:", apiPath);
             return null;
         }
     }
