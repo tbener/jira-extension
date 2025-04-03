@@ -84,9 +84,19 @@ async function listenToMessages() {
                 return true; // Indicate an async response
 
             case MessageActionTypes.SETTINGS_CHANGED:
-                readSettings();
-                sendResponse({ status: "settings_refreshed" });
-                break;
+                (async () => {
+                    try {
+                        console.debug("Settings changed");
+                        await ensureInitialized(true);
+                        sendResponse({ settings: settingsService.settings });
+                    } catch (error) {
+                        console.warn("Error re-initializing:", error);
+                        sendResponse({ error: "Failed to reload settings" });
+                    }
+                })();
+
+                return true;
+                
             case MessageActionTypes.GET_OPEN_TABS_ISSUES:
                 console.debug("Open tabs issues requested");
                 const openTabsIssues = navigationService.tabsService.getIssuesList();
@@ -118,8 +128,8 @@ async function listenToMessages() {
     });
 }
 
-async function ensureInitialized() {
-    if (!isInitialized) {
+async function ensureInitialized(force) {
+    if (!isInitialized || force) {
         console.log(`************  Initializing background script... [${new Date().toISOString()}] ************`);
         await readSettings();
         await initIssuesList();

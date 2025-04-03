@@ -1,4 +1,7 @@
-import {SettingsService} from '../../services/settingsService.js';
+import { SettingsService } from '../../services/settingsService.js';
+import { MessageActionTypes } from '../../enum/message-action-types.enum.js'
+
+const settingsService = new SettingsService();
 
 const updateNotificationElement = document.getElementsByClassName('update-notification')[0];
 const upToDateNotificationElement = document.getElementsByClassName('update-not-required')[0];
@@ -38,15 +41,14 @@ const saveOptions = () => {
         boardUrl: boardLinkInputElement.value
     }
 
-    SettingsHandler.saveSettings(settings).then(() => {
-        const status = document.getElementById('status');
-        status.textContent = 'Options saved.';
-        setTimeout(() => {
-            status.textContent = '';
-        }, 3000);
-    })
+    settingsService.saveSettings(settings);
+    const status = document.getElementById('status');
+    status.textContent = 'Options saved.';
+    setTimeout(() => {
+        status.textContent = '';
+    }, 3000);
 
-    chrome.runtime.sendMessage({action: "settingsChanged"});
+    chrome.runtime.sendMessage({ action: MessageActionTypes.SETTINGS_CHANGED });
 
 };
 
@@ -54,7 +56,7 @@ const saveOptions = () => {
 // stored in chrome.storage.
 const restoreOptions = async () => {
     try {
-        const settings = await SettingsHandler.getSettings();
+        const settings = await settingsService.readSettings();
 
         document.getElementById('customDomain').value = settings.customDomain;
         document.getElementById('defaultProjectKey').value = settings.defaultProjectKey;
