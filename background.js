@@ -124,12 +124,12 @@ async function ensureInitialized() {
         await readSettings();
         await initIssuesList();
         isInitialized = true;
+        console.log(`++++++++++++ Background script initialized. [${new Date().toISOString()}] ++++++++++++`);
     }
 }
 
 
 (async () => {
-    await listenToMessages();
     await ensureInitialized();
-    console.log("++++++++++++ Background script initialized. [${new Date().toISOString()}] ++++++++++++");
+    await listenToMessages();
 })();
