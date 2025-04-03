@@ -8,8 +8,7 @@
     "author": "tbener@gmail.com",
     "background": {
         "service_worker": "background.js",
-        "type": "module",
-        "persistent": true
+        "type": "module"
     },
     "action": {
         "default_popup": "pages/popup/popup.html",

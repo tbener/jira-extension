@@ -10,6 +10,8 @@ const settingsService = new SettingsService();
 const navigationService = new NavigationService();
 const issuesLists = new IssuesLists();
 
+let isInitialized = false;
+
 chrome.runtime.onInstalled.addListener(function (details) {
     // Check if the extension is newly installed
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -68,9 +70,19 @@ async function listenToMessages() {
                 sendResponse({ status: "navigation_started" });
                 break;
             case MessageActionTypes.GET_SETTINGS:
-                console.debug("Settings requested");
-                sendResponse({ settings: settingsService.settings });
-                break;
+                (async () => {
+                    try {
+                        console.debug("Settings requested");
+                        await ensureInitialized();
+                        sendResponse({ settings: settingsService.settings });
+                    } catch (error) {
+                        console.warn("Error returning settings from background listener:", error);
+                        sendResponse({ error: "Failed to return settings" });
+                    }
+                })();
+
+                return true; // Indicate an async response
+
             case MessageActionTypes.SETTINGS_CHANGED:
                 readSettings();
                 sendResponse({ status: "settings_refreshed" });
@@ -90,6 +102,7 @@ async function listenToMessages() {
                 (async () => {
                     try {
                         console.debug("Issues list refresh requested");
+                        await ensureInitialized();
                         await issuesLists.updateIssuesList();
                         sendResponse({ issuesList: issuesLists.getList() });
                     } catch (error) {
@@ -105,11 +118,18 @@ async function listenToMessages() {
     });
 }
 
+async function ensureInitialized() {
+    if (!isInitialized) {
+        console.log(`************  Initializing background script... [${new Date().toISOString()}] ************`);
+        await readSettings();
+        await initIssuesList();
+        isInitialized = true;
+    }
+}
+
 
 (async () => {
     await listenToMessages();
-
-    await readSettings();
-    await initIssuesList();
-    console.log("Background script initialized.");
+    await ensureInitialized();
+    console.log("++++++++++++ Background script initialized. [${new Date().toISOString()}] ++++++++++++");
 })();
