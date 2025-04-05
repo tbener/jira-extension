@@ -1,5 +1,7 @@
 import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
 import { fillIssuesTable } from "./fillTable.js";
+import { fetchSettingsFromBackground } from '../../common/utils.js'
+
 
 const ELEMENT_IDS = {
     ISSUE_INPUT: 'issue',
@@ -27,30 +29,21 @@ const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDER
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.debug('--- Start loading popup')
     togglePlaceholdersVisibility(true);
     await initializeIssuesTableFromCache();
+    console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
     await Promise.all([
         refreshIssuesTableFromServer(),
         fetchAndDisplayProjectAndVersion(),
         checkAndDisplayVersionUpdate()
     ]);
+    console.debug('--- Finish loading popup')
 });
-
-const fetchSettings = async () => {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: MessageActionTypes.GET_SETTINGS }, response => {
-            if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-            } else {
-                resolve(response.settings);
-            }
-        });
-    });
-};
 
 const fetchAndDisplayProjectAndVersion = async () => {
     try {
-        const settings = await fetchSettings();
+        const settings = await fetchSettingsFromBackground();
         versionElement.textContent = settings.versionDisplay;
         linkToProjectElement.textContent = settings.defaultProjectKey;
         linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
@@ -151,6 +144,7 @@ const fetchIssuesList = async (actionType) => {
 
 const initializeIssuesTableFromCache = async () => {
     try {
+        console.debug('initializeIssuesTableFromCache')
         const issuesList = await fetchIssuesList("getIssuesList");
         togglePlaceholdersVisibility(issuesList.length === 0);
         fillIssuesTable(issuesList, issuesTableElement);

@@ -1,18 +1,18 @@
+// import { SettingsService } from "./settingsService";
+import { fetchSettingsFromBackground } from "../common/utils.js";
 
-const JiraService = (() => {
-    username = 'tbener@gmail.com'
-    password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
+const JiraService = (async () => {
+    const username = 'tbener@gmail.com';
+    const password = 'ATATT3xFfGF0GblxeqLm1syJGUrwfMFvTGQI7tViD01Fa03VungyrybBy8tE076aBAaaoBCGQb9zPY9Zgk13WUaZrZScodXk7vuuyNWGpYF7N332Bwxt6Jbc0UFxhyjJgKZzLAoh21mnJj8VW7FXNHvHokdwm_M2KL_487AYNaBqD095css7nr0=A52A0BB9';
 
-    abortController = null
-    settings = {};
+    let abortController = null
+    const settings = await fetchSettingsFromBackground();
 
-    let baseUrl = '';
+    // SettingsHandler.getSettings().then(sett => {
+    //     this.settings = sett;
+    // });
 
-    SettingsHandler.getSettings().then(sett => {
-        this.settings = sett;
-
-        baseUrl = `https://${this.settings.customDomain}.atlassian.net`
-    });
+    // settingsService = new SettingsService();
 
     const getIssueKey = (issueNumberOrKey) => {
         if (issueNumberOrKey === '') return '';
@@ -31,11 +31,11 @@ const JiraService = (() => {
         return `${this.settings.defaultProjectKey}-${issueNumberOrKey}`;
     }
 
-    const getBoardLink = () => {
-        const r = guessBoardLink(this.settings.defaultProjectKey);
-        console.debug('getBoardLink', r);
-        return `https://${this.settings.customDomain}.atlassian.net/jira/software/c/projects/${this.settings.defaultProjectKey}/boards/183`
-    }
+    // const getBoardLink = () => {
+    //     const r = guessBoardLink(this.settings.defaultProjectKey);
+    //     console.debug('getBoardLink', r);
+    //     return `https://${this.settings.customDomain}.atlassian.net/jira/software/c/projects/${this.settings.defaultProjectKey}/boards/183`
+    // }
 
     const guessBoardLink = async (domain, projectKey) => {
         const baseUrl = `https://${domain}.atlassian.net`;
