@@ -1,6 +1,7 @@
 import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
 import { fillIssuesTable } from "./fillTable.js";
 import { fetchSettingsFromBackground } from '../../common/utils.js'
+import { JiraService } from '../../services/jira/jiraService.js';
 
 
 const ELEMENT_IDS = {
@@ -46,7 +47,8 @@ const fetchAndDisplayProjectAndVersion = async () => {
         const settings = await fetchSettingsFromBackground();
         versionElement.textContent = settings.versionDisplay;
         linkToProjectElement.textContent = settings.defaultProjectKey;
-        linkToProjectElement.href = settings.boardUrl || await JiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+        const jiraService = new JiraService()
+        linkToProjectElement.href = settings.boardUrl || await jiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
     } catch (error) {
         console.log('Error fetching project and version:', error);
     }
