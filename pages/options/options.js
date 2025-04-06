@@ -15,11 +15,12 @@ const boardLinkInputElement = document.getElementById('boardLinkInput');
 checkUpdateElement.addEventListener('click', async () => checkUpdate(true));
 
 document.addEventListener('DOMContentLoaded', async () => {
-    jiraHelperService.init();
+    await jiraHelperService.init();
 
     updateNotificationElement.addEventListener('click', VersionService.startUpdate);
     downloadUpdateElement.addEventListener('click', VersionService.startUpdate);
 
+    restoreOptions();
     checkUpdate(false);
 });
 
@@ -80,7 +81,7 @@ const setBoardLink = async () => {
     if (boardLink === '') {
         const domain = document.getElementById('customDomain').value;
         const projectKey = document.getElementById('defaultProjectKey').value;
-        boardLinkElement.textContent = "Searching..."
+        boardLinkElement.textContent = "Searching...";
         boardLink = await jiraHelperService.guessBoardLink(domain, projectKey);
     }
     boardLinkElement.href = boardLink;
@@ -91,7 +92,6 @@ const copyBoardLinkToInput = async () => {
     boardLinkInputElement.value = boardLinkElement.textContent;
 }
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
 document.getElementById('saveButton').addEventListener('click', saveOptions);
 document.getElementById('setBoardLink').addEventListener('click', copyBoardLinkToInput);
 

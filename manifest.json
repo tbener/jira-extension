@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "MDClone Jira Extension",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "key": "cahojkigicegnlnghbnoigeibdnicpap",
     "update_url": "https://raw.githubusercontent.com/tbener/jira-extension/main/update.xml",
     "description": "MDClone Extension for Jira, by Tal Bener",
