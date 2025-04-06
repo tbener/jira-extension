@@ -4,6 +4,8 @@ import { fetchSettingsFromBackground, formatString } from '/common/utils.js';
 import { CONFIG } from '../../config.js';
 
 export class JiraHttpService {
+    abortController = null;
+
     constructor() {
         this.baseUrl = '';
         this.baseApiUrl = '';
@@ -22,22 +24,24 @@ export class JiraHttpService {
     async init() {
         const settingsService = new SettingsService();
         this.settings = await settingsService.readSettings();
-        const baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
-        this.baseApiUrl = `${baseUrl}/rest/api/3/search`;
+        this.baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
+        this.baseApiUrl = `${this.baseUrl}/rest/api/3/search`;
 
         console.debug(`JiraHttpService initialized!!!`);
     }
 
     getApiPath(apiPath, ...args) {
-        const baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
-        return formatString(`${baseUrl}/${apiPath}`, ...args);
+        return formatString(`${this.baseUrl}/${apiPath}`, ...args);
     }
 
-    //TODO: Implement fetchIssue method
-    async fetchIssue(key) {
+    getIssueLink(issueKey) {
+        return `${this.baseUrl}/browse/${issueKey}`;
+    }
+
+    async fetchIssue(key, withAbortController = false) {
+        console.debug("Fetching issue with key:", key);
         const apiPath = this.getApiPath(this.API_PATH.ISSUE, key);
-        console.log(`API Path: ${apiPath}`);
-        // Add fetch logic here
+        return await this.fetch(apiPath, withAbortController);
     }
 
     async fetchMyIssues() {
@@ -67,9 +71,21 @@ export class JiraHttpService {
         return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${CONFIG.MAX_RESULTS}`;
     }
 
-    async fetch(apiPath) {
+    async fetch(apiPath, withAbortController = false) {
+        console.log(`Fetching ${apiPath}`);
+
+        if (withAbortController) {
+            console.debug("Using AbortController for fetch.");
+            if (this.abortController) {
+                console.debug("Aborting previous fetch request.");
+            }
+            // Abort the previous fetch request if it exists
+            this.abortFetch();
+            this.abortController = new AbortController();
+            this.authHeaders.signal = this.abortController.signal;
+        }
+
         try {
-            console.log(`Fetching ${apiPath}`);
 
             const response = await fetch(apiPath, {
                 method: "GET",
@@ -93,6 +109,13 @@ export class JiraHttpService {
         } catch (error) {
             console.warn("Error fetching issue(s):", error, "Path:", apiPath);
             return null;
+        }
+    }
+
+    abortFetch() {
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
         }
     }
 }

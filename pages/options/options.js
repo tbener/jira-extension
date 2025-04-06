@@ -1,6 +1,8 @@
 import { SettingsService } from '../../services/settingsService.js';
 import { MessageActionTypes } from '../../enum/message-action-types.enum.js'
+import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
 
+const jiraHelperService = new JiraHelperService()
 const settingsService = new SettingsService();
 
 const updateNotificationElement = document.getElementsByClassName('update-notification')[0];
@@ -13,6 +15,8 @@ const boardLinkInputElement = document.getElementById('boardLinkInput');
 checkUpdateElement.addEventListener('click', async () => checkUpdate(true));
 
 document.addEventListener('DOMContentLoaded', async () => {
+    jiraHelperService.init();
+
     updateNotificationElement.addEventListener('click', VersionService.startUpdate);
     downloadUpdateElement.addEventListener('click', VersionService.startUpdate);
 
@@ -67,7 +71,7 @@ const restoreOptions = async () => {
         await setBoardLink();
 
     } catch (error) {
-        console.error('Error restoring options:', error);
+        console.warn('Error restoring options:', error);
     }
 };
 
@@ -77,7 +81,7 @@ const setBoardLink = async () => {
         const domain = document.getElementById('customDomain').value;
         const projectKey = document.getElementById('defaultProjectKey').value;
         boardLinkElement.textContent = "Searching..."
-        boardLink = await JiraService.guessBoardLink(domain, projectKey);
+        boardLink = await jiraHelperService.guessBoardLink(domain, projectKey);
     }
     boardLinkElement.href = boardLink;
     boardLinkElement.textContent = boardLink;

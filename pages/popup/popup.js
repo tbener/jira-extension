@@ -1,8 +1,9 @@
 import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
 import { fillIssuesTable } from "./fillTable.js";
 import { fetchSettingsFromBackground } from '../../common/utils.js'
-import { JiraService } from '../../services/jira/jiraService.js';
+import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
 
+const jiraHelperService = new JiraHelperService()
 
 const ELEMENT_IDS = {
     ISSUE_INPUT: 'issue',
@@ -31,6 +32,7 @@ const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup')
+    jiraHelperService.init();
     togglePlaceholdersVisibility(true);
     await initializeIssuesTableFromCache();
     console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
@@ -47,8 +49,7 @@ const fetchAndDisplayProjectAndVersion = async () => {
         const settings = await fetchSettingsFromBackground();
         versionElement.textContent = settings.versionDisplay;
         linkToProjectElement.textContent = settings.defaultProjectKey;
-        const jiraService = new JiraService()
-        linkToProjectElement.href = settings.boardUrl || await jiraService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+        linkToProjectElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
     } catch (error) {
         console.log('Error fetching project and version:', error);
     }
@@ -73,7 +74,7 @@ const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
 };
 
 const navigateToIssueFromInput = (stayInCurrentTab = false) => {
-    const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
+    const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
     sendNavigateToIssueMessage(issueKey, stayInCurrentTab);
 };
 
@@ -87,14 +88,14 @@ document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => n
 
 const fetchAndDisplayIssuePreview = async () => {
     const currentRequest = ++latestRequest;
-    const issueKey = JiraService.getIssueKey(issueInputElement.value.trim());
+    const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
     if (issueKey === '') {
         return;
     }
 
     try {
-        const issue = await JiraService.fetchIssue(issueKey);
+        const issue = await jiraHelperService.fetchIssueForPreview(issueKey);
         if (currentRequest === latestRequest && issue) {
             if (issue.error) {
                 previewElementError.textContent = issue.error;
@@ -115,7 +116,7 @@ const clearIssuePreview = () => {
 };
 
 issueInputElement.addEventListener('input', async function () {
-    JiraService.abort();
+    jiraHelperService.AbortFetchIssueForPreview();
     clearTimeout(typingTimer);
     clearIssuePreview();
 
