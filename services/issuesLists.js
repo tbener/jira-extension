@@ -10,8 +10,9 @@ export class IssuesLists {
         AssignedToMe: { assignedToMe: true },
     };
 
-    async init() {
-        console.debug('Initializing IssuesLists')
+    init = async () => {
+        console.debug('Initializing IssuesLists');
+
         await this.jiraHttpService.init();
         console.debug('IssuesLists initialized!!!');
     }
