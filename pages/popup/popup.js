@@ -31,17 +31,25 @@ const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDER
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.debug('--- Start loading popup')
-    jiraHelperService.init();
+    console.debug('--- Start loading popup');
     togglePlaceholdersVisibility(true);
-    await initializeIssuesTableFromCache();
-    console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
-    await Promise.all([
-        refreshIssuesTableFromServer(),
-        fetchAndDisplayProjectAndVersion(),
-        checkAndDisplayVersionUpdate()
-    ]);
-    console.debug('--- Finish loading popup')
+
+    try {
+        await jiraHelperService.init();
+        await initializeIssuesTableFromCache();
+        console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
+        await Promise.all([
+            refreshIssuesTableFromServer(),
+            fetchAndDisplayProjectAndVersion(),
+            checkAndDisplayVersionUpdate()
+        ]);
+    } catch (error) {
+        console.warn('Error during DOMContentLoaded initialization:', error);
+    } finally {
+        togglePlaceholdersVisibility(false);
+    }
+
+    console.debug('--- Finish loading popup');
 });
 
 const fetchAndDisplayProjectAndVersion = async () => {

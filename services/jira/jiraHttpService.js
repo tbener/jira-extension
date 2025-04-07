@@ -1,6 +1,6 @@
 import { JqlBuilder } from "./jqlBuilder.js";
 import { SettingsService } from '../settingsService.js';
-import { fetchSettingsFromBackground, formatString } from '/common/utils.js';
+import { formatString } from '/common/utils.js';
 import { CONFIG } from '../../config.js';
 
 export class JiraHttpService {
@@ -22,6 +22,8 @@ export class JiraHttpService {
     };
 
     async init() {
+        console.debug('Initializing JiraHttpService')
+        // this is called when initializing background, so can't fetch settings from there
         const settingsService = new SettingsService();
         this.settings = await settingsService.readSettings();
         this.baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
