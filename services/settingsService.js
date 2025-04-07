@@ -14,13 +14,13 @@ export class SettingsService {
 
     updateSettings(newSettings) {
         Object.assign(this.settings, newSettings, this.additionalSettings);
-        console.log("Settings: ", this.settings);
     }
-
-
+    
+    
     async readSettings() {
         return new Promise((resolve) => {
             chrome.storage.sync.get(this.defaultSettings, (items) => {
+                console.log("Settings read: ", this.settings);
                 this.updateSettings(items);
                 resolve(this.settings);
             });

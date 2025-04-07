@@ -4,6 +4,7 @@ import { fetchSettingsFromBackground, formatString } from '../../common/utils.js
 export class JiraHelperService {
 
     async init() {
+        console.debug('Initializing JiraHelperService')
         this.settings = await fetchSettingsFromBackground();
         this.jiraHttpService = new JiraHttpService();
         await this.jiraHttpService.init();

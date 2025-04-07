@@ -103,10 +103,19 @@ async function listenToMessages() {
                 sendResponse({ issueKeys: openTabsIssues });
                 break;
             case MessageActionTypes.GET_ISSUES_LIST:
-                console.debug("Issues list requested");
-                updateOpenTabs();
-                sendResponse({ issuesList: issuesLists.getList() });
-                break;
+                (async () => {
+                    try {
+                        console.debug("Issues list requested");
+                        await ensureInitialized();
+                        updateOpenTabs();
+                        sendResponse({ issuesList: issuesLists.getList() });
+                    } catch (error) {
+                        console.warn("Error fetching issues list:", error);
+                        sendResponse({ error: "Failed to fetch issues list" });
+                    }
+                })();
+
+                return true; // Indicate an async response
             case MessageActionTypes.REFRESH_ISSUES_LIST:
 
                 (async () => {
@@ -140,6 +149,7 @@ async function ensureInitialized(force) {
 
 
 (async () => {
-    await ensureInitialized();
+    console.debug('Starting background service...');
     await listenToMessages();
+    await ensureInitialized();
 })();
