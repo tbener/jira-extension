@@ -34,7 +34,7 @@ export class ElementObserver {
     // Private
 
     handleMutations(mutationsList, observer) {
-        console.debug('ElementObserver - handleMutations called', mutationsList);
+        console.debug('✅✅✅ ElementObserver - handleMutations called', mutationsList);
         if (this.shouldCheckTargetElement()) {
             this.checkTargetElement(observer);
         }
@@ -61,6 +61,7 @@ export class ElementObserver {
     }
 
     shouldCheckTargetElement() {
+        console.debug('✅ ElementObserver - shouldCheckTargetElement called. Current state:', this.issueKey, this.found);
         if (this.isNewIssue()) {
             console.debug('New issue detected, resetting found state and looking for target element.');
         }
@@ -107,17 +108,15 @@ export class ElementObserver {
     getIssueKeyFromUrl() {
         const issueKeyRegex = /(?:\/browse\/|[?&]selectedIssue=)([A-Z][A-Z0-9]+-\d+)/;
         const match = window.location.href.match(issueKeyRegex);
-        // this.issueKey = match ? match[1] : null;
-        // console.log('✔️✔️✔️ getIssueKeyFromUrl - match:', this.issueKey);
         return match ? match[1] : null;
     }
 
     isNewIssue() {
         if (this.saveUrl !== window.location.href) {
-            console.debug('URL changed:', window.location.href, 'checking issue key...');
+            console.debug('☑️☑️☑️ URL changed:', window.location.href);
             this.saveUrl = window.location.href;
             const issueKey = this.getIssueKeyFromUrl();
-            console.debug('Issue key:', issueKey, 'this.issueKey:', this.issueKey);
+            console.debug('😎😎😎 Issue key:', issueKey, 'this.issueKey:', this.issueKey);
             if (this.issueKey !== issueKey) {
                 this.issueKey = issueKey;
                 this.found = false;
@@ -125,6 +124,7 @@ export class ElementObserver {
                 return !!this.issueKey;
             }
         }
+        console.debug('❌❌❌ URL did not change:', window.location.href);
         return false;
     }
 }

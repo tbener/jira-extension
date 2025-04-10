@@ -3,7 +3,13 @@ export function addHeaderInfo(refElement, issue) {
         throw new Error("Invalid target element provided.");
     }
 
+    const existingDiv = refElement.parentNode.querySelector('.extension-header-info');
+    if (existingDiv) {
+        existingDiv.textContent = issue.key;
+        return;
+    }
     const newDiv = document.createElement('div');
+    newDiv.className = 'extension-header-info';
     newDiv.textContent = issue.key;
 
     if (refElement.nextSibling) {

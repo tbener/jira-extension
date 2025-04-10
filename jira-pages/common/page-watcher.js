@@ -16,7 +16,7 @@ const data = {
     page: {
         targetElementSelector: 'div[data-component-selector="breadcrumbs-wrapper"] > nav',
         callbackFunction: elementReady,
-        keepMonitorSelector: null,
+        keepMonitorSelector: 'body',
     },
     modal: {
         targetElementSelector: 'div[data-component-selector="breadcrumbs-wrapper"] > nav',
@@ -44,7 +44,7 @@ export default async function watchPageToAddElements(pageType) {
 }
 
 async function elementReady(elm, issueKey) {
-    console.log('✅✅✅✅✅ NEW ISSUE!!!:', elm);
+    console.log('✅✔️✅✔️✅✔️✅ NEW ISSUE!!!:', elm, issueKey);
     try {
         const jiraHttpService = new JiraHttpService();
         await jiraHttpService.init();

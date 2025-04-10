@@ -5,8 +5,9 @@ export class CopyIssueIcon {
 
     createButton(refElement, issue, issueLink) {
         const parentElement = document.querySelector(parentElementSelector);
-        if (parentElement.querySelector('.extension-copy-link-button')) {
-            return;
+        const existingElement = parentElement.querySelector('.extension-copy-link-button');
+        if (existingElement) {
+            existingElement.remove();
         }
         const buttonElement = parentElement.querySelector('button');
         this.iconButton = buttonElement.cloneNode(true);
@@ -19,8 +20,6 @@ export class CopyIssueIcon {
 
         this.iconButton?.addEventListener('click', () => {
             this.copyLinkToClipboard(issueLink, issue.key, issue.fields.summary);
-            // const issueKey = this.getIssueFunc();
-            // this.createLinkAndCopy(issueKey);
         });
 
         console.debug('Copy-link button created');
