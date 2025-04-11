@@ -3,7 +3,8 @@ export class SettingsService {
         customDomain: 'www',
         defaultProjectKey: 'jira',
         boardUrl: '',
-        useSmartNavigation: true
+        useSmartNavigation: true,
+        showDueDateAlert: true,
     };
 
     additionalSettings = {

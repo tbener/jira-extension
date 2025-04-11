@@ -43,6 +43,7 @@ const saveOptions = () => {
         customDomain: document.getElementById('customDomain').value,
         defaultProjectKey: document.getElementById('defaultProjectKey').value,
         useSmartNavigation: document.getElementById('useSmartNavigation').checked,
+        showDueDateAlert: document.getElementById('showDueDateAlert').checked,
         boardUrl: boardLinkInputElement.value
     }
 
@@ -67,6 +68,7 @@ const restoreOptions = async () => {
         document.getElementById('defaultProjectKey').value = settings.defaultProjectKey;
         document.getElementById('version').textContent = settings.versionDisplay;
         document.getElementById('useSmartNavigation').checked = settings.useSmartNavigation;
+        document.getElementById('showDueDateAlert').checked = settings.showDueDateAlert;
         boardLinkInputElement.value = settings.boardUrl;
 
         await setBoardLink();

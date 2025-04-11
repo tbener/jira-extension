@@ -11,6 +11,7 @@ import { ElementObserver } from './element-observer.js';
 import { addHeaderInfo } from './header-info.js';
 import { JiraHttpService } from '../../services/jira/jiraHttpService.js';
 import { CopyIssueIcon } from './copy-issue-icon.js';
+import { fetchSettingsFromBackground } from '../../common/utils.js';
 
 const data = {
     page: {
@@ -25,8 +26,12 @@ const data = {
     }
 }
 
+let settings = null;
+
 export default async function watchPageToAddElements(pageType) {
     console.debug("✅ page-watcher.js injected successfully.", `document.readyState = ${document.readyState}`);
+
+    settings = await fetchSettingsFromBackground();
 
     const handler = async () => {
         console.debug('✅ Init watchPageToAddElements with args:', pageType);
@@ -51,7 +56,9 @@ async function elementReady(elm, issueKey) {
         const issue = await jiraHttpService.fetchIssue(issueKey);
         console.debug('Issue fetched:', issue);
 
-        addHeaderInfo(elm, issue);
+        if (settings?.showDueDateAlert) {
+            addHeaderInfo(elm, issue);
+        }
 
         const issueLink = jiraHttpService.getIssueLink(issue.key);
         const copyIssueIcon = new CopyIssueIcon();
