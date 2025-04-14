@@ -22,4 +22,14 @@ const formatString = (str, ...args) => {
     });
 };
 
-export { fetchSettingsFromBackground, formatString };
+/**
+ * Formats a date string into a readable format (e.g., "Apr 20, 2025").
+ * @param {string} dateStr - The date string to format.
+ * @returns {string} - The formatted date.
+ */
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+}
+
+export { fetchSettingsFromBackground, formatString, formatDate };

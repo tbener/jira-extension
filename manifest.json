@@ -29,7 +29,8 @@
                 "jira-pages/main/scripts-init.js"
             ],
             "css": [
-                "jira-pages/main/freeze-title.css"
+                "jira-pages/main/freeze-title.css",
+                "jira-pages/common/style.css"
             ],
             "matches": [
                 "https://*.atlassian.net/browse/*"
@@ -41,7 +42,8 @@
                 "jira-pages/modal/scripts-init.js"
             ],
             "css": [
-                "jira-pages/modal/freeze-title.css"
+                "jira-pages/modal/freeze-title.css",
+                "jira-pages/common/style.css"
             ],
             "matches": [
                 "https://*.atlassian.net/jira/software/*"
