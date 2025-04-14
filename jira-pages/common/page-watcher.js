@@ -8,7 +8,7 @@
  */
 
 import { ElementObserver } from './element-observer.js';
-import { addHeaderInfo } from './header-info.js';
+import { HeaderInfo } from './header-info.js';
 import { JiraHttpService } from '../../services/jira/jiraHttpService.js';
 import { CopyIssueIcon } from './copy-issue-icon.js';
 import { fetchSettingsFromBackground } from '../../common/utils.js';
@@ -57,7 +57,8 @@ async function elementReady(elm, issueKey) {
         console.debug('Issue fetched:', issue);
 
         if (settings?.showDueDateAlert) {
-            addHeaderInfo(elm, issue);
+            const headerInfo = new HeaderInfo();
+            headerInfo.addDueDateInfo(elm, issue);
         }
 
         const issueLink = jiraHttpService.getIssueLink(issue.key);
