@@ -10,15 +10,15 @@ const dueDateInfo = {
     statuses: {
         "analyze": {
             dueDateField: "customfield_12047",
-            message: (dueDate) => dueDate ? `Analysis Due Date: ${formatDate(dueDate)}` : "No analysis due date."
+            message: (dueDate) => dueDate ? `Analysis Due Date: ${formatDate(dueDate)}` : "No analysis due date"
         },
         "in dev": {
             dueDateField: "customfield_12048",
-            message: (dueDate) => dueDate ? `Dev Due Date: ${formatDate(dueDate)}` : "No dev due date."
+            message: (dueDate) => dueDate ? `Dev Due Date: ${formatDate(dueDate)}` : "No dev due date"
         },
         "qa": {
             dueDateField: "customfield_12049",
-            message: (dueDate) => dueDate ? `QA Due Date: ${formatDate(dueDate)}` : "No QA due date."
+            message: (dueDate) => dueDate ? `QA Due Date: ${formatDate(dueDate)}` : "No QA due date"
         }
     }
 };
