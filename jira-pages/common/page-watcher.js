@@ -58,7 +58,7 @@ async function elementReady(elm, issueKey) {
 
         if (settings?.showDueDateAlert) {
             const headerInfo = new HeaderInfo();
-            headerInfo.addDueDateInfo(elm.parentElement.parentElement.parentElement, issue);
+            headerInfo.addDueDateInfo(elm.parentElement.parentElement, issue);
         }
 
         const issueLink = jiraHttpService.getIssueLink(issue.key);
