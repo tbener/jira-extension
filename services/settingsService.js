@@ -4,7 +4,7 @@ export class SettingsService {
         defaultProjectKey: 'jira',
         boardUrl: '',
         useSmartNavigation: true,
-        showDueDateAlert: true,
+        showDueDateAlert: false,
     };
 
     additionalSettings = {
