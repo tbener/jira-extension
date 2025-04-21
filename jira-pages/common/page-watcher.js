@@ -57,7 +57,7 @@ async function elementReady(elm, issueKey) {
         console.debug('Issue fetched:', issue);
 
         if (settings?.showDueDateAlert) {
-            const headerInfo = new HeaderInfo();
+            const headerInfo = new HeaderInfo(settings);
             headerInfo.addDueDateInfo(elm.parentElement.parentElement, issue);
         }
 

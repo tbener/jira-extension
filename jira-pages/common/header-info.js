@@ -9,21 +9,27 @@ const dueDateInfo = {
     },
     statuses: {
         "analyze": {
+            displayName: "Analyze",
             dueDateField: "customfield_12047",
-            message: (dueDate) => dueDate ? `Analysis Due Date: ${formatDate(dueDate)}` : "No analysis due date"
         },
         "in dev": {
+            displayName: "Dev",
             dueDateField: "customfield_12048",
-            message: (dueDate) => dueDate ? `Dev Due Date: ${formatDate(dueDate)}` : "No dev due date"
         },
         "qa": {
+            displayName: "QA",
             dueDateField: "customfield_12049",
-            message: (dueDate) => dueDate ? `QA Due Date: ${formatDate(dueDate)}` : "No QA due date"
         }
     }
 };
 
 export class HeaderInfo {
+    settings = null;
+    
+    constructor(settings) {
+        this.settings = settings;
+    }
+
     addDueDateInfo(refElement, issue) {
         if (!refElement || !(refElement instanceof HTMLElement)) {
             throw new Error("Invalid target element provided.");
@@ -49,12 +55,22 @@ export class HeaderInfo {
         }
 
         const dueDate = issue.fields[statusInfo.dueDateField];
-        const message = statusInfo.message(dueDate);
+        const message = this.generateDueDateMessage(statusInfo.displayName, dueDate);
         const dueDateClassName = dueDate ? dueDateInfo.classes.headerMessageDueDate : dueDateInfo.classes.headerMessageNoDueDate;
 
         const div = this.getOrCreateDiv(refElement);
         div.textContent = message;
         div.classList.add(dueDateClassName);
+    }
+
+    generateDueDateMessage(status, dueDate) {
+        const templates = this.settings.dueDateOptions.messageTemplate;
+        const msgTemplate = dueDate ? templates.with : templates.without;
+        const message = msgTemplate
+            .replace("{status}", status)
+            .replace("{date}", dueDate ? formatDate(dueDate) : "missing");
+        console.debug("Message:", message);
+        return message;
     }
 
     getOrCreateDiv(refElement) {

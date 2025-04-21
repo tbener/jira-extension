@@ -5,6 +5,12 @@ export class SettingsService {
         boardUrl: '',
         useSmartNavigation: true,
         showDueDateAlert: false,
+        dueDateOptions: {
+            messageTemplate: {
+                with: '{status} due date: {date}',
+                without: '(Missing {status} due date)',
+            }
+        }
     };
 
     additionalSettings = {

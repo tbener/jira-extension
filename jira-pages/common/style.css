@@ -12,19 +12,19 @@
     font-size: 13px;
     padding: 4px 10px;
     border-radius: 4px;
-    border: 1px solid #ffbdad;
-    background-color: #ffebe6;
+    background-color: #f4f5f7;
+    border: 1px solid transparent;
     color: #6b778c;
     font-weight: 500;
 }
 
 .header-message.has-due-date {
-    background-color: #f4f5f7;
-    border: 1px solid transparent;
+    
 }
 
 .header-message.no-due-date {
-    color: #b35b00;
-    background-color: #fff4e5;
-    border: 1px solid #ffe2b3;
+    /* style for more reddish alert  */
+    /* color: #b35b00; */
+    /* background-color: #fff4e5; */
+    /* border: 1px solid #ffe2b3; */
 }
