@@ -38,7 +38,10 @@ export default async function watchPageToAddElements(pageType) {
         const pageData = data[pageType];
         console.debug('pageData:', pageData);
         const observer = new ElementObserver();
-        observer.waitForElement(pageData.targetElementSelector, pageData.callbackFunction, pageData.keepMonitorSelector);
+        // observer.waitForElement(pageData.targetElementSelector, pageData.callbackFunction, pageData.keepMonitorSelector);
+
+        observer.waitForElement('button[id="issue\\.fields\\.status-view\\.status-button"] > span', showDueDate, true, false);
+
     };
 
     if (document.readyState === 'complete') {
@@ -46,6 +49,18 @@ export default async function watchPageToAddElements(pageType) {
     } else {
         window.addEventListener('load', handler);
     }
+}
+
+async function showDueDate(elm, issueKey) {
+    console.log('✅✅✅✅ status changed!!!:', elm, issueKey);
+    const breadcrumbsWrapper = document.querySelector('div[data-component-selector="breadcrumbs-wrapper"]');
+    const jiraHttpService = new JiraHttpService();
+    await jiraHttpService.init();
+    setTimeout(async () => {
+        const issue = await jiraHttpService.fetchIssue(issueKey);
+        console.log(breadcrumbsWrapper.parentElement, issue);
+        console.log('✅ Issue Status ✅: ', issue.fields.status?.name);
+    }, 1000);
 }
 
 async function elementReady(elm, issueKey) {

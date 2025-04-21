@@ -16,11 +16,13 @@ export class ElementObserver {
         *              If the element is found, it executes the provided callback function.
         *              Optionally, it can keep monitoring another element.
     */
-    waitForElement(targetSelector, callbackWhenFound, keepMonitorSelector = null) {
+    waitForElement(targetSelector, callbackWhenFound, keepMonitorSelector = null, checkUrlChange = true) {
         console.debug('ElementObserver - initializing...');
 
         this.callbackWhenFound = callbackWhenFound;
         this.keepMonitorSelector = keepMonitorSelector;
+        //TODO: change to trigger mode - issue change / element change
+        this.checkUrlChange = checkUrlChange;
         this.targetSelector = targetSelector;
         this.getIssueKeyFromUrl();
         // this.saveUrl = window.location.href;
@@ -61,6 +63,11 @@ export class ElementObserver {
     }
 
     shouldCheckTargetElement() {
+        if (!this.checkUrlChange) {
+            console.debug('URL change check is disabled. Proceeding to check target element.');
+            return true;
+        }
+
         console.debug('✅ ElementObserver - shouldCheckTargetElement called. Current state:', this.issueKey, this.found);
         if (this.isNewIssue()) {
             console.debug('New issue detected, resetting found state and looking for target element.');
@@ -92,6 +99,17 @@ export class ElementObserver {
 
             if (this.keepMonitorSelector) {
                 console.debug('Keeping observer alive!!');
+                if (!this.checkUrlChange) {
+                    console.debug('Need to check if the innerHtml is changed');
+                    const innerHtml = foundElement.innerHTML;
+                    if (this.innerHtml === innerHtml) {
+                        console.debug('Inner HTML did not change:', innerHtml);
+                        return;
+                    } else {
+                        this.innerHtml = innerHtml;
+                        console.debug('Inner HTML changed:', innerHtml);
+                    }
+                }
             } else {
                 // Disconnect the observer to avoid unnecessary checks
                 console.debug('Disconnecting observer');
@@ -99,7 +117,7 @@ export class ElementObserver {
             }
 
             console.debug('Calling callbackWhenFound function');
-            this.callbackWhenFound(foundElement, this.issueKey);
+            this.callbackWhenFound(foundElement, this.getIssueKeyFromUrl());
         } else {
             console.debug('handleMutations - container element not found');
         }
