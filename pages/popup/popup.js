@@ -15,7 +15,8 @@ const ELEMENT_IDS = {
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
     GO_BUTTON: 'goButton',
-    GO_TO_OPTIONS: 'go-to-options'
+    GO_TO_OPTIONS: 'go-to-options',
+    CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
 };
 
 let typingTimer;
@@ -29,6 +30,7 @@ const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
+const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
@@ -40,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
         await Promise.all([
             refreshIssuesTableFromServer(),
-            fetchAndDisplayProjectAndVersion(),
+            applySettingsInfo(),
             checkAndDisplayVersionUpdate()
         ]);
     } catch (error) {
@@ -49,12 +51,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         togglePlaceholdersVisibility(false);
     }
 
+    showDueDateElement.addEventListener('change', async function () {
+        console.log('🤗 Checkbox changed:', this.checked);
+        try {
+            const showDueDateAlert = this.checked;
+            await chrome.runtime.sendMessage({ action: "saveSettings", settings: { showDueDateAlert }, refreshAll: false });
+            console.debug('Settings saved successfully');
+        } catch (error) {
+            console.log('Error saving settings:', error);
+        }
+    });
+
     console.debug('--- Finish loading popup');
 });
 
-const fetchAndDisplayProjectAndVersion = async () => {
+const applySettingsInfo = async () => {
     try {
         const settings = await fetchSettingsFromBackground();
+        showDueDateElement.checked = settings.showDueDateAlert;
         versionElement.textContent = settings.versionDisplay;
         linkToProjectElement.textContent = settings.defaultProjectKey;
         linkToProjectElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);

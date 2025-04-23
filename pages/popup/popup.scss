@@ -3,16 +3,20 @@
 body {
     min-width: 28rem;
     padding: 0.5rem;
-}
+    min-height: 100%;
+    background-color: #F2F3F5;
 
-.wrapper {
     display: flex;
     flex-direction: column;
-    min-height: 100%;
-    border-radius: 12px;
-    overflow: hidden;
+    
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    padding-bottom: 8px;
+    background-color: white;
+    flex: 1;
 }
 
 header {
@@ -44,6 +48,10 @@ header {
     }
 }
 
+main {
+    display: flex;
+}
+
 .input-group {
     margin-block-end: unset;
 
@@ -55,8 +63,8 @@ header {
 
         &:focus {
             border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2); /* Light focus effect */
-            outline: none; /* Remove default outline */
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
         }
 
         &::placeholder {
@@ -91,7 +99,7 @@ header {
         bottom: 0;
         left: 0;
         right: 0;
-        height: 20px; /* Height of the fade effect */
+        height: 20px;
         background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
     }
 
@@ -112,7 +120,8 @@ a {
 }
 
 footer {
-    color: #808080; /* Grey */
+    color: #808080;
+    font-size: 12px;
     margin-top: auto;
     height: fit-content;
 

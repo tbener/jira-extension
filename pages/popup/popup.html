@@ -9,21 +9,22 @@
 </head>
 
 <body>
-    <div class="wrapper">
-        <header class="p-3">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-1 ps-0">
-                        <img class="icon" src="/images/icon-32.png">
-                    </div>
-                    <div class="col-auto">
-                        <h1 class="d-inline-block"> Jira Issue Navigator</h1>
-                    </div>
+
+    <header class="p-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-1 ps-0">
+                    <img class="icon" src="/images/icon-32.png">
+                </div>
+                <div class="col-auto">
+                    <h1 class="d-inline-block"> Jira Issue Navigator</h1>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <main class="flex-grow-1">
+    <main>
+        <div class="section">
             <div class="container">
                 <div class="row my-3">
                     <div class="col">
@@ -35,11 +36,21 @@
                         <div class="text-muted hint">
                             Ctrl+Enter to open on active tab
                         </div>
-                        <div class="preview-container mt-4">
-                            <span id="preview-error" class="preview-error"></span>
-                            <a href="#" target="_blank" id="preview-link"></a>
-                        </div>
-                        <div class="jira-popup">
+                    </div>
+                </div>
+                <div class="row">
+                    <small class="fw-semibold text-secondary">Default project: <a href="#" target="_blank"
+                            id="link-to-project" title="Open board"></a></small>
+                </div>
+            </div>
+
+            <div class="container mt-3">
+                <div class="row my-3">
+                    <div class="col">
+                        <!-- <div class="mb-2 small text-secondary">
+                            Suggested (yours, open in tabs):
+                        </div> -->
+                        <div class="issues-table-container">
                             <!-- loading placeholders -->
                             <table id="issues-table-placeholders" class="table-sm jira-issues placeholders">
                                 <tbody>
@@ -85,21 +96,29 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </main>
 
-        <footer class="text-secondary">
-            <div class="container">
-                <small class="text-muted">Default project: <a href="#" target="_blank" id="link-to-project"
-                        title="Open board"></a></small>
-                <hr class="mt-2 mb-2">
-                <span class="info-link" id="go-to-options">Options</span>
-                <span class="float-end">
-                    <small id="version"></small>
-                </span>
-                <div class="alert alert-warning update-notification py-2 mt-2" id="update" role="alert"></div>
+    <footer class="text-secondary mt-3">
+        <div class="container">
+
+            <div class="">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showDueDateAlert" checked>
+                    <label class="form-check-label" for="showDueDateAlert">
+                        Show due date message
+                    </label>
+                </div>
             </div>
-        </footer>
-    </div>
+
+            <!-- <span class="info-link" id="go-to-options">More Options</span> -->
+            <a id="go-to-options" href="_blank">More Options</a>
+            <span class="float-end">
+                <small id="version"></small>
+            </span>
+            <div class="alert alert-warning update-notification py-2 mt-2" id="update" role="alert"></div>
+        </div>
+    </footer>
 
     <script src="/services/versionService.js"></script>
     <script type="module" src="popup.js"></script>

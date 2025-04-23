@@ -83,6 +83,21 @@ async function listenToMessages() {
 
                 return true; // Indicate an async response
 
+            case MessageActionTypes.SAVE_SETTINGS:
+                (async () => {
+                    try {
+                        console.debug("Settings save requested", message.settings);
+                        await ensureInitialized(message.refreshAll);
+                        await settingsService.saveSettings(message.settings);
+                        sendResponse({ settings: settingsService.settings });
+                    } catch (error) {
+                        console.warn("Error saving settings:", error);
+                        sendResponse({ error: "Failed to save settings" });
+                    }
+                })();
+
+                return true; // Indicate an async response
+
             case MessageActionTypes.SETTINGS_CHANGED:
                 (async () => {
                     try {
