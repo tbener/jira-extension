@@ -54,7 +54,7 @@ async function elementReady(elm, issueKey) {
         const jiraHttpService = new JiraHttpService();
         await jiraHttpService.init();
         const issue = await jiraHttpService.fetchIssue(issueKey);
-        console.debug('Issue fetched:', issue);
+        console.debug('🏝️ Fetched Issue:', issue);
 
         if (settings?.showDueDateAlert) {
             const headerInfo = new HeaderInfo(settings);

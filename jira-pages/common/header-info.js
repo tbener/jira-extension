@@ -9,7 +9,7 @@ const dueDateInfo = {
     },
     statuses: {
         "analyze": {
-            displayName: "Analyze",
+            displayName: "Analysis",
             dueDateField: "customfield_12047",
         },
         "in dev": {
@@ -18,7 +18,7 @@ const dueDateInfo = {
         },
         "qa": {
             displayName: "QA",
-            dueDateField: "customfield_12049",
+            dueDateField: "customfield_11532",
         }
     }
 };
