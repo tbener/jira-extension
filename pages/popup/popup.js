@@ -190,10 +190,13 @@ const initializeIssuesTableFromCache = async () => {
 const refreshIssuesTableFromServer = async () => {
     try {
         const issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
-        fillIssuesTable(issuesList, issuesTableElement);
-        togglePlaceholdersVisibility(false);
+        if (issuesList.length > 0) {
+            fillIssuesTable(issuesList, issuesTableElement);
+        }
     } catch (error) {
         console.log('Error refreshing issues table from server:', error);
+    } finally {
+        togglePlaceholdersVisibility(false);
     }
 };
 

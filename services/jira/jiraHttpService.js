@@ -105,11 +105,11 @@ export class JiraHttpService {
             if (contentType && contentType.includes("application/json")) {
                 return await response.json();
             } else {
-                console.warn("Response is not JSON:", response);
+                console.log("Response is not JSON:", response);
                 return null;
             }
         } catch (error) {
-            console.warn("Error fetching issue(s):", error, "Path:", apiPath);
+            console.log("Error fetching issue(s):", error, "Path:", apiPath);
             return null;
         }
     }
