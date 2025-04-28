@@ -121,9 +121,13 @@ const fetchAndDisplayIssuePreview = async () => {
         if (currentRequest === latestRequest && issue) {
             if (issue.error) {
                 previewElementError.textContent = issue.error;
+                previewElementError.style.display = 'block';
+                previewElementLink.style.display = 'none';
             } else {
                 previewElementLink.textContent = `${issue.key.toUpperCase()}: ${issue.summary}`;
                 previewElementLink.href = issue.link;
+                previewElementLink.style.display = 'block';
+                previewElementError.style.display = 'none';
             }
         }
     } catch (error) {
