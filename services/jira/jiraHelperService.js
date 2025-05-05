@@ -1,5 +1,6 @@
 import { JiraHttpService } from "./jiraHttpService.js";
-import { fetchSettingsFromBackground, formatString } from '../../common/utils.js';
+import { fetchSettingsFromBackground } from '../../common/utils.js';
+import { Issue } from "../../models/issue.js";
 
 export class JiraHelperService {
 
@@ -27,14 +28,19 @@ export class JiraHelperService {
         return `${this.settings.defaultProjectKey}-${issueNumberOrKey}`;
     }
 
-    async fetchIssueForPreview(issueKey) {
+    async fetchIssueByKey(issueKey) {
         console.debug("Fetching issue with key:", issueKey);
         if (!issueKey) {
             console.debug("No issue key provided. Returning null.");
             return null;
         }
 
-        const data = await this.jiraHttpService.fetchIssue(issueKey);
+        return await this.jiraHttpService.fetchIssue(issueKey);
+
+    }
+
+    async fetchIssueForPreview(issueKey) {
+        const data = await this.fetchIssueByKey(issueKey);
 
         if (!data) {
             return { error: "Not found" };
@@ -45,6 +51,17 @@ export class JiraHelperService {
             summary: data.fields.summary,
             link: this.jiraHttpService.getIssueLink(data.key)
         }
+    }
+
+    async fetchIssue(issueKey, overrideFields = {}) {
+        const data = await this.fetchIssueByKey(issueKey);
+
+        if (!data) {
+            return null;
+        }
+
+        return new Issue(data, overrideFields);
+
     }
 
     AbortFetchIssueForPreview() {

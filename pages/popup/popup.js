@@ -17,10 +17,18 @@ const ELEMENT_IDS = {
     GO_BUTTON: 'goButton',
     GO_TO_OPTIONS: 'go-to-options',
     CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
+    FILTER_BUTTONS_CONTAINER: 'filter-buttons-container',
 };
 
+const FILTERS = {
+    SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', hidden: true },
+    SUGGESTED: { id: 'suggested', label: 'Suggested' },
+    OPEN_TABS: { id: 'open-tabs', label: 'Open Tabs' },
+    MY: { id: 'my', label: 'My' }
+};
+
+let issuesList = [];
 let typingTimer;
-let latestRequest = 0;
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const previewElementLink = document.getElementById(ELEMENT_IDS.PREVIEW_LINK);
@@ -31,12 +39,15 @@ const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
+const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
     togglePlaceholdersVisibility(true);
 
     try {
+        addFilterButtons();
+        applyFilter(FILTERS.SUGGESTED);
         await jiraHelperService.init();
         await initializeIssuesTableFromCache();
         console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
@@ -109,26 +120,31 @@ issueInputElement.addEventListener('keydown', function (event) {
 document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => navigateToIssueFromInput());
 
 const fetchAndDisplayIssuePreview = async () => {
-    const currentRequest = ++latestRequest;
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
+    const handleNoResults = () => {
+        applyFilter(FILTERS.SUGGESTED);
+        hideFilter(FILTERS.SEARCH_RESULTS);
+    };
+
     if (issueKey === '') {
+        handleNoResults();
         return;
     }
 
     try {
-        const issue = await jiraHelperService.fetchIssueForPreview(issueKey);
-        if (currentRequest === latestRequest && issue) {
-            if (issue.error) {
-                previewElementError.textContent = issue.error;
-                previewElementError.style.display = 'block';
-                previewElementLink.style.display = 'none';
-            } else {
-                previewElementLink.textContent = `${issue.key.toUpperCase()}: ${issue.summary}`;
-                previewElementLink.href = issue.link;
-                previewElementLink.style.display = 'block';
-                previewElementError.style.display = 'none';
-            }
+        const issue = await jiraHelperService.fetchIssue(issueKey, { searchResults: true });
+        if (issue) {
+            console.log('Issue fetched for preview:', issue);
+            // delete previous search results
+            issuesList = issuesList.filter(issue => !issue.searchResults);
+            console.log('Filtered issuesList:', issuesList);
+            issuesList.push({ ...issue });
+            console.log('Updated issuesList:', issuesList);
+            applyFilter(FILTERS.SEARCH_RESULTS);
+        }
+        else {
+            handleNoResults();
         }
     } catch (error) {
         console.log('Error fetching issue preview:', error);
@@ -193,7 +209,7 @@ const initializeIssuesTableFromCache = async () => {
 
 const refreshIssuesTableFromServer = async () => {
     try {
-        const issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
+        issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
         if (issuesList.length > 0) {
             fillIssuesTable(issuesList, issuesTableElement);
         }
@@ -208,3 +224,77 @@ const togglePlaceholdersVisibility = (show) => {
     placeholdersTableElement.style.display = show ? 'block' : 'none';
     issuesTableElement.style.display = show ? 'none' : 'block';
 };
+
+const hideFilter = (filter) => {
+    const button = filterButtonsContainer.querySelector(`#filter-${filter.id}-button`);
+    if (button) {
+        button.setAttribute('hidden', 'true');
+    }
+};
+
+const applyFilter = (filter) => {
+    console.log(`Applying filter: ${filter.label}`);
+
+    const input = filterButtonsContainer.querySelector(`#filter-${filter.id}`);
+    if (input) {
+        input.checked = true;
+        // make sure the button is visible
+        const button = input.closest('.filter-button');
+        if (button) {
+            button.removeAttribute('hidden');
+        }
+    }
+
+    if (!issuesList?.length > 0) {
+        return;
+    }
+
+    let filteredIssues = issuesList;
+
+    switch (filter.id) {
+        case FILTERS.SEARCH_RESULTS.id:
+            filteredIssues = issuesList.filter(issue => issue.searchResults);
+            break;
+        case FILTERS.SUGGESTED.id:
+            break;
+        case FILTERS.OPEN_TABS.id:
+            filteredIssues = issuesList.filter(issue => issue.hasOpenTab);
+            break;
+        case FILTERS.MY.id:
+            filteredIssues = issuesList.filter(issue => issue.assignedToMe);
+            break;
+        default:
+            console.warn(`Unknown filter ID: ${filter.id}`);
+    }
+
+    fillIssuesTable(filteredIssues, issuesTableElement);
+};
+
+const addFilterButtons = () => {
+    const template = filterButtonsContainer.querySelector('#filter-button-template');
+    if (!template) {
+        console.error('Filter button template not found in the DOM.');
+        return;
+    }
+
+    Object.values(FILTERS).forEach(filter => {
+        // Duplicate the span in the template for each button
+        const button = template.firstElementChild.cloneNode(true);
+        const input = button.querySelector('input');
+        const label = button.querySelector('label');
+
+        button.id = `filter-${filter.id}-button`;
+        input.id = `filter-${filter.id}`;
+        label.setAttribute('for', input.id);
+        label.textContent = filter.label;
+        if (filter.hidden) {
+            button.setAttribute('hidden', 'true');
+        }
+
+        input.addEventListener('click', () => {
+            console.log(`Filter ${filter.label} clicked`);
+            applyFilter(filter);
+        });
+        filterButtonsContainer.appendChild(button);
+    });
+}
