@@ -98,6 +98,23 @@ a {
     }
 }
 
+.editable-div {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0 0.2rem;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+        border: 1px dashed #ccc;
+    }
+
+    &:focus-within {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        outline: none;
+    }
+}
+
 footer {
     color: #808080;
     font-size: 12px;

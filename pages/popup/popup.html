@@ -30,7 +30,7 @@
                     <div class="col">
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="Enter issue number or ID" id="issue"
-                                autofocus>
+                                autofocus autocomplete="off">
                             <button class="btn btn-primary go-button" id="goButton">Go</button>
                         </div>
                         <div class="text-muted hint">
@@ -38,9 +38,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <small class="fw-semibold text-secondary">Default project: <a href="#" target="_blank"
-                            id="link-to-project" title="Open board"></a></small>
+                <div class="row mt-4">
+                    <small class="text-secondary d-flex align-items-center gap-1">
+                        Default project:
+                        <div id="default-project" contenteditable="true"
+                            class="d-inline-block fw-semibold editable-div"></div>
+                        <a href="#" target="_blank" id="link-to-board" title="Open board"
+                            class="d-inline-block ms-auto">Open board</a>
+                    </small>
                 </div>
             </div>
 

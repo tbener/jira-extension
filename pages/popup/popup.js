@@ -8,7 +8,8 @@ const jiraHelperService = new JiraHelperService()
 const ELEMENT_IDS = {
     ISSUE_INPUT: 'issue',
     VERSION_UPDATE: 'update',
-    LINK_TO_PROJECT: 'link-to-project',
+    DEFAULT_PROJECT: 'default-project',
+    LINK_TO_BOARD: 'link-to-board',
     ISSUES_TABLE: 'issues-table',
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
@@ -28,10 +29,12 @@ const FILTERS = {
 let issuesList = [];
 let typingTimer;
 let currentFilter = null;
+let originalProjectValue;
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
-const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT);
+const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
+const linkToBoardElement = document.getElementById(ELEMENT_IDS.LINK_TO_BOARD);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
@@ -78,12 +81,41 @@ const applySettingsInfo = async () => {
         const settings = await fetchSettingsFromBackground();
         showDueDateElement.checked = settings.showDueDateAlert;
         versionElement.textContent = settings.versionDisplay;
-        linkToProjectElement.textContent = settings.defaultProjectKey;
-        linkToProjectElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+        defaultProjectElement.textContent = settings.defaultProjectKey;
+        originalProjectValue = defaultProjectElement.textContent;
+        linkToBoardElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
     } catch (error) {
         console.log('Error fetching project and version:', error);
     }
 };
+
+defaultProjectElement.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        defaultProjectElement.textContent = originalProjectValue;
+        issueInputElement.focus();
+        event.preventDefault();
+    } else if (event.key === 'Enter') {
+        issueInputElement.focus();
+        event.preventDefault();
+    }
+});
+
+defaultProjectElement.addEventListener('focusout', async function () {
+    try {
+        const newProjectKey = defaultProjectElement.textContent.trim();
+        if (newProjectKey !== originalProjectValue) {
+            await chrome.runtime.sendMessage({
+                action: MessageActionTypes.SAVE_SETTINGS,
+                settings: { defaultProjectKey: newProjectKey },
+                refreshAll: true
+            });
+            originalProjectValue = newProjectKey;
+            console.debug('Default project key saved successfully');
+        }
+    } catch (error) {
+        console.log('Error saving default project key:', error);
+    }
+});
 
 const checkAndDisplayVersionUpdate = async () => {
     try {
@@ -92,7 +124,7 @@ const checkAndDisplayVersionUpdate = async () => {
             versionUpdateElement.style.display = 'block';
             versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
             versionUpdateElement.addEventListener('click', VersionService.startUpdate);
-            
+
             const hintSpan = document.createElement('div');
             hintSpan.className = 'text-muted small';
             hintSpan.textContent = 'If the file does not automatically start downloading, please open the popup and click it again.';
