@@ -39,20 +39,6 @@ export class JiraHelperService {
 
     }
 
-    async fetchIssueForPreview(issueKey) {
-        const data = await this.fetchIssueByKey(issueKey);
-
-        if (!data) {
-            return { error: "Not found" };
-        }
-
-        return {
-            key: data.key,
-            summary: data.fields.summary,
-            link: this.jiraHttpService.getIssueLink(data.key)
-        }
-    }
-
     async fetchIssue(issueKey, overrideFields = {}) {
         const data = await this.fetchIssueByKey(issueKey);
 
@@ -64,7 +50,7 @@ export class JiraHelperService {
 
     }
 
-    AbortFetchIssueForPreview() {
+    AbortFetch() {
         this.jiraHttpService.abortFetch();
     }
 

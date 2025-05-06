@@ -7,8 +7,6 @@ const jiraHelperService = new JiraHelperService()
 
 const ELEMENT_IDS = {
     ISSUE_INPUT: 'issue',
-    PREVIEW_LINK: 'preview-link',
-    PREVIEW_ERROR: 'preview-error',
     VERSION_UPDATE: 'update',
     LINK_TO_PROJECT: 'link-to-project',
     ISSUES_TABLE: 'issues-table',
@@ -29,10 +27,9 @@ const FILTERS = {
 
 let issuesList = [];
 let typingTimer;
+let currentFilter = null;
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
-const previewElementLink = document.getElementById(ELEMENT_IDS.PREVIEW_LINK);
-const previewElementError = document.getElementById(ELEMENT_IDS.PREVIEW_ERROR);
 const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
 const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
@@ -119,7 +116,7 @@ issueInputElement.addEventListener('keydown', function (event) {
 
 document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => navigateToIssueFromInput());
 
-const fetchAndDisplayIssuePreview = async () => {
+const fetchAndDisplayIssueFromInput = async () => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
     const handleNoResults = () => {
@@ -135,8 +132,7 @@ const fetchAndDisplayIssuePreview = async () => {
     try {
         const issue = await jiraHelperService.fetchIssue(issueKey, { searchResults: true });
         if (issue) {
-            console.log('Issue fetched for preview:', issue);
-            // delete previous search results
+            console.log('Issue fetched by input:', issue);
             issuesList = issuesList.filter(issue => !issue.searchResults);
             console.log('Filtered issuesList:', issuesList);
             issuesList.push({ ...issue });
@@ -147,23 +143,24 @@ const fetchAndDisplayIssuePreview = async () => {
             handleNoResults();
         }
     } catch (error) {
-        console.log('Error fetching issue preview:', error);
+        console.log('Error updating search results from input:', error);
     }
 };
 
-const clearIssuePreview = () => {
-    previewElementLink.textContent = '';
-    previewElementLink.href = '#';
-    previewElementError.textContent = '';
+const clearSearchResults = () => {
+    issuesList = issuesList.filter(issue => !issue.searchResults);
+    if (currentFilter?.id === FILTERS.SEARCH_RESULTS.id) {
+        applyFilter(currentFilter);
+    }
 };
 
 issueInputElement.addEventListener('input', async function () {
-    jiraHelperService.AbortFetchIssueForPreview();
+    jiraHelperService.AbortFetch();
     clearTimeout(typingTimer);
-    clearIssuePreview();
+    clearSearchResults();
 
     typingTimer = setTimeout(async () => {
-        await fetchAndDisplayIssuePreview();
+        await fetchAndDisplayIssueFromInput();
     }, 200);
 });
 
@@ -233,6 +230,7 @@ const hideFilter = (filter) => {
 };
 
 const applyFilter = (filter) => {
+    currentFilter = filter;
     console.log(`Applying filter: ${filter.label}`);
 
     const input = filterButtonsContainer.querySelector(`#filter-${filter.id}`);
