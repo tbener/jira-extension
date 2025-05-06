@@ -92,6 +92,11 @@ const checkAndDisplayVersionUpdate = async () => {
             versionUpdateElement.style.display = 'block';
             versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
             versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+            
+            const hintSpan = document.createElement('div');
+            hintSpan.className = 'text-muted small';
+            hintSpan.textContent = 'If the file does not automatically start downloading, please open the popup and click it again.';
+            versionUpdateElement.appendChild(hintSpan);
         }
     } catch (error) {
         console.log('Error checking version update:', error);
