@@ -176,7 +176,7 @@ const fetchAndDisplayIssueFromInput = async () => {
             console.log('Filtered issuesList:', issuesList);
             issuesList.push({ ...issue });
             console.log('Updated issuesList:', issuesList);
-            applyFilter(FILTERS.SEARCH_RESULTS);
+            applyFilter(FILTERS.SEARCH_RESULTS, false);
         }
         else {
             handleNoResults();
@@ -268,8 +268,8 @@ const hideFilter = (filter) => {
     }
 };
 
-const applyFilter = (filter) => {
-    if (currentFilter?.id === filter?.id) {
+const applyFilter = (filter, toggle = true) => {
+    if (toggle && currentFilter?.id === filter?.id) {
         filter = FILTERS.ALL;
     }
     currentFilter = filter;
