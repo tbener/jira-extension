@@ -20,10 +20,12 @@ const ELEMENT_IDS = {
 };
 
 const FILTERS = {
-    SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', hidden: true },
-    SUGGESTED: { id: 'suggested', label: 'Suggested' },
-    OPEN_TABS: { id: 'open-tabs', label: 'Open Tabs' },
-    MY: { id: 'my', label: 'My' }
+    ALL: { id: 'all', label: 'Show All', icon: 'all', hidden: true },
+    OPEN_TABS: { id: 'open-tabs', label: 'Open Tabs', icon: 'tab' },
+    MY: { id: 'my', label: 'My Issues', icon: 'avatar' },
+    SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', icon: 'search', hidden: 'auto' },
+    // SUGGESTED: { id: 'suggested', label: 'Suggested', icon: 'suggested' },
+    // FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'}
 };
 
 let issuesList = [];
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         addFilterButtons();
-        applyFilter(FILTERS.SUGGESTED);
+        applyFilter(FILTERS.ALL);
         await jiraHelperService.init();
         await initializeIssuesTableFromCache();
         console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
@@ -157,7 +159,7 @@ const fetchAndDisplayIssueFromInput = async () => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
     const handleNoResults = () => {
-        applyFilter(FILTERS.SUGGESTED);
+        applyFilter(FILTERS.ALL);
         hideFilter(FILTERS.SEARCH_RESULTS);
     };
 
@@ -267,16 +269,21 @@ const hideFilter = (filter) => {
 };
 
 const applyFilter = (filter) => {
+    if (currentFilter?.id === filter?.id) {
+        filter = FILTERS.ALL;
+    }
     currentFilter = filter;
     console.log(`Applying filter: ${filter.label}`);
 
     const input = filterButtonsContainer.querySelector(`#filter-${filter.id}`);
     if (input) {
         input.checked = true;
-        // make sure the button is visible
-        const button = input.closest('.filter-button');
-        if (button) {
-            button.removeAttribute('hidden');
+        if (filter.hidden === 'auto') {
+            // make sure the button is visible
+            const button = input.closest('.filter-button');
+            if (button) {
+                button.removeAttribute('hidden');
+            }
         }
     }
 
@@ -289,8 +296,6 @@ const applyFilter = (filter) => {
     switch (filter.id) {
         case FILTERS.SEARCH_RESULTS.id:
             filteredIssues = issuesList.filter(issue => issue.searchResults);
-            break;
-        case FILTERS.SUGGESTED.id:
             break;
         case FILTERS.OPEN_TABS.id:
             filteredIssues = issuesList.filter(issue => issue.hasOpenTab);
@@ -317,13 +322,18 @@ const addFilterButtons = () => {
         const button = template.firstElementChild.cloneNode(true);
         const input = button.querySelector('input');
         const label = button.querySelector('label');
+        const icon = label.querySelector('use');
 
         button.id = `filter-${filter.id}-button`;
         input.id = `filter-${filter.id}`;
         label.setAttribute('for', input.id);
-        label.textContent = filter.label;
+        label.title = filter.label;
         if (filter.hidden) {
             button.setAttribute('hidden', 'true');
+        }
+
+        if (icon) {
+            icon.setAttribute('href', `sprite.svg#${filter.icon}`);
         }
 
         input.addEventListener('click', () => {
