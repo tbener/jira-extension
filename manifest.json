@@ -33,7 +33,8 @@
                 "jira-pages/common/style.css"
             ],
             "matches": [
-                "https://*.atlassian.net/browse/*"
+                "https://*.atlassian.net/browse/*",
+                "https://*.atlassian.net/issues/*"
             ],
             "run_at": "document_idle"
         },

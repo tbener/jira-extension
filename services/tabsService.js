@@ -84,6 +84,12 @@ export class TabsService {
                 return browseMatch[1];
             }
 
+            // Check for "/issues/MD-2501?filter=-1"
+            const issuesMatch = parsedUrl.pathname.match(/\/issues\/([A-Z]+-\d+)/);
+            if (issuesMatch) {
+                return issuesMatch[1];
+            }
+
             // Check for "/boards/xxx?selectedIssue=ISSUE-123"
             const selectedIssue = parsedUrl.searchParams.get("selectedIssue");
             if (selectedIssue && /^[A-Z]+-\d+$/.test(selectedIssue)) {
