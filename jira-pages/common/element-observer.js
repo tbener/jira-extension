@@ -106,7 +106,7 @@ export class ElementObserver {
     }
 
     getIssueKeyFromUrl() {
-        const issueKeyRegex = /(?:\/browse\/|[?&]selectedIssue=)([A-Z][A-Z0-9]+-\d+)/;
+        const issueKeyRegex = /(?:\/(?:browse|issues)\/|[?&]selectedIssue=)([A-Z][A-Z0-9]+-\d+)/;
         const match = window.location.href.match(issueKeyRegex);
         return match ? match[1] : null;
     }

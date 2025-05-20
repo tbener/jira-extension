@@ -87,27 +87,6 @@ main {
     font-size: 0.8rem;
 }
 
-.preview-container {
-    position: relative;
-    height: 40px;
-    overflow: hidden;
-    display: inline-block;
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 20px;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
-    }
-
-    .preview-error {
-        color: #808080;
-    }
-}
-
 a {
     color: #109feb;
     text-decoration: none;
@@ -116,6 +95,23 @@ a {
     &:hover {
         color: #1a71c9;
         text-decoration: underline;
+    }
+}
+
+.editable-div {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0 0.2rem;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+        border: 1px dashed #ccc;
+    }
+
+    &:focus-within {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        outline: none;
     }
 }
 
@@ -150,3 +146,25 @@ footer {
         cursor: pointer;
     }
 }
+
+/* Filter buttons */
+
+.filter-buttons .btn-check + label {
+    color: #5a9bd8;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover {
+        color: #2a72b5;
+    }
+}
+
+.filter-buttons .btn-check:checked + label {
+    color: #2a72b5;
+    background-color: #e6f1fb;
+    border: 1px solid #a4c8e8;
+}
+

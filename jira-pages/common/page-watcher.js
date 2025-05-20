@@ -66,7 +66,7 @@ async function elementReady(elm, issueKey) {
         copyIssueIcon.createButton(elm, issue, issueLink);
 
     } catch (error) {
-        console.error('Error adding element to issue page:', error);
+        console.log('⚠️⚠️⚠️⚠️ Error adding element to issue page:', error);
     }
 }
 

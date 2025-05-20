@@ -7,36 +7,49 @@ const jiraHelperService = new JiraHelperService()
 
 const ELEMENT_IDS = {
     ISSUE_INPUT: 'issue',
-    PREVIEW_LINK: 'preview-link',
-    PREVIEW_ERROR: 'preview-error',
     VERSION_UPDATE: 'update',
-    LINK_TO_PROJECT: 'link-to-project',
+    DEFAULT_PROJECT: 'default-project',
+    LINK_TO_BOARD: 'link-to-board',
     ISSUES_TABLE: 'issues-table',
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
     GO_BUTTON: 'goButton',
     GO_TO_OPTIONS: 'go-to-options',
     CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
+    FILTER_BUTTONS_CONTAINER: 'filter-buttons-container',
 };
 
+const FILTERS = {
+    ALL: { id: 'all', label: 'Show All', icon: 'all', hidden: true },
+    OPEN_TABS: { id: 'open-tabs', label: 'Open Tabs', icon: 'tab' },
+    MY: { id: 'my', label: 'My Issues', icon: 'avatar' },
+    SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', icon: 'search', hidden: 'auto' },
+    // SUGGESTED: { id: 'suggested', label: 'Suggested', icon: 'suggested' },
+    // FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'}
+};
+
+let issuesList = [];
 let typingTimer;
-let latestRequest = 0;
+let currentFilter = null;
+let originalProjectValue;
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
-const previewElementLink = document.getElementById(ELEMENT_IDS.PREVIEW_LINK);
-const previewElementError = document.getElementById(ELEMENT_IDS.PREVIEW_ERROR);
 const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
-const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT);
+const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
+const linkToBoardElement = document.getElementById(ELEMENT_IDS.LINK_TO_BOARD);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
+const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
     togglePlaceholdersVisibility(true);
 
     try {
+        addFilterButtons();
+        applyFilter(FILTERS.ALL);
         await jiraHelperService.init();
         await initializeIssuesTableFromCache();
         console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
@@ -70,12 +83,41 @@ const applySettingsInfo = async () => {
         const settings = await fetchSettingsFromBackground();
         showDueDateElement.checked = settings.showDueDateAlert;
         versionElement.textContent = settings.versionDisplay;
-        linkToProjectElement.textContent = settings.defaultProjectKey;
-        linkToProjectElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+        defaultProjectElement.textContent = settings.defaultProjectKey;
+        originalProjectValue = defaultProjectElement.textContent;
+        linkToBoardElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
     } catch (error) {
         console.log('Error fetching project and version:', error);
     }
 };
+
+defaultProjectElement.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        defaultProjectElement.textContent = originalProjectValue;
+        issueInputElement.focus();
+        event.preventDefault();
+    } else if (event.key === 'Enter') {
+        issueInputElement.focus();
+        event.preventDefault();
+    }
+});
+
+defaultProjectElement.addEventListener('focusout', async function () {
+    try {
+        const newProjectKey = defaultProjectElement.textContent.trim();
+        if (newProjectKey !== originalProjectValue) {
+            await chrome.runtime.sendMessage({
+                action: MessageActionTypes.SAVE_SETTINGS,
+                settings: { defaultProjectKey: newProjectKey },
+                refreshAll: true
+            });
+            originalProjectValue = newProjectKey;
+            console.debug('Default project key saved successfully');
+        }
+    } catch (error) {
+        console.log('Error saving default project key:', error);
+    }
+});
 
 const checkAndDisplayVersionUpdate = async () => {
     try {
@@ -84,7 +126,7 @@ const checkAndDisplayVersionUpdate = async () => {
             versionUpdateElement.style.display = 'block';
             versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
             versionUpdateElement.addEventListener('click', VersionService.startUpdate);
-            
+
             const hintSpan = document.createElement('div');
             hintSpan.className = 'text-muted small';
             hintSpan.textContent = 'If the file does not automatically start downloading, please open the popup and click it again.';
@@ -113,46 +155,51 @@ issueInputElement.addEventListener('keydown', function (event) {
 
 document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => navigateToIssueFromInput());
 
-const fetchAndDisplayIssuePreview = async () => {
-    const currentRequest = ++latestRequest;
+const fetchAndDisplayIssueFromInput = async () => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
+    const handleNoResults = () => {
+        applyFilter(FILTERS.ALL);
+        hideFilter(FILTERS.SEARCH_RESULTS);
+    };
+
     if (issueKey === '') {
+        handleNoResults();
         return;
     }
 
     try {
-        const issue = await jiraHelperService.fetchIssueForPreview(issueKey);
-        if (currentRequest === latestRequest && issue) {
-            if (issue.error) {
-                previewElementError.textContent = issue.error;
-                previewElementError.style.display = 'block';
-                previewElementLink.style.display = 'none';
-            } else {
-                previewElementLink.textContent = `${issue.key.toUpperCase()}: ${issue.summary}`;
-                previewElementLink.href = issue.link;
-                previewElementLink.style.display = 'block';
-                previewElementError.style.display = 'none';
-            }
+        const issue = await jiraHelperService.fetchIssue(issueKey, { searchResults: true });
+        if (issue) {
+            console.log('Issue fetched by input:', issue);
+            issuesList = issuesList.filter(issue => !issue.searchResults);
+            console.log('Filtered issuesList:', issuesList);
+            issuesList.push({ ...issue });
+            console.log('Updated issuesList:', issuesList);
+            applyFilter(FILTERS.SEARCH_RESULTS, false);
+        }
+        else {
+            handleNoResults();
         }
     } catch (error) {
-        console.log('Error fetching issue preview:', error);
+        console.log('Error updating search results from input:', error);
     }
 };
 
-const clearIssuePreview = () => {
-    previewElementLink.textContent = '';
-    previewElementLink.href = '#';
-    previewElementError.textContent = '';
+const clearSearchResults = () => {
+    issuesList = issuesList.filter(issue => !issue.searchResults);
+    if (currentFilter?.id === FILTERS.SEARCH_RESULTS.id) {
+        applyFilter(currentFilter);
+    }
 };
 
 issueInputElement.addEventListener('input', async function () {
-    jiraHelperService.AbortFetchIssueForPreview();
+    jiraHelperService.AbortFetch();
     clearTimeout(typingTimer);
-    clearIssuePreview();
+    clearSearchResults();
 
     typingTimer = setTimeout(async () => {
-        await fetchAndDisplayIssuePreview();
+        await fetchAndDisplayIssueFromInput();
     }, 200);
 });
 
@@ -198,7 +245,7 @@ const initializeIssuesTableFromCache = async () => {
 
 const refreshIssuesTableFromServer = async () => {
     try {
-        const issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
+        issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
         if (issuesList.length > 0) {
             fillIssuesTable(issuesList, issuesTableElement);
         }
@@ -213,3 +260,86 @@ const togglePlaceholdersVisibility = (show) => {
     placeholdersTableElement.style.display = show ? 'block' : 'none';
     issuesTableElement.style.display = show ? 'none' : 'block';
 };
+
+const hideFilter = (filter) => {
+    const button = filterButtonsContainer.querySelector(`#filter-${filter.id}-button`);
+    if (button) {
+        button.setAttribute('hidden', 'true');
+    }
+};
+
+const applyFilter = (filter, toggle = true) => {
+    if (toggle && currentFilter?.id === filter?.id) {
+        filter = FILTERS.ALL;
+    }
+    currentFilter = filter;
+    console.log(`Applying filter: ${filter.label}`);
+
+    const input = filterButtonsContainer.querySelector(`#filter-${filter.id}`);
+    if (input) {
+        input.checked = true;
+        if (filter.hidden === 'auto') {
+            // make sure the button is visible
+            const button = input.closest('.filter-button');
+            if (button) {
+                button.removeAttribute('hidden');
+            }
+        }
+    }
+
+    if (!issuesList?.length > 0) {
+        return;
+    }
+
+    let filteredIssues = issuesList;
+
+    switch (filter.id) {
+        case FILTERS.SEARCH_RESULTS.id:
+            filteredIssues = issuesList.filter(issue => issue.searchResults);
+            break;
+        case FILTERS.OPEN_TABS.id:
+            filteredIssues = issuesList.filter(issue => issue.hasOpenTab);
+            break;
+        case FILTERS.MY.id:
+            filteredIssues = issuesList.filter(issue => issue.assignedToMe);
+            break;
+        default:
+            // No filter applied, show all issues
+    }
+
+    fillIssuesTable(filteredIssues, issuesTableElement);
+};
+
+const addFilterButtons = () => {
+    const template = filterButtonsContainer.querySelector('#filter-button-template');
+    if (!template) {
+        console.error('Filter button template not found in the DOM.');
+        return;
+    }
+
+    Object.values(FILTERS).forEach(filter => {
+        // Duplicate the span in the template for each button
+        const button = template.firstElementChild.cloneNode(true);
+        const input = button.querySelector('input');
+        const label = button.querySelector('label');
+        const icon = label.querySelector('use');
+
+        button.id = `filter-${filter.id}-button`;
+        input.id = `filter-${filter.id}`;
+        label.setAttribute('for', input.id);
+        label.title = filter.label;
+        if (filter.hidden) {
+            button.setAttribute('hidden', 'true');
+        }
+
+        if (icon) {
+            icon.setAttribute('href', `sprite.svg#${filter.icon}`);
+        }
+
+        input.addEventListener('click', () => {
+            console.log(`Filter ${filter.label} clicked`);
+            applyFilter(filter);
+        });
+        filterButtonsContainer.appendChild(button);
+    });
+}
