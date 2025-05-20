@@ -9,60 +9,124 @@
 </head>
 
 <body>
-    <div class="wrapper">
-        <header class="p-3">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-1 ps-0">
-                        <img class="icon" src="/images/icon-32.png">
-                    </div>
-                    <div class="col-auto">
-                        <h1 class="d-inline-block"> Jira Issue Navigator</h1>
-                    </div>
+
+    <header class="p-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-1 ps-0">
+                    <img class="icon" src="/images/icon-32.png">
+                </div>
+                <div class="col-auto">
+                    <h1 class="d-inline-block"> Jira Issue Navigator</h1>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <main class="flex-grow-1">
+    <main>
+        <div class="section">
             <div class="container">
                 <div class="row my-3">
                     <div class="col">
-                        <form>
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Enter issue number or ID"
-                                    id="issue" autofocus>
-                                <button class="btn btn-primary go-button" type="submit" id="goButton">Go</button>
-                            </div>
-                        </form>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Enter issue number or ID" id="issue"
+                                autofocus>
+                            <button class="btn btn-primary go-button" id="goButton">Go</button>
+                        </div>
                         <div class="text-muted hint">
                             Ctrl+Enter to open on active tab
                         </div>
-                        <div class="preview-container mt-4">
-                            <span id="preview-error" class="preview-error"></span>
-                            <a href="#" target="_blank" id="preview-link"></a>
+                    </div>
+                </div>
+                <div class="preview-container">
+                    <span id="preview-error" class="preview-error"></span>
+                    <a href="#" target="_blank" id="preview-link"></a>
+                </div>
+                <div class="row">
+                    <small class="fw-semibold text-secondary">Default project: <a href="#" target="_blank"
+                            id="link-to-project" title="Open board"></a></small>
+                </div>
+            </div>
+
+            <div class="container">
+                <div class="row my-3">
+                    <div class="col">
+                        <!-- <div class="mb-2 small text-secondary">
+                            Suggested (yours, open in tabs):
+                        </div> -->
+                        <div class="issues-table-container">
+                            <!-- loading placeholders -->
+                            <table id="issues-table-placeholders" class="table-sm jira-issues placeholders">
+                                <tbody>
+                                    <tr class="jira-issue placeholder-glow">
+                                        <td class="jira-key"><span class="placeholder"></span></td>
+                                        <td class="jira-summary"><span class="placeholder"></span></td>
+                                    </tr>
+                                    <tr class="jira-issue placeholder-glow">
+                                        <td class="jira-key"><span class="placeholder"></span></td>
+                                        <td class="jira-summary"><span class="placeholder"></span></td>
+                                    </tr>
+                                    <tr class="jira-issue placeholder-glow">
+                                        <td class="jira-key"><span class="placeholder"></span></td>
+                                        <td class="jira-summary"><span class="placeholder"></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table id="issues-table" class="table-sm jira-issues">
+                                <tbody>
+                                    <!-- Template Row for Issues -->
+                                    <tr class="jira-issue d-none" data-template="true">
+                                        <td class="jira-key"></td>
+                                        <td class="jira-summary"></td>
+                                        <td class="jira-assignee">
+                                            <img src="" alt="" class="assignee-icon d-none">
+                                        </td>
+                                        <td class="jira-tab-icon">
+                                            <span class="tab-icon" title="Tab is open. Click to activate.">
+                                                <svg width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path
+                                                        d="M3 5h6l2 3h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z">
+                                                    </path>
+                                                </svg>
+                                            </span>
+                                        </td>
+                                        <td class="jira-status"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </main>
 
-        <footer class="text-secondary">
-            <div class="container">
-                <small class="text-muted">Default project: <span id="default_project_key"></span></small>
-                <hr class="mt-2 mb-2">
-                <span class="info-link" id="go-to-options">Options</span>
-                <span class="float-end">
-                    <small id="version"></small>
-                </span>
-                <div class="alert alert-warning update-notification py-2 mt-2" id="update" role="alert"></div>
+    <footer class="text-secondary mt-3">
+        <div class="container">
+
+            <div class="">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showDueDateAlert" checked>
+                    <label class="form-check-label" for="showDueDateAlert">
+                        Show due date message
+                    </label>
+                </div>
             </div>
-        </footer>
-    </div>
 
-    <script src="/common/settings.js"></script>
-    <script src="/services/jiraService.js"></script>
-    <script src="/services/version-service.js"></script>
-    <script src="popup.js"></script>
+            <!-- <span class="info-link" id="go-to-options">More Options</span> -->
+            <a id="go-to-options" href="_blank">More Options</a>
+            <span class="float-end">
+                <small id="version"></small>
+            </span>
+            <div class="alert alert-warning update-notification py-2 mt-2" id="update" role="alert"></div>
+        </div>
+    </footer>
+
+    <script src="/services/versionService.js"></script>
+    <script type="module" src="popup.js"></script>
 </body>
 
 </html>

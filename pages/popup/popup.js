@@ -1,85 +1,162 @@
+import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
+import { fillIssuesTable } from "./fillTable.js";
+import { fetchSettingsFromBackground } from '../../common/utils.js'
+import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
+
+const jiraHelperService = new JiraHelperService()
+
+const ELEMENT_IDS = {
+    ISSUE_INPUT: 'issue',
+    PREVIEW_LINK: 'preview-link',
+    PREVIEW_ERROR: 'preview-error',
+    VERSION_UPDATE: 'update',
+    LINK_TO_PROJECT: 'link-to-project',
+    ISSUES_TABLE: 'issues-table',
+    PLACEHOLDERS_TABLE: 'issues-table-placeholders',
+    VERSION: 'version',
+    GO_BUTTON: 'goButton',
+    GO_TO_OPTIONS: 'go-to-options',
+    CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
+};
+
 let typingTimer;
 let latestRequest = 0;
 
-const issueInputElement = document.getElementById('issue');
-const previewElementLink = document.getElementById('preview-link');
-const previewElementError = document.getElementById('preview-error');
-const versionUpdateElement = document.getElementById('update');
-
-SettingsHandler.getSettings().then(settings => {
-    document.getElementById('default_project_key').textContent = settings.defaultProjectKey;
-    document.getElementById('version').textContent = settings.versionDisplay;
-});
+const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
+const previewElementLink = document.getElementById(ELEMENT_IDS.PREVIEW_LINK);
+const previewElementError = document.getElementById(ELEMENT_IDS.PREVIEW_ERROR);
+const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
+const linkToProjectElement = document.getElementById(ELEMENT_IDS.LINK_TO_PROJECT);
+const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
+const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
+const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
+const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if a newer version exists
-    const versionInfo = await VersionService.checkLatestVersion();
+    console.debug('--- Start loading popup');
+    togglePlaceholdersVisibility(true);
 
-    if (versionInfo.isNewerVersion) {
-        versionUpdateElement.style.display = 'block'; // Show update notification
-        versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
-        versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+    try {
+        await jiraHelperService.init();
+        await initializeIssuesTableFromCache();
+        console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
+        await Promise.all([
+            refreshIssuesTableFromServer(),
+            applySettingsInfo(),
+            checkAndDisplayVersionUpdate()
+        ]);
+    } catch (error) {
+        console.warn('Error during DOMContentLoaded initialization:', error);
+    } finally {
+        togglePlaceholdersVisibility(false);
     }
+
+    showDueDateElement.addEventListener('change', async function () {
+        console.log('🤗 Checkbox changed:', this.checked);
+        try {
+            const showDueDateAlert = this.checked;
+            await chrome.runtime.sendMessage({ action: "saveSettings", settings: { showDueDateAlert }, refreshAll: false });
+            console.debug('Settings saved successfully');
+        } catch (error) {
+            console.log('Error saving settings:', error);
+        }
+    });
+
+    console.debug('--- Finish loading popup');
 });
 
-const navigateToIssue = (newWindow = true) => {
-    const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
-    JiraService.navigateToIssue(issueKey, newWindow);
-    if (!newWindow) {
-        window.close();
+const applySettingsInfo = async () => {
+    try {
+        const settings = await fetchSettingsFromBackground();
+        showDueDateElement.checked = settings.showDueDateAlert;
+        versionElement.textContent = settings.versionDisplay;
+        linkToProjectElement.textContent = settings.defaultProjectKey;
+        linkToProjectElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
+    } catch (error) {
+        console.log('Error fetching project and version:', error);
     }
 };
 
-const setPreview = async () => {
-    const currentRequest = ++latestRequest; // Increment and get the latest request number
-    const issueKey = JiraService.getIssueKeyByInput(issueInputElement.value.trim());
+const checkAndDisplayVersionUpdate = async () => {
+    try {
+        const versionInfo = await VersionService.checkLatestVersion();
+        if (versionInfo.isNewerVersion) {
+            versionUpdateElement.style.display = 'block';
+            versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
+            versionUpdateElement.addEventListener('click', VersionService.startUpdate);
+            
+            const hintSpan = document.createElement('div');
+            hintSpan.className = 'text-muted small';
+            hintSpan.textContent = 'If the file does not automatically start downloading, please open the popup and click it again.';
+            versionUpdateElement.appendChild(hintSpan);
+        }
+    } catch (error) {
+        console.log('Error checking version update:', error);
+    }
+};
+
+const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
+    chrome.runtime.sendMessage({ action: "navigateToIssue", issueKey, stayInCurrentTab });
+    window.close();
+};
+
+const navigateToIssueFromInput = (stayInCurrentTab = false) => {
+    const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
+    sendNavigateToIssueMessage(issueKey, stayInCurrentTab);
+};
+
+issueInputElement.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        navigateToIssueFromInput(event.ctrlKey);
+    }
+});
+
+document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => navigateToIssueFromInput());
+
+const fetchAndDisplayIssuePreview = async () => {
+    const currentRequest = ++latestRequest;
+    const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
     if (issueKey === '') {
         return;
     }
 
     try {
-        const issue = await JiraService.fetchIssue(issueKey);
-        console.debug('ISSUE: ', issue);
-        if (currentRequest === latestRequest && issue) { // Ensure this is the latest request
+        const issue = await jiraHelperService.fetchIssueForPreview(issueKey);
+        if (currentRequest === latestRequest && issue) {
             if (issue.error) {
                 previewElementError.textContent = issue.error;
+                previewElementError.style.display = 'block';
+                previewElementLink.style.display = 'none';
             } else {
                 previewElementLink.textContent = `${issue.key.toUpperCase()}: ${issue.summary}`;
                 previewElementLink.href = issue.link;
+                previewElementLink.style.display = 'block';
+                previewElementError.style.display = 'none';
             }
         }
     } catch (error) {
-        // do nothing
+        console.log('Error fetching issue preview:', error);
     }
 };
 
-const clearPreview = () => {
+const clearIssuePreview = () => {
     previewElementLink.textContent = '';
     previewElementLink.href = '#';
     previewElementError.textContent = '';
-}
+};
 
 issueInputElement.addEventListener('input', async function () {
-    JiraService.abort(); // Always abort the previous request
-
+    jiraHelperService.AbortFetchIssueForPreview();
     clearTimeout(typingTimer);
-    clearPreview();
+    clearIssuePreview();
 
     typingTimer = setTimeout(async () => {
-        await setPreview();
+        await fetchAndDisplayIssuePreview();
     }, 200);
 });
 
-issueInputElement.addEventListener('keydown', function (event) {
-    if (event.ctrlKey && event.key === 'Enter') {
-        navigateToIssue(false);
-    }
-});
-
-document.getElementById('goButton').addEventListener('click', navigateToIssue);
-
-document.querySelector('#go-to-options').addEventListener('click', function () {
+document.querySelector(`#${ELEMENT_IDS.GO_TO_OPTIONS}`).addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {
         chrome.runtime.openOptionsPage();
     } else {
@@ -87,4 +164,52 @@ document.querySelector('#go-to-options').addEventListener('click', function () {
     }
 });
 
+const fetchIssuesList = async (actionType) => {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: actionType }, response => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(response.issuesList);
+            }
+        });
+    });
+};
 
+const initializeIssuesTableFromCache = async () => {
+    try {
+        console.debug('initializeIssuesTableFromCache')
+        const issuesList = await fetchIssuesList("getIssuesList");
+        togglePlaceholdersVisibility(issuesList.length === 0);
+        fillIssuesTable(issuesList, issuesTableElement);
+        issuesTableElement.addEventListener("click", event => {
+            const issueElement = event.target.closest(".jira-issue");
+            if (issueElement) {
+                const issueKey = issueElement.getAttribute("data-issue-key");
+                if (issueKey) {
+                    sendNavigateToIssueMessage(issueKey);
+                }
+            }
+        });
+    } catch (error) {
+        console.log('Error initializing issues table from cache:', error);
+    }
+};
+
+const refreshIssuesTableFromServer = async () => {
+    try {
+        const issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
+        if (issuesList.length > 0) {
+            fillIssuesTable(issuesList, issuesTableElement);
+        }
+    } catch (error) {
+        console.log('Error refreshing issues table from server:', error);
+    } finally {
+        togglePlaceholdersVisibility(false);
+    }
+};
+
+const togglePlaceholdersVisibility = (show) => {
+    placeholdersTableElement.style.display = show ? 'block' : 'none';
+    issuesTableElement.style.display = show ? 'none' : 'block';
+};

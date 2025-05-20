@@ -48,8 +48,14 @@
 ## Steps to upgrade
 1. Update new version in manifest 
 2. Update necessary information in options.html ("Versions details" section)
-3. Run create_zip.py
-4. The actual download branch is ***main***. So make sure to merge to this branch ***both*** manifest.json and zip file 
+3. Verify `create_zip.py`
+   - **Folder Structure**: Ensure all necessary folders are included in the script.
+   - **Root Files**: Confirm that all updated root files are listed in the script.
+   - **Run the Script**: Execute the `create_zip.py` script to generate the updated zip file.
+   - **Validate Output**: Verify that the generated zip file contains all required files and folders.
+   - **Test (Important!!)**: drag the new zip file and verify it works as expected
+4. Run `create_zip.py`
+5. The actual download branch is ***main***. So make sure to merge to this branch ***both*** manifest.json and zip file 
 
 ## Additional Information
 For more details and updates, visit the [GitHub repository](https://github.com/tbener/jira-extension).

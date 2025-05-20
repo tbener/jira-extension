@@ -9,13 +9,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Additional custom styles -->
     <style>
-        a {
+        a.no-decoration {
             display: inline-block;
             text-decoration: none;
             color: #3498db;
         }
 
-        a:hover {
+        a.no-decoration:hover {
             text-decoration: underline;
         }
 
@@ -39,69 +39,109 @@
 </head>
 
 <body>
-    <div class="container col-4">
-        <h1 class="mt-5 mb-4">Extension Options</h1>
+<div class="container col-4">
+    <h1 class="mt-5 mb-4">Extension Options</h1>
 
-        <div class="mb-3">
-            <label for="customDomain" class="form-label">Jira Custom Domain Start</label>
-            <div class="input-group">
-                <span class="input-group-text">https://</span>
-                <input type="text" class="form-control" id="customDomain" placeholder="Your Jira custom domain start">
-                <span class="input-group-text">.atlassian.net</span>
-            </div>
-            <small class="form-text text-muted">Enter the start of your Jira custom domain (e.g., "example").</small>
+    <div class="mb-3">
+        <label for="customDomain" class="form-label">Jira Custom Domain Start</label>
+        <div class="input-group">
+            <span class="input-group-text">https://</span>
+            <input type="text" class="form-control" id="customDomain" placeholder="Your Jira custom domain start">
+            <span class="input-group-text">.atlassian.net</span>
         </div>
-
-        <div class="mb-3">
-            <label for="defaultProjectKey" class="form-label">Default Project Key</label>
-            <input type="text" class="form-control" id="defaultProjectKey" placeholder="Your default project key">
-            <small class="form-text text-muted">Enter your default Jira project key (e.g., "PROJ").</small>
-        </div>
-
-        <div class="row mt-3 ms-1 align-items-baseline">
-            <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
-            <div class="form-text text-muted col-auto" id="status"></div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-5 text-secondary">
-            <span>
-                <span class="text-secondary" id="version"></span>
-                <button type="button" id="checkUpdateButton" class="btn btn-sm btn-outline-primary ms-3">Check for
-                    updates</button>
-            </span>
-            <a href="https://tbener.github.io/jira-extension/">Installation Instructions</a>
-        </div>
-
-        <div class="mt-3">
-            <div class="alert alert-warning update-notification py-2" id="update" role="alert"></div>
-            <div class="alert alert-success update-not-required py-2" role="alert">You're up to date. <a href="#"
-                    class="alert-link" id="download-update">Download zip</a></div>
-        </div>
-
-        <hr />
-
-
-        <h3 class="mb-3 mt-3">Features</h3>
-        <ul>
-            <li>Copy issue key as link + summary</li>
-            <li>Popup for quick navigation</li>
-            <li>Freeze issue summary</li>
-        </ul>
-
-        <h5 class="mb-3 mt-5">Versions details</h5>
-        <ul>
-            <li>v1.0.11: (bugfix) link didn't show when navigating straight to a page with popup</li>
-            <li>v1.0.10: (bugfix) error when disconnected observer</li>
-            <li>v1.0.9: (feature) added version update assistant</li>
-            <li>v1.0.7: (bugfix) copy link not always correct</li>
-            <li>v1.0.6: (feature) display preview while typing</li>
-        </ul>
+        <small class="form-text text-muted">Enter the start of your Jira custom domain (e.g., "example").</small>
     </div>
 
-    <!-- Your custom script -->
-    <script src="/common/settings.js"></script>
-    <script src="/services/version-service.js"></script>
-    <script src="options.js"></script>
+    <div class="mb-3">
+        <label for="defaultProjectKey" class="form-label">Default Project Key</label>
+        <input type="text" class="form-control" id="defaultProjectKey" placeholder="Your default project key">
+        <small class="form-text text-muted">Enter your default Jira project key (e.g., "PROJ").</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="boardLinkInput" class="form-label">Default Board Link (leave blank for auto find)</label>
+        <!--        <button type="button" id="findBoard" class="btn btn-outline-secondary btn-sm ms-2 mb-1">Auto find</button>-->
+        <input type="text" class="form-control" id="boardLinkInput" placeholder="(Auto)">
+
+        <small class="form-text text-muted">
+            <a href="#" target="_blank" id="boardLinkA"></a>
+            (<a href="#" id="setBoardLink">set</a>)
+            <br>
+            The URL to open when clicking on the project name.
+        </small>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <label class="form-label fw-bold">Enable Smart Navigation</label>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="useSmartNavigation" checked>
+            <label class="form-check-label" for="useSmartNavigation">
+                When opening an issue, switch to an existing tab if it's already open instead of creating a new one.
+            </label>
+        </div>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="showDueDateAlert" checked>
+            <label class="form-check-label" for="showDueDateAlert">
+                Show due date message
+            </label>
+        </div>
+    </div>
+
+    <div class="row mt-3 ms-1 align-items-baseline">
+        <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
+        <div class="form-text text-muted col-auto" id="status"></div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-5 text-secondary">
+            <span>
+                <span class="text-secondary" id="version"></span>
+                <button type="button" id="checkUpdateButton" class="btn btn-sm btn-outline-primary ms-3">
+                    Check for updates
+                </button>
+            </span>
+        <a href="https://tbener.github.io/jira-extension/" class="no-decoration">Installation Instructions</a>
+    </div>
+
+    <div class="mt-3">
+        <div class="alert alert-warning update-notification py-2" id="update" role="alert"></div>
+        <div class="alert alert-success update-not-required py-2" role="alert">You're up to date.
+            <a href="#" class="alert-link" id="download-update">Download zip</a>
+        </div>
+    </div>
+
+    <hr/>
+
+
+    <h3 class="mb-3 mt-3">Features</h3>
+    <ul>
+        <li>Copy issue key as link + summary</li>
+        <li>Popup for quick navigation</li>
+        <li>Freeze issue summary</li>
+        <li>Smart navigation - reuse existing tabs when opening issues</li>
+    </ul>
+
+    <h5 class="mb-3 mt-5">Versions details</h5>
+    <ul>
+        <li>v2.0.0: (feature) added issue list in popup</li>
+        <li>v2.0.0: (feature) added due date indication</li>
+        <li>v2.0.0: (feature) added smart navigation</li>
+    </ul>
+    <ul>
+        <li>v1.0.13: (feature) added link to board</li>
+        <li>v1.0.12: UI</li>
+        <li>v1.0.11: (bugfix) link didn't show when navigating straight to a page with popup</li>
+        <li>v1.0.10: (bugfix) error when disconnected observer</li>
+        <li>v1.0.9: (feature) added version update assistant</li>
+        <li>v1.0.7: (bugfix) copy link not always correct</li>
+        <li>v1.0.6: (feature) display preview while typing</li>
+    </ul>
+</div>
+
+<script src="/services/versionService.js"></script>
+<script src="options.js" type="module"></script>
 </body>
 
 </html>

@@ -54,9 +54,9 @@ const VersionService = (() => {
         }
     }
 
-    const startUpdate = (windowToClose) => {
-        downloadZip(windowToClose);
-        openExtensionsPage();
+    const startUpdate = async () => {
+        await openExtensionsPage();
+        downloadZip();
     }
 
     const downloadZip = () => {
@@ -66,18 +66,20 @@ const VersionService = (() => {
     }
 
     const openExtensionsPage = () => {
-        chrome.tabs.query({ currentWindow: true }, function (tabs) {
-            const extensionTab = tabs.find(tab => tab.url === this.EXTENSIONS_PAGE_URL);
-
-            if (extensionTab) {
-                // If found, bring the tab to focus
-                chrome.tabs.update(extensionTab.id, { active: true });
-            } else {
-                // If not found, open a new tab
-                chrome.tabs.create({ url: this.EXTENSIONS_PAGE_URL });
-            }
+        return new Promise((resolve) => {
+            chrome.tabs.query({ currentWindow: true }, function (tabs) {
+                const extensionTab = tabs.find(tab => tab.url === EXTENSIONS_PAGE_URL);
+    
+                if (extensionTab) {
+                    // If found, bring the tab to focus
+                    chrome.tabs.update(extensionTab.id, { active: true }, resolve);
+                } else {
+                    // If not found, open a new tab
+                    chrome.tabs.create({ url: EXTENSIONS_PAGE_URL }, resolve);
+                }
+            });
         });
-    }
+    };
 
     // Check if version is newer than the current version
     function isVersionNewer(version) {
