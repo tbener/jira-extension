@@ -304,7 +304,7 @@ const applyFilter = (filter, toggle = true) => {
             filteredIssues = issuesList.filter(issue => issue.assignedToMe);
             break;
         default:
-            console.warn(`Unknown filter ID: ${filter.id}`);
+            // No filter applied, show all issues
     }
 
     fillIssuesTable(filteredIssues, issuesTableElement);
