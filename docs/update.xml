@@ -1,5 +1,5 @@
 <gupdate xmlns="http://www.google.com/update2/response" protocol="2.0">
     <app appid="cahojkigicegnlnghbnoigeibdnicpap">
-        <updatecheck codebase="https://tbener.github.io/jira-extension/mdclone-jira-extension.crx" version="1.0.1" />
+        <updatecheck codebase="https://tbener.github.io/jira-extension/mdclone-jira-extension.crx" version="2.0.2" />
     </app>
 </gupdate>
