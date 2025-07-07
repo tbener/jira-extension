@@ -23,7 +23,7 @@ if __name__ == "__main__":
     files_to_zip = ['manifest.json', 'background.js', 'config.js']
 
     # Define the output zip file name
-    output_zip = 'MDClone Jira Extension.zip'
+    output_zip = 'TalTool Jira Extension.zip'
 
     # Call the function
     zip_folders_and_files(output_zip, folders_to_zip, files_to_zip)

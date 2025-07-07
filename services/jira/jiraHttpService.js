@@ -10,7 +10,6 @@ export class JiraHttpService {
         this.baseUrl = '';
         this.baseApiUrl = '';
         this.authHeaders = {
-            Authorization: "Basic " + btoa(`${CONFIG.USERNAME}:${CONFIG.PASSWORD}`),
             "Content-Type": "application/json",
         };
         this.settings = {};

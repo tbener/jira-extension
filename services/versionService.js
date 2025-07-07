@@ -2,7 +2,7 @@ const VersionService = (() => {
     EXTENSIONS_PAGE_URL = 'chrome://extensions/';
 
     baseUrl = `https://raw.githubusercontent.com/tbener/jira-extension/main`;
-    zipUrl = `${baseUrl}/MDClone%20Jira%20Extension.zip`;
+    zipUrl = `${baseUrl}/TalTool%20Jira%20Extension.zip`;
     manifestUrl = `${baseUrl}/manifest.json`;
 
     const checkLatestVersion = async (force = false) => {

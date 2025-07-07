@@ -3,8 +3,8 @@ import { NavigationService } from './services/navigationService.js';
 import { IssuesLists } from "./services/issuesLists.js";
 import { MessageActionTypes } from './enum/message-action-types.enum.js';
 
-const DEFAULT_CUSTOM_DOMAIN = 'mdclone';
-const DEFAULT_PROJECT_KEY = 'ADAMS';
+const DEFAULT_CUSTOM_DOMAIN = 'your-domain';
+const DEFAULT_PROJECT_KEY = 'JIRA';
 
 const settingsService = new SettingsService();
 const navigationService = new NavigationService();
