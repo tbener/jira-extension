@@ -5,37 +5,13 @@ import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
 const jiraHelperService = new JiraHelperService()
 const settingsService = new SettingsService();
 
-const updateNotificationElement = document.getElementsByClassName('update-notification')[0];
-const upToDateNotificationElement = document.getElementsByClassName('update-not-required')[0];
-const downloadUpdateElement = document.getElementById('download-update');
-const checkUpdateElement = document.getElementById('checkUpdateButton');
 const boardLinkElement = document.getElementById('boardLinkA');
 const boardLinkInputElement = document.getElementById('boardLinkInput');
 
-checkUpdateElement.addEventListener('click', async () => checkUpdate(true));
-
 document.addEventListener('DOMContentLoaded', async () => {
     await jiraHelperService.init();
-
-    updateNotificationElement.addEventListener('click', VersionService.startUpdate);
-    downloadUpdateElement.addEventListener('click', VersionService.startUpdate);
-
     restoreOptions();
-    checkUpdate(false);
 });
-
-const checkUpdate = async (force = false) => {
-    const versionInfo = await VersionService.checkLatestVersion(force);
-
-    if (versionInfo.isNewerVersion) {
-        upToDateNotificationElement.style.display = 'none';
-        updateNotificationElement.style.display = 'block';
-        updateNotificationElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
-    } else {
-        updateNotificationElement.style.display = 'none';
-        upToDateNotificationElement.style.display = force ? 'block' : 'none';
-    }
-}
 
 // Saves options to chrome.storage
 const saveOptions = () => {

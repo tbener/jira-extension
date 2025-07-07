@@ -17,6 +17,11 @@ chrome.runtime.onInstalled.addListener(function (details) {
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         // Save default settings or perform any necessary setup
         saveDefaultSettings();
+        if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+        }
     } else if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
         chrome.storage.local.clear(() => {
             if (chrome.runtime.lastError) {
