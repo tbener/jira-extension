@@ -4,7 +4,7 @@ export class SettingsService {
         defaultProjectKey: 'jira',
         boardUrl: '',
         useSmartNavigation: true,
-        showDueDateAlert: false,
+        showDueDateAlert: true,
         dueDateOptions: {
             messageTemplate: {
                 with: '{status} due date: {date}',
