@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "TalTool Jira Extension",
-    "version": "2.0.5",
+    "version": "2.0.6",
     "description": "Extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     "background": {

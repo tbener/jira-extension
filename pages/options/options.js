@@ -11,6 +11,19 @@ const boardLinkInputElement = document.getElementById('boardLinkInput');
 document.addEventListener('DOMContentLoaded', async () => {
     await jiraHelperService.init();
     restoreOptions();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('welcome')) {
+        // display pin message
+        const pinCard = document.querySelector('.pin-card-container');
+        const dismissBtn = document.getElementById('dismiss-pin-msg');
+        if (pinCard) {
+            pinCard.classList.add('show');
+            dismissBtn.addEventListener('click', () => {
+                pinCard.classList.remove('show');
+            });
+        }
+    }
 });
 
 // Saves options to chrome.storage

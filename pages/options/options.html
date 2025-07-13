@@ -35,105 +35,173 @@
             text-decoration: underline;
             cursor: pointer;
         }
+
+        .pin-card-container {
+            top: 20px;
+            right: 20px;
+            position: fixed;
+            z-index: 2147483646;
+            opacity: 0;
+            transition: opacity 1.0s ease;
+        }
+
+        .pin-card-container.show {
+            opacity: 1;
+        }
+
+        .pin-card {
+            background-color: hsla(0, 0%, 100%, 1);
+            border-radius: 8px;
+            width: calc(55 * var(--lns-unit, 8px));
+            /* height: calc(63 * var(--lns-unit, 8px)); */
+            padding: 30px;
+            border: 1px solid rgba(11, 18, 40, 0.14) hsla(225.5, 57%, 10%, 0.14);
+            box-shadow: rgba(0, 0, 0, 0.10) 0px 2px 12px, rgba(0, 0, 0, 0.18) 0px 8px 24px;
+        }
+
+        .pin-card-content {
+            display: grid;
+            -webkit-box-align: center;
+            align-items: center;
+            justify-content: stretch;
+            grid-auto-flow: row;
+        }
+
+        .screenshot {
+            max-width: 100%;
+        }
+
+        img {
+            overflow-clip-margin: content-box;
+            overflow: clip;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container col-4">
-        <h1 class="mt-5 mb-4">Jira Extension Options</h1>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-9 col-lg-8 col-xl-6">
 
-        <div class="card p-4 mb-4" style="background-color: #f0f8ff; border-left: 5px solid #0d6efd;">
-            <div class="mb-3">
-            <label for="customDomain" class="form-label fw-bold">Jira Custom Domain Start</label>
-            <div class="input-group">
-                <span class="input-group-text">https://</span>
-                <input type="text" class="form-control" id="customDomain" placeholder="Your Jira custom domain start">
-                <span class="input-group-text">.atlassian.net</span>
+                <div class="pin-card-container" id="pin-message-container">
+                    <div radius="xlarge" class="pin-card bg-body ">
+                        <div class="pin-card-content">
+                            <h2 class="d-flex align-items-center">
+                                <img src="/images/icon-32.png" alt="TalTool Logo" class="logo me-3">
+                                TalTool Jira Extension
+                            </h2>
+                            <h5 class="mt-4">First, pin TalTool to access later</h5>
+                            <p class="mt-1">
+                                Click the
+                                <svg width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M19 10V7c0-1.103-.897-2-2-2h-3c0-1.654-1.346-3-3-3S8 3.346 8 5H5c-1.103 0-2 .897-2 2v3.881l.659.239C4.461 11.41 5 12.166 5 13s-.539 1.59-1.341 1.88L3 15.119V19c0 1.103.897 2 2 2h3.881l.239-.659C9.41 19.539 10.166 19 11 19s1.59.539 1.88 1.341l.239.659H17c1.103 0 2-.897 2-2v-3c1.654 0 3-1.346 3-3s-1.346-3-3-3zm0 4h-2l-.003 5h-2.545c-.711-1.22-2.022-2-3.452-2s-2.741.78-3.452 2H5v-2.548C6.22 15.741 7 14.43 7 13s-.78-2.741-2-3.452V7h5V5a1 1 0 0 1 2 0v2h5v5h2a1 1 0 0 1 0 2z" />
+                                </svg>
+                                above to pin TalTool.
+                            </p></svg>
+                            <img src="/images/pin-instructions.png" alt="How to pin" class="screenshot">
+                            <button class="btn btn-outline-secondary mt-5" id="dismiss-pin-msg">Dismiss</button>
+                        </div>
+                    </div>
+                </div>
+
+                <h1 class="mt-5 mb-4">Jira Extension Options</h1>
+
+                <div class="card p-4 mb-4" style="background-color: #f0f8ff; border-left: 5px solid #0d6efd;">
+                    <div class="mb-3">
+                        <label for="customDomain" class="form-label fw-bold">Jira Custom Domain Start</label>
+                        <div class="input-group">
+                            <span class="input-group-text">https://</span>
+                            <input type="text" class="form-control" id="customDomain" placeholder="Your Jira custom domain start">
+                            <span class="input-group-text">.atlassian.net</span>
+                        </div>
+                        <small class="form-text text-muted">Enter the start of your Jira custom domain (e.g., "example").</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="defaultProjectKey" class="form-label fw-bold">Default Project Key</label>
+                        <input type="text" class="form-control" id="defaultProjectKey" placeholder="Your default project key">
+                        <small class="form-text text-muted">Enter your default Jira project key (e.g., "PROJ").</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="boardLinkInput" class="form-label">Default Board Link (leave blank for auto find)</label>
+                    <!--        <button type="button" id="findBoard" class="btn btn-outline-secondary btn-sm ms-2 mb-1">Auto find</button>-->
+                    <input type="text" class="form-control" id="boardLinkInput" placeholder="(Auto)">
+
+                    <small class="form-text text-muted">
+                        <a href="#" target="_blank" id="boardLinkA"></a>
+                        (<a href="#" id="setBoardLink">set</a>)
+                        <br>
+                        The URL to open when clicking on the project name.
+                    </small>
+                </div>
+
+                <div class="card p-3 mb-3">
+                    <label class="form-label fw-bold">Enable Smart Navigation</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="useSmartNavigation" checked>
+                        <label class="form-check-label" for="useSmartNavigation">
+                            When opening an issue, switch to an existing tab if it's already open instead of creating a new one.
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card p-3 mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showDueDateAlert" checked>
+                        <label class="form-check-label" for="showDueDateAlert">
+                            Show due date message
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row mt-3 ms-1 align-items-baseline">
+                    <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
+                    <div class="form-text text-muted col-auto" id="status"></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-5 text-secondary">
+                    <span class="text-secondary" id="version"></span>
+                </div>
+
+
+                <hr />
+
+
+                <h3 class="mb-3 mt-3">Main Features</h3>
+                <ul>
+                    <li>Copy issue key as link + summary</li>
+                    <li>Popup for quick navigation</li>
+                    <li>Freeze issue summary</li>
+                    <li>Smart navigation - reuse existing tabs when opening issues</li>
+                    <li>Due date indication</li>
+                    <li>Suggested issue list in popup</li>
+                </ul>
+
+                <h5 class="mb-3 mt-5">Versions details</h5>
+                <ul>
+                    <li>v2.0.6: (feature) added welcome pin message</li>
+                    <li>v2.0.5: (feature) change copy icon to match Jira new design</li>
+                    <li>v2.0.4: Published to Chrome Web Store</li>
+                    <li>v2.0.2: (bugfix) added copy icon to pages with filter URL</li>
+                    <li>v2.0.1: (feature) added issue list filters</li>
+                    <li>v2.0.0: (feature) added issue list in popup</li>
+                    <li>v2.0.0: (feature) added due date indication</li>
+                    <li>v2.0.0: (feature) added smart navigation</li>
+                </ul>
+                <ul>
+                    <li>v1.0.13: (feature) added link to board</li>
+                    <li>v1.0.12: UI</li>
+                    <li>v1.0.11: (bugfix) link didn't show when navigating straight to a page with popup</li>
+                    <li>v1.0.10: (bugfix) error when disconnected observer</li>
+                    <li>v1.0.9: (feature) added version update assistant</li>
+                    <li>v1.0.7: (bugfix) copy link not always correct</li>
+                    <li>v1.0.6: (feature) display preview while typing</li>
+                </ul>
             </div>
-            <small class="form-text text-muted">Enter the start of your Jira custom domain (e.g., "example").</small>
-            </div>
-
-            <div class="mb-3">
-            <label for="defaultProjectKey" class="form-label fw-bold">Default Project Key</label>
-            <input type="text" class="form-control" id="defaultProjectKey" placeholder="Your default project key">
-            <small class="form-text text-muted">Enter your default Jira project key (e.g., "PROJ").</small>
-            </div>
         </div>
-
-        <div class="mb-3">
-            <label for="boardLinkInput" class="form-label">Default Board Link (leave blank for auto find)</label>
-            <!--        <button type="button" id="findBoard" class="btn btn-outline-secondary btn-sm ms-2 mb-1">Auto find</button>-->
-            <input type="text" class="form-control" id="boardLinkInput" placeholder="(Auto)">
-
-            <small class="form-text text-muted">
-                <a href="#" target="_blank" id="boardLinkA"></a>
-                (<a href="#" id="setBoardLink">set</a>)
-                <br>
-                The URL to open when clicking on the project name.
-            </small>
-        </div>
-
-        <div class="card p-3 mb-3">
-            <label class="form-label fw-bold">Enable Smart Navigation</label>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="useSmartNavigation" checked>
-                <label class="form-check-label" for="useSmartNavigation">
-                    When opening an issue, switch to an existing tab if it's already open instead of creating a new one.
-                </label>
-            </div>
-        </div>
-
-        <div class="card p-3 mb-3">
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="showDueDateAlert" checked>
-                <label class="form-check-label" for="showDueDateAlert">
-                    Show due date message
-                </label>
-            </div>
-        </div>
-
-        <div class="row mt-3 ms-1 align-items-baseline">
-            <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
-            <div class="form-text text-muted col-auto" id="status"></div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-5 text-secondary">
-            <span class="text-secondary" id="version"></span>
-        </div>
-
-
-        <hr />
-
-
-        <h3 class="mb-3 mt-3">Main Features</h3>
-        <ul>
-            <li>Copy issue key as link + summary</li>
-            <li>Popup for quick navigation</li>
-            <li>Freeze issue summary</li>
-            <li>Smart navigation - reuse existing tabs when opening issues</li>
-            <li>Due date indication</li>
-            <li>Suggested issue list in popup</li>
-        </ul>
-
-        <h5 class="mb-3 mt-5">Versions details</h5>
-        <ul>
-            <li>v2.0.5: (feature) change copy icon to match Jira new design</li>
-            <li>v2.0.4: Published to Chrome Web Store</li>
-            <li>v2.0.2: (bugfix) added copy icon to pages with filter URL</li>
-            <li>v2.0.1: (feature) added issue list filters</li>
-            <li>v2.0.0: (feature) added issue list in popup</li>
-            <li>v2.0.0: (feature) added due date indication</li>
-            <li>v2.0.0: (feature) added smart navigation</li>
-        </ul>
-        <ul>
-            <li>v1.0.13: (feature) added link to board</li>
-            <li>v1.0.12: UI</li>
-            <li>v1.0.11: (bugfix) link didn't show when navigating straight to a page with popup</li>
-            <li>v1.0.10: (bugfix) error when disconnected observer</li>
-            <li>v1.0.9: (feature) added version update assistant</li>
-            <li>v1.0.7: (bugfix) copy link not always correct</li>
-            <li>v1.0.6: (feature) display preview while typing</li>
-        </ul>
     </div>
 
     <script src="/services/versionService.js"></script>
