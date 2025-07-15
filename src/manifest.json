@@ -1,0 +1,77 @@
+{
+    "manifest_version": 3,
+    "name": "TalTool Jira Extension",
+    "version": "2.0.6",
+    "description": "Extension for Jira, by Tal Bener",
+    "author": "tbener@gmail.com",
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "pages/popup/popup.html",
+        "default_icon": "images/icon-32.png"
+    },
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Alt+J",
+                "mac": "Command+J"
+            }
+        }
+    },
+    "options_page": "pages/options/options.html",
+    "content_scripts": [
+        {
+            "js": [
+                "jira-pages/main/scripts-init.js"
+            ],
+            "css": [
+                "jira-pages/main/freeze-title.css",
+                "jira-pages/common/style.css"
+            ],
+            "matches": [
+                "https://*.atlassian.net/browse/*",
+                "https://*.atlassian.net/issues/*"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "js": [
+                "jira-pages/modal/scripts-init.js"
+            ],
+            "css": [
+                "jira-pages/modal/freeze-title.css",
+                "jira-pages/common/style.css"
+            ],
+            "matches": [
+                "https://*.atlassian.net/jira/software/*"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "icons": {
+        "16": "images/icon-16.png",
+        "32": "images/icon-32.png",
+        "48": "images/icon-96.png",
+        "128": "images/icon-96.png"
+    },
+    "permissions": [
+        "scripting",
+        "activeTab",
+        "storage",
+        "tabs"
+    ],
+    "host_permissions": [
+        "https://*.atlassian.net/*"
+    ]
+}
