@@ -47,6 +47,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
     togglePlaceholdersVisibility(true);
 
+    // Clipboard check for jira issue format, and auto-fill input
+    issueInputElement.addEventListener('focus', async function handleClipboardPasteOnce() {
+        console.debug(`Checking clipboard for number input... secureContext: ${window.isSecureContext}`);
+        if (issueInputElement && navigator.clipboard && window.isSecureContext) {
+            try {
+                const text = await navigator.clipboard.readText();
+                const trimmedText = text.trim();
+                if (/^[A-Z][A-Z0-9_]+-\d+$/i.test(trimmedText)) {
+                    console.debug('Clipboard text matched format:', trimmedText);
+                    issueInputElement.value = trimmedText;
+                    issueInputElement.select();
+                    handleIssueInput();
+                }
+            } catch (err) {
+                console.log('Clipboard read failed:', err);
+            }
+        } else {
+            console.log(`Clipboard access not available or not secure context. Reason: ${!issueInputElement ? 'issueInputElement is null' : ''} ${!navigator.clipboard ? 'navigator.clipboard is not available' : ''} ${!window.isSecureContext ? 'window.isSecureContext is false' : ''}`);
+        }
+        // Remove this event listener after first use
+        issueInputElement.removeEventListener('focus', handleClipboardPasteOnce);
+    });
+
     try {
         addFilterButtons();
         applyFilter(FILTERS.ALL);
@@ -193,7 +216,7 @@ const clearSearchResults = () => {
     }
 };
 
-issueInputElement.addEventListener('input', async function () {
+const handleIssueInput = async function () {
     jiraHelperService.AbortFetch();
     clearTimeout(typingTimer);
     clearSearchResults();
@@ -201,7 +224,9 @@ issueInputElement.addEventListener('input', async function () {
     typingTimer = setTimeout(async () => {
         await fetchAndDisplayIssueFromInput();
     }, 200);
-});
+};
+
+issueInputElement.addEventListener('input', handleIssueInput);
 
 document.querySelector(`#${ELEMENT_IDS.GO_TO_OPTIONS}`).addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {
@@ -304,7 +329,7 @@ const applyFilter = (filter, toggle = true) => {
             filteredIssues = issuesList.filter(issue => issue.assignedToMe);
             break;
         default:
-            // No filter applied, show all issues
+        // No filter applied, show all issues
     }
 
     fillIssuesTable(filteredIssues, issuesTableElement);

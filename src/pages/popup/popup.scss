@@ -70,6 +70,11 @@ main {
         &::placeholder {
             color: #aaa;
         }
+
+        &::selection {
+            background: #b3e0ff; // Soft blue
+            color: #1e3a8a;      // Deep blue text for contrast
+        }
     }
 
     button.go-button {

@@ -51,7 +51,7 @@ export class JiraHelperService {
     }
 
     AbortFetch() {
-        this.jiraHttpService.abortFetch();
+        this.jiraHttpService?.abortFetch();
     }
 
     async guessBoardLink(domain, projectKey) {

@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "TalTool Jira Extension",
-    "version": "2.0.6",
+    "version": "2.1.0",
     "description": "Extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     "background": {
@@ -69,7 +69,8 @@
         "scripting",
         "activeTab",
         "storage",
-        "tabs"
+        "tabs",
+        "clipboardRead"
     ],
     "host_permissions": [
         "https://*.atlassian.net/*"
