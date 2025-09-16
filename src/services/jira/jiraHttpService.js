@@ -8,7 +8,6 @@ export class JiraHttpService {
 
     constructor() {
         this.baseUrl = '';
-        this.baseApiUrl = '';
         this.authHeaders = {
             "Content-Type": "application/json",
         };
@@ -16,7 +15,7 @@ export class JiraHttpService {
     }
 
     API_PATH = {
-        JQL: 'rest/api/3/search',
+        JQL: 'rest/api/3/search/jql?fields=key,summary,status,assignee,created,updated&jql={0}&maxResults={1}',
         ISSUE: 'rest/api/3/issue/{0}'
     };
 
@@ -26,13 +25,16 @@ export class JiraHttpService {
         const settingsService = new SettingsService();
         this.settings = await settingsService.readSettings();
         this.baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
-        this.baseApiUrl = `${this.baseUrl}/rest/api/3/search`;
 
         console.debug(`JiraHttpService initialized!!!`);
     }
 
     getApiPath(apiPath, ...args) {
         return formatString(`${this.baseUrl}/${apiPath}`, ...args);
+    }
+
+    getJqlPath(jql) {
+        return this.getApiPath(this.API_PATH.JQL, encodeURIComponent(jql), CONFIG.MAX_RESULTS);
     }
 
     getIssueLink(issueKey) {
@@ -66,10 +68,6 @@ export class JiraHttpService {
         const apiPath = this.getJqlPath(jql);
         const response = await this.fetch(apiPath);
         return response?.issues ?? [];
-    }
-
-    getJqlPath(jql) {
-        return `${this.baseApiUrl}?jql=${encodeURIComponent(jql)}&maxResults=${CONFIG.MAX_RESULTS}`;
     }
 
     async fetch(apiPath, withAbortController = false) {
