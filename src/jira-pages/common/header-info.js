@@ -68,7 +68,7 @@ export class HeaderInfo {
         const msgTemplate = dueDate ? templates.with : templates.without;
         const message = msgTemplate
             .replace("{status}", status)
-            .replace("{date}", dueDate ? formatDate(dueDate) : "missing");
+            .replace("{date}", dueDate ? formatDate(dueDate, true) : "missing");
         console.debug("Message:", message);
         return message;
     }

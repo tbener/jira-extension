@@ -23,13 +23,35 @@ const formatString = (str, ...args) => {
 };
 
 /**
- * Formats a date string into a readable format (e.g., "Apr 20, 2025").
+ * Formats a date string into a readable format with optional relative indicators.
  * @param {string} dateStr - The date string to format.
- * @returns {string} - The formatted date.
+ * @param {boolean} includeRelativeIndicators - Whether to include "(today)", "(tomorrow)", "(passed)" indicators. Default: false.
+ * @returns {string} - The formatted date with optional indicators.
  */
-function formatDate(dateStr) {
+function formatDate(dateStr, includeRelativeIndicators = false) {
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    
+    // Reset time to compare only dates
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+    
+    const formattedDate = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+    
+    if (includeRelativeIndicators) {
+        if (dateOnly.getTime() === todayOnly.getTime()) {
+            return `${formattedDate} (today)`;
+        } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
+            return `${formattedDate} (tomorrow)`;
+        } else if (dateOnly < todayOnly) {
+            return `${formattedDate} (overdue)`;
+        }
+    }
+    
+    return formattedDate;
 }
 
 export { fetchSettingsFromBackground, formatString, formatDate };
