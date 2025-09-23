@@ -25,7 +25,7 @@ const FILTERS = {
     MY: { id: 'my', label: 'My Issues', icon: 'avatar' },
     SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', icon: 'search', hidden: 'auto' },
     // SUGGESTED: { id: 'suggested', label: 'Suggested', icon: 'suggested' },
-    // FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'}
+    FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'}
 };
 
 let issuesList = [];
@@ -165,6 +165,36 @@ const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
     window.close();
 };
 
+const toggleIssueFavorite = async (issueKey) => {
+    try {
+        console.debug(`Toggling favorite for issue: ${issueKey}`);
+        const response = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: MessageActionTypes.TOGGLE_FAVORITE, issueKey }, response => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        if (response.error) {
+            console.error('Error toggling favorite:', response.error);
+            return;
+        }
+
+        // Update the local issues list
+        issuesList = response.issuesList || issuesList;
+        
+        // Re-apply the current filter to refresh the display
+        applyFilter(currentFilter, false);
+        
+        console.debug(`Issue ${issueKey} favorite status: ${response.isFavorite}`);
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+    }
+};
+
 const navigateToIssueFromInput = (stayInCurrentTab = false) => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
     sendNavigateToIssueMessage(issueKey, stayInCurrentTab);
@@ -255,6 +285,19 @@ const initializeIssuesTableFromCache = async () => {
         togglePlaceholdersVisibility(issuesList.length === 0);
         fillIssuesTable(issuesList, issuesTableElement);
         issuesTableElement.addEventListener("click", event => {
+            // Check if the click was on a favorite icon
+            const favoriteIcon = event.target.closest(".favorite-icon");
+            if (favoriteIcon) {
+                event.stopPropagation();
+                const issueElement = favoriteIcon.closest(".jira-issue");
+                const issueKey = issueElement.getAttribute("data-issue-key");
+                if (issueKey) {
+                    toggleIssueFavorite(issueKey);
+                }
+                return;
+            }
+
+            // Regular issue click handling
             const issueElement = event.target.closest(".jira-issue");
             if (issueElement) {
                 const issueKey = issueElement.getAttribute("data-issue-key");
@@ -327,6 +370,9 @@ const applyFilter = (filter, toggle = true) => {
             break;
         case FILTERS.MY.id:
             filteredIssues = issuesList.filter(issue => issue.assignedToMe);
+            break;
+        case FILTERS.FAVORITES.id:
+            filteredIssues = issuesList.filter(issue => issue.isFavorite);
             break;
         default:
         // No filter applied, show all issues

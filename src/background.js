@@ -147,6 +147,21 @@ async function listenToMessages() {
                 })();
 
                 return true; // Indicate an async response
+            
+            case MessageActionTypes.TOGGLE_FAVORITE:
+                (async () => {
+                    try {
+                        console.debug("Toggle favorite requested for:", message.issueKey);
+                        await ensureInitialized();
+                        const isFavorite = await issuesLists.toggleFavorite(message.issueKey);
+                        sendResponse({ isFavorite, issuesList: issuesLists.getList() });
+                    } catch (error) {
+                        console.warn("Error toggling favorite:", error);
+                        sendResponse({ error: "Failed to toggle favorite" });
+                    }
+                })();
+
+                return true; // Indicate an async response
         }
 
         return true; // Ensure async handling

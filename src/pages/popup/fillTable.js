@@ -53,6 +53,16 @@ export function fillIssuesTable(issuesList, containerElement) {
         } else {
             issueElement.classList.remove("has-open-tab");
         }
+
+        // Handle favorite icon
+        const favoriteElement = issueElement.querySelector(".favorite-icon");
+        if (favoriteElement) {
+            if (issue.isFavorite) {
+                favoriteElement.classList.add("is-favorite");
+            } else {
+                favoriteElement.classList.remove("is-favorite");
+            }
+        }
     });
     console.debug("Issues table filled.");
 }

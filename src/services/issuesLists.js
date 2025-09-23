@@ -2,6 +2,8 @@ import { JiraHttpService } from "./jira/jiraHttpService.js";
 
 export class IssuesLists {
     issuesList = {};
+    sortedIssuesList = [];
+    favorites = new Set();
 
     jiraHttpService = new JiraHttpService();
 
@@ -14,6 +16,8 @@ export class IssuesLists {
         console.debug('Initializing IssuesLists');
 
         await this.jiraHttpService.init();
+        await this.loadFavorites();
+        this.updateSortedList(); // Initialize sorted list even if empty
         console.debug('IssuesLists initialized!!!');
     }
 
@@ -40,10 +44,10 @@ export class IssuesLists {
         this._addIssues(newKeys.map(key => ({ key })), openTabField);
         console.debug("New keys added.", this.issuesList);
 
-        // remove issues that are not in newoOpenTabsKeys and not assigned to me
+        // remove issues that are not in newoOpenTabsKeys and not assigned to me and not favorites
         Object.keys(this.issuesList).forEach(key => {
             if (!newoOpenTabsKeys.includes(key)) {
-                if (this.issuesList[key].assignedToMe) {
+                if (this.issuesList[key].assignedToMe || this.isFavorite(key)) {
                     this.issuesList[key].hasOpenTab = false;
                 } else {
                     delete this.issuesList[key];
@@ -52,27 +56,49 @@ export class IssuesLists {
         });
 
         console.debug("Open tabs issues merged to list (not updated from server).", this.issuesList);
+        this.updateSortedList();
     }
 
 
     /**
      * Refreshes the issues list from the server.
-     * Fetches my issues and open tabs issues from the server and updates the list.
+     * Fetches my issues, open tabs issues, and favorite issues from the server and updates the list.
      */
     updateIssuesList = async () => {
         console.debug("Updating issues list from server. Current:", this.issuesList);
         const openTabsKeys = Object.keys(this.issuesList).filter(key => this.issuesList[key].hasOpenTab);
-        const [myIssues, openTabsIssues] = await Promise.all([
+        const favoriteKeys = Array.from(this.favorites);
+        
+        // Create a single list of all keys to fetch, removing duplicates
+        const allKeysToFetch = [...new Set([...openTabsKeys, ...favoriteKeys])];
+        
+        const [myIssues, additionalIssues] = await Promise.all([
             this.jiraHttpService.fetchMyIssues(),
-            this.jiraHttpService.fetchByKeys(openTabsKeys)
+            allKeysToFetch.length > 0 ? this.jiraHttpService.fetchByKeys(allKeysToFetch) : Promise.resolve([])
         ]);
 
-        console.debug("Issues fetched from server.", myIssues, openTabsIssues);
+        console.debug("Issues fetched from server.", { myIssues, additionalIssues });
 
         this.issuesList = {};
         this._addIssues(myIssues, this.customProperties.AssignedToMe);
-        this._addIssues(openTabsIssues, this.customProperties.OpenTabs);
+        
+        // Add additional issues with appropriate properties
+        // Filter open tabs issues first
+        const openTabsIssues = additionalIssues.filter(issue => openTabsKeys.includes(issue.key));
+        const otherIssues = additionalIssues.filter(issue => !openTabsKeys.includes(issue.key));
+        
+        // Add open tabs issues with open tabs properties
+        if (openTabsIssues.length > 0) {
+            this._addIssues(openTabsIssues, this.customProperties.OpenTabs);
+        }
+        
+        // Add remaining issues without special properties
+        if (otherIssues.length > 0) {
+            this._addIssues(otherIssues, {});
+        }
+        
         console.debug("Issues updated and stored.", this.issuesList);
+        this.updateSortedList();
     }
 
 
@@ -116,7 +142,85 @@ export class IssuesLists {
     //     console.debug("Open tabs issues fetched and stored.", this.issuesList);
     // }
 
-    getList = () => Object.values(this.issuesList);
+    getList = () => this.sortedIssuesList;
+
+    updateSortedList = () => {
+        const issues = Object.values(this.issuesList);
+        this.sortedIssuesList = this.sortIssues(issues);
+        console.debug("Sorted issues list updated:", this.sortedIssuesList.map(i => `${i.key}(F:${i.isFavorite},M:${i.assignedToMe})`));
+    }
+
+    sortIssues = (issues) => {
+        return issues.sort((a, b) => {
+            // Priority 1: Favorites first
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            
+            // Priority 2: Within same favorite status, assigned to me first
+            if (a.isFavorite === b.isFavorite) {
+                if (a.assignedToMe && !b.assignedToMe) return -1;
+                if (!a.assignedToMe && b.assignedToMe) return 1;
+            }
+            
+            // Priority 3: Within same category, maintain original order (by key)
+            return a.key.localeCompare(b.key);
+        });
+    }
+
+    // Favorites methods
+    loadFavorites = async () => {
+        return new Promise((resolve) => {
+            chrome.storage.sync.get({ favorites: [] }, (items) => {
+                this.favorites = new Set(items.favorites);
+                console.debug("Favorites loaded from storage:", Array.from(this.favorites));
+                resolve(this.favorites);
+            });
+        });
+    }
+
+    saveFavorites = async () => {
+        return new Promise((resolve, reject) => {
+            const favoritesArray = Array.from(this.favorites);
+            chrome.storage.sync.set({ favorites: favoritesArray }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error saving favorites:', chrome.runtime.lastError);
+                    reject(chrome.runtime.lastError);
+                } else {
+                    console.debug('Favorites saved to storage:', favoritesArray);
+                    resolve(favoritesArray);
+                }
+            });
+        });
+    }
+
+    toggleFavorite = async (issueKey) => {
+        const wasFavorite = this.favorites.has(issueKey);
+        
+        if (wasFavorite) {
+            this.favorites.delete(issueKey);
+            console.debug(`Removed ${issueKey} from favorites`);
+        } else {
+            this.favorites.add(issueKey);
+            console.debug(`Added ${issueKey} to favorites`);
+        }
+
+        // Update the issue in the list if it exists
+        if (this.issuesList[issueKey]) {
+            this.issuesList[issueKey].isFavorite = !wasFavorite;
+        }
+
+        await this.saveFavorites();
+        this.updateSortedList();
+        return !wasFavorite;
+    }
+
+    isFavorite = (issueKey) => {
+        return this.favorites.has(issueKey);
+    }
+
+    getFavoritesList = () => {
+        return this.sortedIssuesList.filter(issue => issue.isFavorite);
+    }
 
     _addIssues(issues, overrideFields) {
         issues.forEach(issue => {
@@ -155,6 +259,7 @@ export class IssuesLists {
             updated,
             assignedToMe,
             hasOpenTab,
+            isFavorite: this.isFavorite(key),
             isUpdated: true,
 
             ...overrideFields,
