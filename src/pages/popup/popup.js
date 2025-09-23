@@ -185,6 +185,7 @@ const toggleIssueFavorite = async (issueKey) => {
 
         // Update the local issues list
         issuesList = response.issuesList || issuesList;
+        console.debug('Updated issuesList after toggle:', issuesList.map(i => `${i.key}(F:${i.isFavorite})`));
         
         // Re-apply the current filter to refresh the display
         applyFilter(currentFilter, false);
@@ -283,7 +284,7 @@ const initializeIssuesTableFromCache = async () => {
         console.debug('initializeIssuesTableFromCache')
         const issuesList = await fetchIssuesList("getIssuesList");
         togglePlaceholdersVisibility(issuesList.length === 0);
-        fillIssuesTable(issuesList, issuesTableElement);
+        fillIssuesTable(issuesList, issuesTableElement, 'init');
         issuesTableElement.addEventListener("click", event => {
             // Check if the click was on a favorite icon
             const favoriteIcon = event.target.closest(".favorite-icon");
@@ -315,7 +316,7 @@ const refreshIssuesTableFromServer = async () => {
     try {
         issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
         if (issuesList.length > 0) {
-            fillIssuesTable(issuesList, issuesTableElement);
+            fillIssuesTable(issuesList, issuesTableElement, 'init');
         }
     } catch (error) {
         console.log('Error refreshing issues table from server:', error);
@@ -378,7 +379,8 @@ const applyFilter = (filter, toggle = true) => {
         // No filter applied, show all issues
     }
 
-    fillIssuesTable(filteredIssues, issuesTableElement);
+    console.debug('Applying filter, filteredIssues:', filteredIssues.map(i => `${i.key}(F:${i.isFavorite})`));
+    fillIssuesTable(filteredIssues, issuesTableElement, 'refresh');
 };
 
 const addFilterButtons = () => {
