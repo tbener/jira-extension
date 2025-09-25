@@ -152,14 +152,14 @@ export class IssuesLists {
 
     sortIssues = (issues) => {
         return issues.sort((a, b) => {
-            // Priority 1: Favorites first
-            if (a.isFavorite && !b.isFavorite) return -1;
-            if (!a.isFavorite && b.isFavorite) return 1;
+            // Priority 1: Assigned to me first
+            if (a.assignedToMe && !b.assignedToMe) return -1;
+            if (!a.assignedToMe && b.assignedToMe) return 1;
             
-            // Priority 2: Within same favorite status, assigned to me first
-            if (a.isFavorite === b.isFavorite) {
-                if (a.assignedToMe && !b.assignedToMe) return -1;
-                if (!a.assignedToMe && b.assignedToMe) return 1;
+            // Priority 2: Within same assignment status, favorites first
+            if (a.assignedToMe === b.assignedToMe) {
+                if (a.isFavorite && !b.isFavorite) return -1;
+                if (!a.isFavorite && b.isFavorite) return 1;
             }
             
             // Priority 3: Within same category, maintain original order (by key)
