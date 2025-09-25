@@ -173,3 +173,9 @@ footer {
     border: 1px solid #a4c8e8;
 }
 
+.filter-button svg {
+    fill: none;
+    stroke: currentColor;
+    transition: fill 0.2s ease;
+}
+
