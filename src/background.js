@@ -1,6 +1,7 @@
 import { SettingsService } from './services/settingsService.js';
 import { NavigationService } from './services/navigationService.js';
 import { IssuesLists } from "./services/issuesLists.js";
+import { UpdateNotificationService } from './services/updateNotificationService.js';
 import { MessageActionTypes } from './enum/message-action-types.enum.js';
 
 const DEFAULT_CUSTOM_DOMAIN = 'your-domain';
@@ -9,6 +10,7 @@ const DEFAULT_PROJECT_KEY = 'JIRA';
 const settingsService = new SettingsService();
 const navigationService = new NavigationService();
 const issuesLists = new IssuesLists();
+const updateNotificationService = new UpdateNotificationService();
 
 let isInitialized = false;
 
@@ -162,6 +164,41 @@ async function listenToMessages() {
                 })();
 
                 return true; // Indicate an async response
+            
+            case "getUpdateMessage":
+                (async () => {
+                    try {
+                        console.debug("Update message requested");
+                        await ensureInitialized();
+                        const shouldShow = await updateNotificationService.shouldShowUpdateMessage();
+                        if (shouldShow) {
+                            const updateMessage = await updateNotificationService.getUpdateMessage();
+                            sendResponse({ shouldShow: true, updateMessage });
+                        } else {
+                            sendResponse({ shouldShow: false });
+                        }
+                    } catch (error) {
+                        console.warn("Error getting update message:", error);
+                        sendResponse({ shouldShow: false, error: "Failed to get update message" });
+                    }
+                })();
+
+                return true; // Indicate an async response
+            
+            case "markUpdateAsSeen":
+                (async () => {
+                    try {
+                        console.debug("Marking update as seen");
+                        await ensureInitialized();
+                        await updateNotificationService.markVersionAsSeen();
+                        sendResponse({ success: true });
+                    } catch (error) {
+                        console.warn("Error marking update as seen:", error);
+                        sendResponse({ success: false, error: "Failed to mark update as seen" });
+                    }
+                })();
+
+                return true; // Indicate an async response
         }
 
         return true; // Ensure async handling
@@ -173,6 +210,7 @@ async function ensureInitialized(force) {
         console.log(`************  Initializing background script... [${new Date().toISOString()}] ************`);
         await readSettings();
         await initIssuesList();
+        await updateNotificationService.init();
         isInitialized = true;
         console.log(`++++++++++++ Background script initialized. [${new Date().toISOString()}] ++++++++++++`);
     }
