@@ -74,7 +74,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         addFilterButtons();
         applyFilter(FILTERS.ALL);
         await jiraHelperService.init();
-        await initializeIssuesTableFromCache();
+        setupIssuesTableEventListeners();
+        await loadIssuesFromCache(); // Load cache data but don't display it
         console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
         await Promise.all([
             refreshIssuesTableFromServer(),
@@ -279,36 +280,38 @@ const fetchIssuesList = async (actionType) => {
     });
 };
 
-const initializeIssuesTableFromCache = async () => {
-    try {
-        console.debug('initializeIssuesTableFromCache')
-        const issuesList = await fetchIssuesList("getIssuesList");
-        togglePlaceholdersVisibility(issuesList.length === 0);
-        fillIssuesTable(issuesList, issuesTableElement, 'init');
-        issuesTableElement.addEventListener("click", event => {
-            // Check if the click was on a favorite icon
-            const favoriteIcon = event.target.closest(".favorite-icon");
-            if (favoriteIcon) {
-                event.stopPropagation();
-                const issueElement = favoriteIcon.closest(".jira-issue");
-                const issueKey = issueElement.getAttribute("data-issue-key");
-                if (issueKey) {
-                    toggleIssueFavorite(issueKey);
-                }
-                return;
+const setupIssuesTableEventListeners = () => {
+    issuesTableElement.addEventListener("click", event => {
+        // Check if the click was on a favorite icon
+        const favoriteIcon = event.target.closest(".favorite-icon");
+        if (favoriteIcon) {
+            event.stopPropagation();
+            const issueElement = favoriteIcon.closest(".jira-issue");
+            const issueKey = issueElement.getAttribute("data-issue-key");
+            if (issueKey) {
+                toggleIssueFavorite(issueKey);
             }
+            return;
+        }
 
-            // Regular issue click handling
-            const issueElement = event.target.closest(".jira-issue");
-            if (issueElement) {
-                const issueKey = issueElement.getAttribute("data-issue-key");
-                if (issueKey) {
-                    sendNavigateToIssueMessage(issueKey);
-                }
+        // Regular issue click handling
+        const issueElement = event.target.closest(".jira-issue");
+        if (issueElement) {
+            const issueKey = issueElement.getAttribute("data-issue-key");
+            if (issueKey) {
+                sendNavigateToIssueMessage(issueKey);
             }
-        });
+        }
+    });
+};
+
+const loadIssuesFromCache = async () => {
+    try {
+        console.debug('Loading issues from cache');
+        await fetchIssuesList(MessageActionTypes.GET_ISSUES_LIST);
+        console.debug('Issues loaded from cache');
     } catch (error) {
-        console.log('Error initializing issues table from cache:', error);
+        console.log('Error loading issues from cache:', error);
     }
 };
 

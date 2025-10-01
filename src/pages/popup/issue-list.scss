@@ -107,35 +107,36 @@
 
 /* placeholders */
 
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
 .placeholders {
-  .jira-key span {
-    width: 55px;
-    white-space: nowrap;
-
-    span.placeholder {
-      display: block;
+  padding: 4px;
+  
+  .placeholder-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+    
+    &::before, &::after {
+      content: '';
       height: 1em;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200px 100%;
+      animation: shimmer 1.5s infinite linear;
+      border-radius: 4px;
     }
-  }
-
-  .jira-summary {
-    width: 100%;
-
-    span.placeholder {
-      display: block;
-      height: 1em;
-    }
-  }
-
-  .jira-issue:nth-child(1) .jira-summary span.placeholder {
-    width: 70%;
-  }
-
-  .jira-issue:nth-child(2) .jira-summary span.placeholder {
-    width: 50%;
-  }
-
-  .jira-issue:nth-child(3) .jira-summary span.placeholder {
-    width: 40%;
+    
+    &::before { width: 55px; } /* key */
+    &::after { width: 60%; } /* summary */
+    
+    &:nth-child(1)::after { width: 70%; }
+    &:nth-child(2)::after { width: 40%; }
+    &:nth-child(3)::after { width: 50%; }
+    &:nth-child(4)::after { width: 60%; }
+    &:nth-child(5)::after { width: 60%; }
   }
 }
