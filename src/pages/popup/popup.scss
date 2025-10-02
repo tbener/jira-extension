@@ -8,7 +8,6 @@ body {
 
     display: flex;
     flex-direction: column;
-    
 }
 
 .section {
@@ -72,8 +71,8 @@ main {
         }
 
         &::selection {
-            background: #b3e0ff; // Soft blue
-            color: #1e3a8a;      // Deep blue text for contrast
+            background: #b3e0ff;
+            color: #1e3a8a;
         }
     }
 
@@ -154,7 +153,7 @@ footer {
 
 /* Filter buttons */
 
-.filter-buttons .btn-check + label {
+.filter-buttons .btn-check+label {
     color: #5a9bd8;
     border-radius: 4px;
     padding: 5px 10px;
@@ -167,10 +166,54 @@ footer {
     }
 }
 
-.filter-buttons .btn-check:checked + label {
+.filter-buttons .btn-check:checked+label {
     color: #2a72b5;
     background-color: #e6f1fb;
     border: 1px solid #a4c8e8;
+}
+
+/* Update notification message */
+
+.update-message {
+    margin-top: 10px;
+    margin-bottom: -4px;
+    animation: slideDown 0.6s ease-out;
+    font-size: 13px;
+    color: #5d4037;
+    background-color: #fff8e1;
+    border: 1px solid #f57c00;
+    padding: 10px;
+
+    .update-title {
+        color: #f39c12;
+        font-weight: bold;
+        margin: 0 0 2px;
+        font-size: 14px;
+    }
+
+    .update-feature {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+
+    .update-details {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+
+@keyframes slideDown {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    to {
+        max-height: 200px;
+        opacity: 1;
+    }
 }
 
 .filter-button svg {
@@ -178,4 +221,3 @@ footer {
     stroke: currentColor;
     transition: fill 0.2s ease;
 }
-

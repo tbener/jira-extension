@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
     togglePlaceholdersVisibility(true);
 
+    // Check for update message and mark popup as opened
+    await checkAndShowUpdateMessage();
+
     // Clipboard check for jira issue format, and auto-fill input
     issueInputElement.addEventListener('focus', async function handleClipboardPasteOnce() {
         console.debug(`Checking clipboard for number input... secureContext: ${window.isSecureContext}`);
@@ -384,6 +387,53 @@ const applyFilter = (filter, toggle = true) => {
 
     console.debug('Applying filter, filteredIssues:', filteredIssues.map(i => `${i.key}(F:${i.isFavorite})`));
     fillIssuesTable(filteredIssues, issuesTableElement, 'refresh');
+};
+
+const checkAndShowUpdateMessage = async () => {
+    try {
+        const response = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: "getUpdateMessage" }, response => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        if (response.shouldShow && response.updateMessage) {
+            showUpdateMessage(response.updateMessage);
+        }
+
+        // Mark update as seen (removes badge)
+        chrome.runtime.sendMessage({ action: "markUpdateAsSeen" });
+    } catch (error) {
+        console.log('Error checking update message:', error);
+    }
+};
+
+const showUpdateMessage = (updateMessage) => {
+    const updateNotification = document.getElementById('update-notification');
+    const titleElement = updateNotification.querySelector('.update-title');
+    const featureElement = updateNotification.querySelector('.update-feature');
+    const detailsElement = updateNotification.querySelector('.update-details');
+
+    // Populate content
+    titleElement.textContent = updateMessage.title;
+    featureElement.textContent = updateMessage.message;
+    
+    // Clear and populate features
+    detailsElement.innerHTML = '';
+    if (updateMessage.features && updateMessage.features.length > 0) {
+        updateMessage.features.forEach(feature => {
+            const li = document.createElement('li');
+            li.textContent = feature;
+            detailsElement.appendChild(li);
+        });
+    }
+
+    // Show the message
+    updateNotification.classList.remove('d-none');
 };
 
 const addFilterButtons = () => {
