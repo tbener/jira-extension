@@ -23,9 +23,9 @@ const FILTERS = {
     ALL: { id: 'all', label: 'Show All', icon: 'all', hidden: true },
     OPEN_TABS: { id: 'open-tabs', label: 'Open Tabs', icon: 'tab' },
     MY: { id: 'my', label: 'My Issues', icon: 'avatar' },
-    SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', icon: 'search', hidden: 'auto' },
+    FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'},
     // SUGGESTED: { id: 'suggested', label: 'Suggested', icon: 'suggested' },
-    FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'}
+    SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', icon: 'search', hidden: 'auto' }
 };
 
 let issuesList = [];
