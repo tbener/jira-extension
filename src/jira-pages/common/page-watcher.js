@@ -7,7 +7,7 @@
  * @module page-watcher
  */
 
-import { ElementObserver } from './element-observer.js';
+import { ElementObserver2 } from './element-observer2.js';
 import { HeaderInfo } from './header-info.js';
 import { JiraHttpService } from '../../services/jira/jiraHttpService.js';
 import { CopyIssueIcon } from './copy-issue-icon.js';
@@ -37,7 +37,7 @@ export default async function watchPageToAddElements(pageType) {
         console.debug('✅ Init watchPageToAddElements with args:', pageType);
         const pageData = data[pageType];
         console.debug('pageData:', pageData);
-        const observer = new ElementObserver();
+        const observer = new ElementObserver2();
         observer.waitForElement(pageData.targetElementSelector, pageData.callbackFunction, pageData.keepMonitorSelector);
     };
 
@@ -49,7 +49,7 @@ export default async function watchPageToAddElements(pageType) {
 }
 
 async function elementReady(elm, issueKey) {
-    console.log('✅✔️✅✔️✅✔️✅ NEW ISSUE!!!:', elm, issueKey);
+    console.log('✅✔️✅✔️✅✔️✅ ELEMENT READY!!!:', elm, issueKey);
     try {
         const jiraHttpService = new JiraHttpService();
         await jiraHttpService.init();
