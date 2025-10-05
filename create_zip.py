@@ -25,7 +25,7 @@ def zip_folders_and_files(zip_filename, folders, files, base_folder):
 if __name__ == "__main__":
     # Define your folders and files (relative to base_folder)
     folders_to_zip = ['common', 'enum', 'images', 'jira-pages', 'models', 'pages', 'services']
-    files_to_zip = ['manifest.json', 'background.js', 'config.js']
+    files_to_zip = ['manifest.json', 'background.js', 'config.js', 'update-messages.json']
 
     # Define the base folder
     base_folder = 'src'

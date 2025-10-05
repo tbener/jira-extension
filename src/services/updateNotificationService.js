@@ -144,7 +144,7 @@ export class UpdateNotificationService {
             
             return {
                 version: latestMessage?.version || this.currentVersion, // Use message version or fallback to current
-                title: latestMessage?.title || "What's New",
+                title: latestMessage?.title || "New Version Updated",
                 message: latestMessage?.message || "New features and improvements available!",
                 features: latestMessage?.features || []
             };
@@ -152,7 +152,7 @@ export class UpdateNotificationService {
             console.warn('Could not load update messages:', error);
             return {
                 version: this.currentVersion,
-                title: "What's New",
+                title: "New Version Updated",
                 message: "New features and improvements available!",
                 features: []
             };
