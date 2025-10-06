@@ -45,3 +45,22 @@
     color: #e67e7e;
     border: 1px solid #5d3a3a;
 }
+
+/* Copy icon star colors - CSS custom properties for easy management */
+.extension-copy-link-button {
+    --star-outer-color: #f39c12;  /* Original orange for light mode */
+    --star-inner-color: #f1c40f;  /* Original yellow for light mode */
+}
+
+/* Dark mode star colors - smoky yellow with more visible link */
+[data-color-mode="dark"] .extension-copy-link-button {
+    --star-outer-color: #d4af37;  /* Smoky golden yellow */
+    --star-inner-color: #e7d84f;  /* Khaki - lighter smoky yellow */
+    color: #2c3e50;  /* Dark color for the link icon to contrast against yellow star */
+    opacity: 1;
+}
+
+/* Add a subtle background circle behind the link icon for better visibility */
+[data-color-mode="dark"] .extension-copy-link-button svg g:last-child {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
+}
