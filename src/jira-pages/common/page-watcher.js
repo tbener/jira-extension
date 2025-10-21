@@ -49,7 +49,7 @@ export default async function watchPageToAddElements(pageType) {
 }
 
 async function elementReady(elm, issueKey) {
-    console.log('✅✔️✅✔️✅✔️✅ ELEMENT READY!!!:', elm, issueKey);
+    console.debug('✅✔️✅✔️✅✔️✅ (callback function) ELEMENT READY!!!:', elm, issueKey);
     try {
         const jiraHttpService = new JiraHttpService();
         await jiraHttpService.init();
