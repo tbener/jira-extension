@@ -29,6 +29,14 @@ chrome.runtime.onInstalled.addListener(function (details) {
     }
 });
 
+function applyDevIndicator() {
+    const manifest = chrome.runtime.getManifest();
+    if (manifest.name.includes('(DEV)')) {
+        chrome.action.setBadgeText({ text: 'D' });
+        chrome.action.setBadgeBackgroundColor({ color: '#d93025' });
+    }
+}
+
 function saveDefaultSettings() {
     const customDomain = DEFAULT_CUSTOM_DOMAIN;
     const defaultProjectKey = DEFAULT_PROJECT_KEY;
@@ -219,6 +227,7 @@ async function ensureInitialized(force) {
 
 (async () => {
     console.debug('Starting background service...');
+    applyDevIndicator();
     await listenToMessages();
     await ensureInitialized();
 })();
