@@ -32,6 +32,7 @@ let issuesList = [];
 let typingTimer;
 let currentFilter = null;
 let originalProjectValue;
+let settings = {};
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
@@ -79,10 +80,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         await jiraHelperService.init();
         setupIssuesTableEventListeners();
         await loadIssuesFromCache(); // Load cache data but don't display it
-        console.debug('Call Promise All: refreshIssuesTableFromServer(), fetchAndDisplayProjectAndVersion(), checkAndDisplayVersionUpdate()');
+        await loadSettings();
+        console.debug('Call Promise All: refreshIssuesTableFromServer(), resolveBoardLink(), checkAndDisplayVersionUpdate()');
         await Promise.all([
             refreshIssuesTableFromServer(),
-            applySettingsInfo(),
+            resolveBoardLink(),
             checkAndDisplayVersionUpdate()
         ]);
     } catch (error) {
@@ -105,16 +107,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Finish loading popup');
 });
 
-const applySettingsInfo = async () => {
+const loadSettings = async () => {
     try {
-        const settings = await fetchSettingsFromBackground();
+        settings = await fetchSettingsFromBackground();
         showDueDateElement.checked = settings.showDueDateAlert;
         versionElement.textContent = settings.versionDisplay;
         defaultProjectElement.textContent = settings.defaultProjectKey;
         originalProjectValue = defaultProjectElement.textContent;
+    } catch (error) {
+        console.log('Error fetching settings:', error);
+    }
+};
+
+const resolveBoardLink = async () => {
+    try {
         linkToBoardElement.href = settings.boardUrl || await jiraHelperService.guessBoardLink(settings.customDomain, settings.defaultProjectKey);
     } catch (error) {
-        console.log('Error fetching project and version:', error);
+        console.log('Error resolving board link:', error);
     }
 };
 
@@ -371,7 +380,8 @@ const applyFilter = (filter, toggle = true) => {
     switch (filter.id) {
         case FILTERS.DEFAULT.id:
             filteredIssues = issuesList.filter(issue =>
-                issue.hasOpenTab || issue.isFavorite || issue.statusCategory === 'In Progress' || issue.statusCategory === 'To Do'
+                issue.hasOpenTab || issue.isFavorite || issue.statusCategory === 'In Progress' ||
+                (settings.includeTodoInDefaultView && issue.statusCategory === 'To Do')
             );
             break;
         case FILTERS.SEARCH_RESULTS.id:

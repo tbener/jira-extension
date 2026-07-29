@@ -34,7 +34,8 @@ const saveOptions = () => {
         useSmartNavigation: document.getElementById('useSmartNavigation').checked,
         showDueDateAlert: document.getElementById('showDueDateAlert').checked,
         boardUrl: boardLinkInputElement.value,
-        myIssuesJql: document.getElementById('myIssuesJql').value
+        myIssuesJql: document.getElementById('myIssuesJql').value,
+        includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked
     }
 
     settingsService.saveSettings(settings);
@@ -61,6 +62,7 @@ const restoreOptions = async () => {
         document.getElementById('showDueDateAlert').checked = settings.showDueDateAlert;
         boardLinkInputElement.value = settings.boardUrl;
         document.getElementById('myIssuesJql').value = settings.myIssuesJql;
+        document.getElementById('includeTodoInDefaultView').checked = settings.includeTodoInDefaultView;
 
         await setBoardLink();
 

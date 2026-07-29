@@ -171,6 +171,18 @@
                     </small>
                 </div>
 
+                <div class="card p-3 mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="includeTodoInDefaultView" checked>
+                        <label class="form-check-label" for="includeTodoInDefaultView">
+                            Include "To Do" issues in the default view
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">
+                        Applies to issues assigned to you that are still in "To Do". Issues with an open tab or marked as favorite are always shown, regardless of this setting.
+                    </small>
+                </div>
+
                 <div class="row mt-3 ms-1 align-items-baseline">
                     <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
                     <div class="form-text text-muted col-auto" id="status"></div>
