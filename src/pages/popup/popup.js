@@ -381,7 +381,7 @@ const applyFilter = (filter, toggle = true) => {
         case FILTERS.DEFAULT.id:
             filteredIssues = issuesList.filter(issue =>
                 issue.hasOpenTab || issue.isFavorite || issue.statusCategory === 'In Progress' ||
-                (settings.includeTodoInDefaultView && issue.statusCategory === 'To Do')
+                (settings.includeTodoInDefaultView && issue.status === 'To Do')
             );
             break;
         case FILTERS.SEARCH_RESULTS.id:
