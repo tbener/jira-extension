@@ -5,6 +5,7 @@ export class SettingsService {
         boardUrl: '',
         useSmartNavigation: true,
         showDueDateAlert: true,
+        myIssuesJql: 'statusCategory != Done AND status != Rejected',
         dueDateOptions: {
             messageTemplate: {
                 with: '{status} due date: {date}',

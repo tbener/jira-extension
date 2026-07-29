@@ -33,7 +33,8 @@ const saveOptions = () => {
         defaultProjectKey: document.getElementById('defaultProjectKey').value,
         useSmartNavigation: document.getElementById('useSmartNavigation').checked,
         showDueDateAlert: document.getElementById('showDueDateAlert').checked,
-        boardUrl: boardLinkInputElement.value
+        boardUrl: boardLinkInputElement.value,
+        myIssuesJql: document.getElementById('myIssuesJql').value
     }
 
     settingsService.saveSettings(settings);
@@ -59,6 +60,7 @@ const restoreOptions = async () => {
         document.getElementById('useSmartNavigation').checked = settings.useSmartNavigation;
         document.getElementById('showDueDateAlert').checked = settings.showDueDateAlert;
         boardLinkInputElement.value = settings.boardUrl;
+        document.getElementById('myIssuesJql').value = settings.myIssuesJql;
 
         await setBoardLink();
 
@@ -85,6 +87,9 @@ const copyBoardLinkToInput = async () => {
 
 document.getElementById('saveButton').addEventListener('click', saveOptions);
 document.getElementById('setBoardLink').addEventListener('click', copyBoardLinkToInput);
+document.getElementById('resetMyIssuesJql').addEventListener('click', () => {
+    document.getElementById('myIssuesJql').value = settingsService.defaultSettings.myIssuesJql;
+});
 
 document.querySelectorAll('input[type="text"]').forEach(input => {
     input.addEventListener('input', async (event) => {

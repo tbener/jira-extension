@@ -160,6 +160,17 @@
                     </div>
                 </div>
 
+                <div class="card p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="myIssuesJql" class="form-label fw-bold mb-0">My Issues Query (additional JQL conditions)</label>
+                        <button type="button" id="resetMyIssuesJql" class="btn btn-outline-secondary btn-sm">Reset to Default</button>
+                    </div>
+                    <textarea class="form-control mt-2" id="myIssuesJql" rows="2"></textarea>
+                    <small class="form-text text-muted">
+                        Extra JQL conditions applied on top of the base "My Issues" query.
+                    </small>
+                </div>
+
                 <div class="row mt-3 ms-1 align-items-baseline">
                     <button type="button" id="saveButton" class="btn btn-primary col-auto">Save</button>
                     <div class="form-text text-muted col-auto" id="status"></div>
@@ -186,6 +197,7 @@
 
                 <h5 class="mb-3 mt-5">Versions details</h5>
                 <ul>
+                    <li>v2.2.5: (feature) added getting my issues also in To Do and Backlog by default, and made it configurable</li>
                     <li>v2.2.3: (feature) added dark mode support</li>
                     <li>v2.2.0: (feature) added favorites</li>
                     <li>v2.1.2: (feature) added relative day indication to due date</li>

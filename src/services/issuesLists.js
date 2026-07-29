@@ -253,6 +253,7 @@ export class IssuesLists {
             key,
             summary,
             status: status?.name ?? "---",
+            statusCategory: status?.statusCategory?.name ?? null,
             assignee: assignee?.displayName,
             assigneeIconUrl: assignee?.avatarUrls?.["16x16"],
             created,

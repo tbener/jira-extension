@@ -20,7 +20,7 @@ const ELEMENT_IDS = {
 };
 
 const FILTERS = {
-    ALL: { id: 'all', label: 'Show All', icon: 'all', hidden: true },
+    DEFAULT: { id: 'default', label: 'Default', icon: 'all', hidden: true },
     OPEN_TABS: { id: 'open-tabs', label: 'Open Tabs', icon: 'tab' },
     MY: { id: 'my', label: 'My Issues', icon: 'avatar' },
     FAVORITES: { id: 'favorites', label: 'Favorites', icon: 'favorites'},
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         addFilterButtons();
-        applyFilter(FILTERS.ALL);
+        applyFilter(FILTERS.DEFAULT);
         await jiraHelperService.init();
         setupIssuesTableEventListeners();
         await loadIssuesFromCache(); // Load cache data but don't display it
@@ -217,7 +217,7 @@ const fetchAndDisplayIssueFromInput = async () => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
     const handleNoResults = () => {
-        applyFilter(FILTERS.ALL);
+        applyFilter(FILTERS.DEFAULT);
         hideFilter(FILTERS.SEARCH_RESULTS);
     };
 
@@ -322,7 +322,7 @@ const refreshIssuesTableFromServer = async () => {
     try {
         issuesList = await fetchIssuesList(MessageActionTypes.REFRESH_ISSUES_LIST);
         if (issuesList.length > 0) {
-            fillIssuesTable(issuesList, issuesTableElement, 'init');
+            applyFilter(currentFilter, false);
         }
     } catch (error) {
         console.log('Error refreshing issues table from server:', error);
@@ -345,7 +345,7 @@ const hideFilter = (filter) => {
 
 const applyFilter = (filter, toggle = true) => {
     if (toggle && currentFilter?.id === filter?.id) {
-        filter = FILTERS.ALL;
+        filter = FILTERS.DEFAULT;
     }
     currentFilter = filter;
     console.log(`Applying filter: ${filter.label}`);
@@ -369,6 +369,11 @@ const applyFilter = (filter, toggle = true) => {
     let filteredIssues = issuesList;
 
     switch (filter.id) {
+        case FILTERS.DEFAULT.id:
+            filteredIssues = issuesList.filter(issue =>
+                issue.hasOpenTab || issue.isFavorite || issue.statusCategory === 'In Progress'
+            );
+            break;
         case FILTERS.SEARCH_RESULTS.id:
             filteredIssues = issuesList.filter(issue => issue.searchResults);
             break;

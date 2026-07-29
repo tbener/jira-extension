@@ -50,7 +50,7 @@ export class JiraHttpService {
     async fetchMyIssues() {
         console.debug("Fetching my issues.");
 
-        const jql = await JqlBuilder.jqlMyIssues(this.settings.defaultProjectKey);
+        const jql = await JqlBuilder.jqlMyIssues(this.settings.defaultProjectKey, this.settings.myIssuesJql);
         console.debug("Fetching my issues with JQL:", jql);
         const apiPath = this.getJqlPath(jql);
         const response = await this.fetch(apiPath);
