@@ -371,7 +371,7 @@ const applyFilter = (filter, toggle = true) => {
     switch (filter.id) {
         case FILTERS.DEFAULT.id:
             filteredIssues = issuesList.filter(issue =>
-                issue.hasOpenTab || issue.isFavorite || issue.statusCategory === 'In Progress'
+                issue.hasOpenTab || issue.isFavorite || issue.statusCategory === 'In Progress' || issue.statusCategory === 'To Do'
             );
             break;
         case FILTERS.SEARCH_RESULTS.id:
