@@ -1,0 +1,10 @@
+{
+  "latest": {
+    "version": "2.2.1",
+    "title": "New Version Updated",
+    "message": "Favorites feature added",
+    "features": [
+      "Use the ⭐ to keep key issues always visible"
+    ]
+  }
+}

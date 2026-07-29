@@ -1,0 +1,66 @@
+.header-message-container {
+    display: flex;
+    /* justify-content: center; */
+    /* flex-grow: 1; */
+}
+
+.header-message {
+    margin-left: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background-color: #f4f5f7;
+    border: 1px solid transparent;
+    color: #6b778c;
+    font-weight: 500;
+}
+
+/* Dark mode styles - Jira uses data-color-mode="dark" attribute */
+[data-color-mode="dark"] .header-message {
+    background-color: #2c3e50;
+    color: #b3c7d9;
+    border: 1px solid #34495e;
+}
+
+.header-message.has-due-date {
+    /* Default styling for due date messages - inherits from .header-message */
+    opacity: 1;
+}
+
+.header-message.no-due-date {
+    /* style for more reddish alert  */
+    /* color: #b35b00; */
+    /* background-color: #fff4e5; */
+    /* border: 1px solid #ffe2b3; */
+    /* Default styling for missing due date messages - inherits from .header-message */
+    opacity: 1;
+}
+
+/* Dark mode styles for no due date state */
+[data-color-mode="dark"] .header-message.no-due-date {
+    background-color: #4a2c2a;
+    color: #e67e7e;
+    border: 1px solid #5d3a3a;
+}
+
+/* Copy icon star colors - CSS custom properties for easy management */
+.extension-copy-link-button {
+    --star-outer-color: #f39c12;  /* Original orange for light mode */
+    --star-inner-color: #f1c40f;  /* Original yellow for light mode */
+}
+
+/* Dark mode star colors - smoky yellow with more visible link */
+[data-color-mode="dark"] .extension-copy-link-button {
+    --star-outer-color: #d4af37;  /* Smoky golden yellow */
+    --star-inner-color: #e7d84f;  /* Khaki - lighter smoky yellow */
+    color: #2c3e50;  /* Dark color for the link icon to contrast against yellow star */
+    opacity: 1;
+}
+
+/* Add a subtle background circle behind the link icon for better visibility */
+[data-color-mode="dark"] .extension-copy-link-button svg g:last-child {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
+}
