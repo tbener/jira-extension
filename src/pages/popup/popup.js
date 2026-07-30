@@ -7,7 +7,6 @@ const jiraHelperService = new JiraHelperService()
 
 const ELEMENT_IDS = {
     ISSUE_INPUT: 'issue',
-    VERSION_UPDATE: 'update',
     DEFAULT_PROJECT: 'default-project',
     LINK_TO_BOARD: 'link-to-board',
     ISSUES_TABLE: 'issues-table',
@@ -35,7 +34,6 @@ let originalProjectValue;
 let settings = {};
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
-const versionUpdateElement = document.getElementById(ELEMENT_IDS.VERSION_UPDATE);
 const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
 const linkToBoardElement = document.getElementById(ELEMENT_IDS.LINK_TO_BOARD);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
@@ -81,11 +79,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupIssuesTableEventListeners();
         await loadIssuesFromCache(); // Load cache data but don't display it
         await loadSettings();
-        console.debug('Call Promise All: refreshIssuesTableFromServer(), resolveBoardLink(), checkAndDisplayVersionUpdate()');
+        console.debug('Call Promise All: refreshIssuesTableFromServer(), resolveBoardLink()');
         await Promise.all([
             refreshIssuesTableFromServer(),
-            resolveBoardLink(),
-            checkAndDisplayVersionUpdate()
+            resolveBoardLink()
         ]);
     } catch (error) {
         console.warn('Error during DOMContentLoaded initialization:', error);
@@ -154,24 +151,6 @@ defaultProjectElement.addEventListener('focusout', async function () {
         console.log('Error saving default project key:', error);
     }
 });
-
-const checkAndDisplayVersionUpdate = async () => {
-    try {
-        const versionInfo = await VersionService.checkLatestVersion();
-        if (versionInfo.isNewerVersion) {
-            versionUpdateElement.style.display = 'block';
-            versionUpdateElement.textContent = `Version v${versionInfo.remoteVersion} is now available. Click to download.`;
-            versionUpdateElement.addEventListener('click', VersionService.startUpdate);
-
-            const hintSpan = document.createElement('div');
-            hintSpan.className = 'text-muted small';
-            hintSpan.textContent = 'If the file does not automatically start downloading, please open the popup and click it again.';
-            versionUpdateElement.appendChild(hintSpan);
-        }
-    } catch (error) {
-        console.log('Error checking version update:', error);
-    }
-};
 
 const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
     chrome.runtime.sendMessage({ action: "navigateToIssue", issueKey, stayInCurrentTab });
