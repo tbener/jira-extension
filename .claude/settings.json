@@ -4,7 +4,9 @@
       "Bash(git fetch *)",
       "Bash(git checkout *)",
       "Bash(python create_zip.py)",
-      "Bash(python3 create_zip.py)"
+      "Bash(python3 create_zip.py)",
+      "Bash(git pull *)",
+      "Bash(git ls-tree *)"
     ]
   }
 }

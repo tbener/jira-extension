@@ -6,7 +6,7 @@ export class NavigationService {
 
     init = async (settingsService) => {
         this.settingsService = settingsService;
-        await this.tabsService.readTabs(this.baseUrl);
+        await this.tabsService.readTabs(this.baseUrl, this.settingsService);
     }
 
     get settings() {

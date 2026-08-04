@@ -7,6 +7,7 @@ export class SettingsService {
         showDueDateAlert: true,
         myIssuesJql: 'statusCategory != Done AND status != Rejected',
         includeTodoInDefaultView: true,
+        useSmartNavigationExtended: false,
         dueDateOptions: {
             messageTemplate: {
                 with: '{status} due date: {date}',

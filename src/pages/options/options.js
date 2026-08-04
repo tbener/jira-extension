@@ -35,7 +35,8 @@ const saveOptions = () => {
         showDueDateAlert: document.getElementById('showDueDateAlert').checked,
         boardUrl: boardLinkInputElement.value,
         myIssuesJql: document.getElementById('myIssuesJql').value,
-        includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked
+        includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked,
+        useSmartNavigationExtended: document.getElementById('useSmartNavigationExtended').checked
     }
 
     settingsService.saveSettings(settings);
@@ -63,12 +64,20 @@ const restoreOptions = async () => {
         boardLinkInputElement.value = settings.boardUrl;
         document.getElementById('myIssuesJql').value = settings.myIssuesJql;
         document.getElementById('includeTodoInDefaultView').checked = settings.includeTodoInDefaultView;
+        document.getElementById('useSmartNavigationExtended').checked = settings.useSmartNavigationExtended;
+        updateSmartNavigationExtendedAvailability();
 
         await setBoardLink();
 
     } catch (error) {
         console.warn('Error restoring options:', error);
     }
+};
+
+// The "extend to any link" setting is an enhancement of Smart Navigation, so it only makes
+// sense to offer it when Smart Navigation itself is on.
+const updateSmartNavigationExtendedAvailability = () => {
+    document.getElementById('useSmartNavigationExtended').disabled = !document.getElementById('useSmartNavigation').checked;
 };
 
 const setBoardLink = async () => {
@@ -92,6 +101,7 @@ document.getElementById('setBoardLink').addEventListener('click', copyBoardLinkT
 document.getElementById('resetMyIssuesJql').addEventListener('click', () => {
     document.getElementById('myIssuesJql').value = settingsService.defaultSettings.myIssuesJql;
 });
+document.getElementById('useSmartNavigation').addEventListener('change', updateSmartNavigationExtendedAvailability);
 
 document.querySelectorAll('input[type="text"]').forEach(input => {
     input.addEventListener('input', async (event) => {

@@ -5,5 +5,6 @@ export const MessageActionTypes = {
     SETTINGS_CHANGED: "settingsChanged",
     GET_OPEN_TABS_ISSUES: "getOpenTabsIssues",
     GET_ISSUES_LIST: "getIssuesList",
-    REFRESH_ISSUES_LIST: "refreshIssuesList"
+    REFRESH_ISSUES_LIST: "refreshIssuesList",
+    SWITCH_TO_EXISTING_TAB: "switchToExistingTab"
 };

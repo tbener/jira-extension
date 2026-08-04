@@ -146,6 +146,16 @@
                             When opening an issue, switch to an existing tab if it's already open instead of creating a new one.
                         </label>
                     </div>
+
+                    <div class="form-check form-switch mt-2 ms-4">
+                        <input class="form-check-input" type="checkbox" id="useSmartNavigationExtended">
+                        <label class="form-check-label" for="useSmartNavigationExtended">
+                            Extend to any link <span class="badge bg-warning text-dark">Experimental</span>
+                        </label>
+                    </div>
+                    <small class="form-text text-muted ms-4">
+                        Also works when the issue is opened from any link, not just the popup - shows a brief notice with the option to close this tab and switch to the existing one.
+                    </small>
                 </div>
 
                 <div class="card p-3 mb-3">
@@ -209,6 +219,7 @@
 
                 <h5 class="mb-3 mt-5">Versions details</h5>
                 <ul>
+                    <li>v2.3.0: (feature) added an experimental Smart Navigation extension - a notice offering to switch tabs when an issue is opened from any link, not just the popup</li>
                     <li>v2.2.7: (bugfix) removed the legacy self-update checker, which broke after main's file layout changed</li>
                     <li>v2.2.6: (feature) added a setting to control whether To Do issues appear in the default view</li>
                     <li>v2.2.5: (feature) added getting my issues also in To Do and Backlog by default, and made it configurable</li>

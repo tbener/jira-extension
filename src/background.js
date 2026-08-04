@@ -193,6 +193,20 @@ async function listenToMessages() {
 
                 return true; // Indicate an async response
             
+            case MessageActionTypes.SWITCH_TO_EXISTING_TAB:
+                console.debug("Closing this tab, switching to existing tab:", message.existingTabId);
+                if (sender.tab?.id) {
+                    chrome.tabs.remove(sender.tab.id);
+                }
+                chrome.tabs.update(message.existingTabId, { active: true }, () => {
+                    chrome.tabs.get(message.existingTabId, (existingTab) => {
+                        if (existingTab) {
+                            chrome.windows.update(existingTab.windowId, { focused: true });
+                        }
+                    });
+                });
+                break;
+
             case "markUpdateAsSeen":
                 (async () => {
                     try {
