@@ -50,6 +50,16 @@ export class JiraHelperService {
 
     }
 
+    async searchByText(text) {
+        console.debug("Searching issues by text:", text);
+        if (!text) {
+            return [];
+        }
+
+        const results = await this.jiraHttpService.fetchTextSearch(text);
+        return results.map(data => new Issue(data, { searchResults: true }));
+    }
+
     AbortFetch() {
         this.jiraHttpService?.abortFetch();
     }

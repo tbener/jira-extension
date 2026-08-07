@@ -52,9 +52,7 @@ export class JiraHttpService {
 
         const jql = await JqlBuilder.jqlMyIssues(this.settings.defaultProjectKey, this.settings.myIssuesJql);
         console.debug("Fetching my issues with JQL:", jql);
-        const apiPath = this.getJqlPath(jql);
-        const response = await this.fetch(apiPath);
-        return response?.issues ?? [];
+        return await this.fetchIssuesForJql(jql);
     }
 
     async fetchByKeys(keys) {
@@ -65,14 +63,27 @@ export class JiraHttpService {
             return [];
         }
         const jql = await JqlBuilder.jqlByKeyList(keys);
+        return await this.fetchIssuesForJql(jql);
+    }
+
+    async fetchTextSearch(text) {
+        console.debug("Fetching issues by text search:", text);
+
+        const jql = await JqlBuilder.jqlTextSearch(text, this.settings.defaultProjectKey);
+        console.debug("Fetching text search with JQL:", jql);
+        return await this.fetchIssuesForJql(jql, true);
+    }
+
+    async fetchIssuesForJql(jql, withAbortController = false) {
         const apiPath = this.getJqlPath(jql);
-        const response = await this.fetch(apiPath);
+        const response = await this.fetch(apiPath, withAbortController);
         return response?.issues ?? [];
     }
 
     async fetch(apiPath, withAbortController = false) {
         console.log(`Fetching ${apiPath}`);
 
+        let signal;
         if (withAbortController) {
             console.debug("Using AbortController for fetch.");
             if (this.abortController) {
@@ -81,7 +92,7 @@ export class JiraHttpService {
             // Abort the previous fetch request if it exists
             this.abortFetch();
             this.abortController = new AbortController();
-            this.authHeaders.signal = this.abortController.signal;
+            signal = this.abortController.signal;
         }
 
         try {
@@ -89,6 +100,7 @@ export class JiraHttpService {
             const response = await fetch(apiPath, {
                 method: "GET",
                 headers: this.authHeaders,
+                signal,
             });
 
             console.debug("Response:", response);
