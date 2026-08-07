@@ -303,13 +303,17 @@ const setSearchMode = (mode) => {
         return;
     }
     searchMode = mode;
-    issueInputElement.value = '';
     issueInputElement.placeholder = mode.placeholder;
     searchModeButtonElement.checked = mode.id === SEARCH_MODES.TEXT.id;
     clearTimeout(typingTimer);
     jiraHelperService.AbortFetch();
-    updateSearchResults([]);
+    clearSearchResults();
     issueInputElement.focus();
+
+    const fetchAndDisplay = mode.id === SEARCH_MODES.KEY.id
+        ? fetchAndDisplayIssueFromInput
+        : fetchAndDisplayTextSearchResults;
+    fetchAndDisplay();
 };
 
 searchModeButtonElement.addEventListener('click', () => {

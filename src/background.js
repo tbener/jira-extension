@@ -76,10 +76,19 @@ async function listenToMessages() {
 
         switch (message.action) {
             case MessageActionTypes.NAVIGATE_TO_ISSUE:
-                console.debug("Navigation request accepted to ", message.issueKey);
-                navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
-                sendResponse({ status: "navigation_started" });
-                break;
+                (async () => {
+                    try {
+                        console.debug("Navigation request accepted to ", message.issueKey);
+                        await ensureInitialized();
+                        navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
+                        sendResponse({ status: "navigation_started" });
+                    } catch (error) {
+                        console.warn("Error navigating to issue:", error);
+                        sendResponse({ status: "error", error: "Failed to navigate to issue" });
+                    }
+                })();
+
+                return true; // Indicate an async response
             case MessageActionTypes.GET_SETTINGS:
                 (async () => {
                     try {
