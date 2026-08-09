@@ -2,6 +2,7 @@ import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
 import { fillIssuesTable } from "./fillTable.js";
 import { fetchSettingsFromBackground } from '../../common/utils.js'
 import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
+import { CONFIG } from '../../config.js';
 
 const jiraHelperService = new JiraHelperService()
 
@@ -17,6 +18,7 @@ const ELEMENT_IDS = {
     CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
     FILTER_BUTTONS_CONTAINER: 'filter-buttons-container',
     SEARCH_MODE_BUTTON: 'search-mode-btn',
+    SEARCH_RESULTS_COUNT: 'search-results-count',
 };
 
 const FILTERS = {
@@ -52,6 +54,7 @@ const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE
 const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
 const searchModeButtonElement = document.getElementById(ELEMENT_IDS.SEARCH_MODE_BUTTON);
 const goButtonElement = document.getElementById(ELEMENT_IDS.GO_BUTTON);
+const searchResultsCountElement = document.getElementById(ELEMENT_IDS.SEARCH_RESULTS_COUNT);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
@@ -465,8 +468,20 @@ const applyFilter = (filter, toggle = true) => {
         // No filter applied, show all issues
     }
 
+    updateSearchResultsCount(filter, filteredIssues.length);
+
     console.debug('Applying filter, filteredIssues:', filteredIssues.map(i => `${i.key}(F:${i.isFavorite})`));
     fillIssuesTable(filteredIssues, issuesTableElement, 'refresh');
+};
+
+const updateSearchResultsCount = (filter, count) => {
+    if (filter.id === FILTERS.SEARCH_RESULTS.id) {
+        searchResultsCountElement.textContent = count >= CONFIG.MAX_RESULTS
+            ? `Showing first ${CONFIG.MAX_RESULTS} results`
+            : `${count} result${count === 1 ? '' : 's'} found`;
+    } else {
+        searchResultsCountElement.textContent = `${count} issue${count === 1 ? '' : 's'}`;
+    }
 };
 
 const checkAndShowUpdateMessage = async () => {
