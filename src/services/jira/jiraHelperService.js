@@ -60,6 +60,10 @@ export class JiraHelperService {
         return results.map(data => new Issue(data, { searchResults: true }));
     }
 
+    async buildTextSearchJql(text) {
+        return await this.jiraHttpService.buildTextSearchJql(text);
+    }
+
     AbortFetch() {
         this.jiraHttpService?.abortFetch();
     }

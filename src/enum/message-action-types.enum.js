@@ -1,5 +1,6 @@
 export const MessageActionTypes = {
     NAVIGATE_TO_ISSUE: "navigateToIssue",
+    NAVIGATE_TO_SEARCH: "navigateToSearch",
     GET_SETTINGS: "getSettings",
     SAVE_SETTINGS: "saveSettings",
     SETTINGS_CHANGED: "settingsChanged",

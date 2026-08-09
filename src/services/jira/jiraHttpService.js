@@ -69,9 +69,13 @@ export class JiraHttpService {
     async fetchTextSearch(text) {
         console.debug("Fetching issues by text search:", text);
 
-        const jql = await JqlBuilder.jqlTextSearch(text, this.settings.defaultProjectKey);
+        const jql = await this.buildTextSearchJql(text);
         console.debug("Fetching text search with JQL:", jql);
         return await this.fetchIssuesForJql(jql, true);
+    }
+
+    async buildTextSearchJql(text) {
+        return await JqlBuilder.jqlTextSearch(text, this.settings.defaultProjectKey);
     }
 
     async fetchIssuesForJql(jql, withAbortController = false) {

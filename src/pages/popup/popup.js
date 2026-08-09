@@ -171,6 +171,11 @@ const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
     window.close();
 };
 
+const sendNavigateToSearchMessage = (jql, stayInCurrentTab = false) => {
+    chrome.runtime.sendMessage({ action: MessageActionTypes.NAVIGATE_TO_SEARCH, jql, stayInCurrentTab });
+    window.close();
+};
+
 const toggleIssueFavorite = async (issueKey) => {
     try {
         console.debug(`Toggling favorite for issue: ${issueKey}`);
@@ -204,7 +209,19 @@ const toggleIssueFavorite = async (issueKey) => {
 
 const navigateToIssueFromInput = (stayInCurrentTab = false) => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
+    if (issueKey === '') {
+        return;
+    }
     sendNavigateToIssueMessage(issueKey, stayInCurrentTab);
+};
+
+const navigateToSearchFromInput = async (stayInCurrentTab = false) => {
+    const text = issueInputElement.value.trim();
+    if (!text) {
+        return;
+    }
+    const jql = await jiraHelperService.buildTextSearchJql(text);
+    sendNavigateToSearchMessage(jql, stayInCurrentTab);
 };
 
 issueInputElement.addEventListener('keydown', function (event) {
@@ -214,8 +231,7 @@ issueInputElement.addEventListener('keydown', function (event) {
     if (searchMode.id === SEARCH_MODES.KEY.id) {
         navigateToIssueFromInput(event.ctrlKey);
     } else {
-        clearTimeout(typingTimer);
-        fetchAndDisplayTextSearchResults();
+        navigateToSearchFromInput(event.ctrlKey);
     }
 });
 
@@ -223,8 +239,7 @@ document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => {
     if (searchMode.id === SEARCH_MODES.KEY.id) {
         navigateToIssueFromInput();
     } else {
-        clearTimeout(typingTimer);
-        fetchAndDisplayTextSearchResults();
+        navigateToSearchFromInput();
     }
 });
 

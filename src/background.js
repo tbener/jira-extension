@@ -89,6 +89,21 @@ async function listenToMessages() {
                 })();
 
                 return true; // Indicate an async response
+
+            case MessageActionTypes.NAVIGATE_TO_SEARCH:
+                (async () => {
+                    try {
+                        console.debug("Search navigation request accepted:", message.jql);
+                        await ensureInitialized();
+                        navigationService.navigateToSearch(message.jql, message.stayInCurrentTab);
+                        sendResponse({ status: "navigation_started" });
+                    } catch (error) {
+                        console.warn("Error navigating to search:", error);
+                        sendResponse({ status: "error", error: "Failed to navigate to search" });
+                    }
+                })();
+
+                return true; // Indicate an async response
             case MessageActionTypes.GET_SETTINGS:
                 (async () => {
                     try {
