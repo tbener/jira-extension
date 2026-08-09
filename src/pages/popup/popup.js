@@ -29,8 +29,8 @@ const FILTERS = {
 };
 
 const SEARCH_MODES = {
-    KEY: { id: 'key', placeholder: 'Enter issue number or ID' },
-    TEXT: { id: 'text', placeholder: 'Free text search' },
+    KEY: { id: 'key', placeholder: 'Enter issue number or ID', goTitle: 'Go to issue' },
+    TEXT: { id: 'text', placeholder: 'Free text search', goTitle: 'Open search results in Jira' },
 };
 
 const MIN_TEXT_SEARCH_LENGTH = 2;
@@ -51,6 +51,7 @@ const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
 const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
 const searchModeButtonElement = document.getElementById(ELEMENT_IDS.SEARCH_MODE_BUTTON);
+const goButtonElement = document.getElementById(ELEMENT_IDS.GO_BUTTON);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
@@ -235,7 +236,7 @@ issueInputElement.addEventListener('keydown', function (event) {
     }
 });
 
-document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => {
+goButtonElement.addEventListener('click', () => {
     if (searchMode.id === SEARCH_MODES.KEY.id) {
         navigateToIssueFromInput();
     } else {
@@ -319,6 +320,7 @@ const setSearchMode = (mode) => {
     }
     searchMode = mode;
     issueInputElement.placeholder = mode.placeholder;
+    goButtonElement.title = mode.goTitle;
     searchModeButtonElement.checked = mode.id === SEARCH_MODES.TEXT.id;
     clearTimeout(typingTimer);
     jiraHelperService.AbortFetch();
