@@ -9,7 +9,6 @@ export class IssuesLists {
 
     customProperties = {
         OpenTabs: { hasOpenTab: true },
-        AssignedToMe: { assignedToMe: true },
     };
 
     init = async () => {
@@ -80,7 +79,7 @@ export class IssuesLists {
         console.debug("Issues fetched from server.", { myIssues, additionalIssues });
 
         this.issuesList = {};
-        this._addIssues(myIssues, this.customProperties.AssignedToMe);
+        this._addIssues(myIssues, {});
         
         // Add additional issues with appropriate properties
         // Filter open tabs issues first
@@ -245,7 +244,7 @@ export class IssuesLists {
     }
 
     _mapIssue(issue, overrideFields) {
-        const { id = '', key, assignedToMe = false, hasOpenTab = false, fields = {} } = issue;
+        const { id = '', key, hasOpenTab = false, fields = {} } = issue;
         const { summary = '', status = null, assignee = null, created = null, updated = null } = fields;
 
         return {
@@ -258,7 +257,9 @@ export class IssuesLists {
             assigneeIconUrl: assignee?.avatarUrls?.["16x16"],
             created,
             updated,
-            assignedToMe,
+            // Compared against the real assignee, not membership in the my-issues JQL result set -
+            // that query is filtered by status, so an issue can be mine but fall outside it.
+            assignedToMe: !!assignee?.accountId && assignee.accountId === this.jiraHttpService.currentUserAccountId,
             hasOpenTab,
             isFavorite: this.isFavorite(key),
             isUpdated: true,
