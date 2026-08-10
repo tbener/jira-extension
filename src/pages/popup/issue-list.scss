@@ -76,6 +76,17 @@
   visibility: visible;
 }
 
+.jira-issue.is-active-tab .jira-key::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #2e8b57;
+  vertical-align: middle;
+}
+
 .jira-favorite-icon .favorite-icon {
   cursor: pointer;
   color: #ccc;

@@ -43,6 +43,7 @@ let currentFilter = null;
 let originalProjectValue;
 let settings = {};
 let searchMode = SEARCH_MODES.KEY;
+let activeTabIssueKey = null;
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupIssuesTableEventListeners();
         await loadIssuesFromCache(); // Load cache data but don't display it
         await loadSettings();
+        await resolveActiveTabIssueKey();
         console.debug('Call Promise All: refreshIssuesTableFromServer(), resolveBoardLink()');
         await Promise.all([
             refreshIssuesTableFromServer(),
@@ -131,6 +133,31 @@ const loadSettings = async () => {
         originalProjectValue = defaultProjectElement.textContent;
     } catch (error) {
         console.log('Error fetching settings:', error);
+    }
+};
+
+// Identifies the issue in the tab the user was on before opening the popup, so it can be
+// highlighted in the list (e.g. to make it easy to favorite the issue you're currently viewing).
+const resolveActiveTabIssueKey = async () => {
+    try {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!activeTab?.url) {
+            return;
+        }
+
+        const response = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: MessageActionTypes.GET_ACTIVE_TAB_ISSUE_KEY, url: activeTab.url }, response => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        activeTabIssueKey = response?.issueKey || null;
+    } catch (error) {
+        console.log('Error resolving active tab issue key:', error);
     }
 };
 
@@ -469,6 +496,10 @@ const applyFilter = (filter, toggle = true) => {
     }
 
     updateSearchResultsCount(filter, filteredIssues.length);
+
+    filteredIssues.forEach(issue => {
+        issue.isActiveTab = issue.key === activeTabIssueKey;
+    });
 
     console.debug('Applying filter, filteredIssues:', filteredIssues.map(i => `${i.key}(F:${i.isFavorite})`));
     fillIssuesTable(filteredIssues, issuesTableElement, 'refresh');

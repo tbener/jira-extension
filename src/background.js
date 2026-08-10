@@ -152,6 +152,19 @@ async function listenToMessages() {
                 const openTabsIssues = navigationService.tabsService.getIssuesList();
                 sendResponse({ issueKeys: openTabsIssues });
                 break;
+            case MessageActionTypes.GET_ACTIVE_TAB_ISSUE_KEY:
+                (async () => {
+                    try {
+                        await ensureInitialized();
+                        const issueKey = navigationService.tabsService.extractIssueFromUrl(message.url);
+                        sendResponse({ issueKey });
+                    } catch (error) {
+                        console.warn("Error resolving active tab issue key:", error);
+                        sendResponse({ issueKey: null, error: "Failed to resolve active tab issue key" });
+                    }
+                })();
+
+                return true; // Indicate an async response
             case MessageActionTypes.GET_ISSUES_LIST:
                 (async () => {
                     try {
