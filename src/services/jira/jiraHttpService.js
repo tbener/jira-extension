@@ -16,7 +16,8 @@ export class JiraHttpService {
 
     API_PATH = {
         JQL: 'rest/api/3/search/jql?fields=key,summary,status,assignee,created,updated&jql={0}&maxResults={1}',
-        ISSUE: 'rest/api/3/issue/{0}'
+        ISSUE: 'rest/api/3/issue/{0}',
+        MYSELF: 'rest/api/3/myself'
     };
 
     async init() {
@@ -25,8 +26,17 @@ export class JiraHttpService {
         const settingsService = new SettingsService();
         this.settings = await settingsService.readSettings();
         this.baseUrl = `https://${this.settings.customDomain}.atlassian.net`;
+        await this.fetchCurrentUser();
 
         console.debug(`JiraHttpService initialized!!!`);
+    }
+
+    // Cached so _mapIssue can tell whether an issue is actually assigned to the current user,
+    // independent of which query (my-issues JQL, open tabs, favorites) fetched it.
+    async fetchCurrentUser() {
+        const response = await this.fetch(this.getApiPath(this.API_PATH.MYSELF));
+        this.currentUserAccountId = response?.accountId ?? null;
+        console.debug('Current user account id:', this.currentUserAccountId);
     }
 
     getApiPath(apiPath, ...args) {
