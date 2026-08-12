@@ -11,6 +11,7 @@ import { ElementObserver2 } from './element-observer2.js';
 import { HeaderInfo } from './header-info.js';
 import { JiraHttpService } from '../../services/jira/jiraHttpService.js';
 import { CopyIssueIcon } from './copy-issue-icon.js';
+import { PrevNextArrows } from '../modal/prev-next-arrows.js';
 import { fetchSettingsFromBackground } from '../../common/utils.js';
 
 const data = {
@@ -51,6 +52,12 @@ export default async function watchPageToAddElements(pageType) {
 async function elementReady(elm, issueKey) {
     console.debug('✅✔️✅✔️✅✔️✅ (callback function) ELEMENT READY!!!:', elm, issueKey);
     try {
+        // Doesn't need the fetched issue - only the key, which we already have - so it
+        // runs immediately instead of waiting on the network round-trip below. That
+        // round-trip was the actual cause of the arrows appearing to pop in late.
+        const prevNextArrows = new PrevNextArrows();
+        prevNextArrows.createButtons(elm, issueKey, !!settings?.showBoardDebugIndicator);
+
         const jiraHttpService = new JiraHttpService();
         await jiraHttpService.init();
         const issue = await jiraHttpService.fetchIssue(issueKey);

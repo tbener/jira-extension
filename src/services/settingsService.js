@@ -8,6 +8,8 @@ export class SettingsService {
         myIssuesJql: 'statusCategory != Done AND status != Rejected',
         includeTodoInDefaultView: true,
         useSmartNavigationExtended: false,
+        // TODO: set default to false before releasing (issue #12 prev/next arrows debug aid)
+        showBoardDebugIndicator: true,
         dueDateOptions: {
             messageTemplate: {
                 with: '{status} due date: {date}',

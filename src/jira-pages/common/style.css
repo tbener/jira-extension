@@ -64,3 +64,69 @@
 [data-color-mode="dark"] .extension-copy-link-button svg g:last-child {
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
 }
+
+/* Prev/next board card navigation arrows */
+@keyframes extension-arrow-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.extension-prev-next-arrow {
+    margin-right: 2px;
+    /* fill-mode omitted on purpose: once the animation ends, opacity control
+       reverts to the normal cascade (e.g. the disabled rule below) instead of
+       being pinned to the keyframe's final value. */
+    animation: extension-arrow-fade-in 200ms ease-out;
+}
+
+.extension-prev-next-arrow.extension-arrow-disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+[data-color-mode="dark"] .extension-prev-next-arrow.extension-arrow-disabled {
+    opacity: 0.25;
+}
+
+/* Debug indicator for prev/next board navigation (issue #12) - kept around
+   intentionally as a diagnostic aid for when Jira's board DOM drifts. */
+#extension-board-debug-indicator {
+    position: fixed !important;
+    bottom: 12px !important;
+    right: 12px !important;
+    z-index: 999999 !important;
+    background: #172b4d !important;
+    color: #fff !important;
+    font: 12px/1.4 monospace !important;
+    padding: 8px 20px 8px 10px !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    pointer-events: auto !important;
+    max-width: min(360px, 80vw) !important;
+}
+
+#extension-board-debug-indicator .extension-board-debug-indicator-content {
+    margin: 0 !important;
+    font: inherit !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word !important;
+    pointer-events: none !important;
+}
+
+#extension-board-debug-indicator .extension-board-debug-indicator-close {
+    position: absolute !important;
+    top: 2px !important;
+    right: 4px !important;
+    background: none !important;
+    border: none !important;
+    color: #fff !important;
+    opacity: 0.6 !important;
+    font: 12px/1 monospace !important;
+    padding: 2px !important;
+    cursor: pointer !important;
+}
+
+#extension-board-debug-indicator .extension-board-debug-indicator-close:hover {
+    opacity: 1 !important;
+}

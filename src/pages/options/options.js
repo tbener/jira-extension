@@ -36,7 +36,8 @@ const saveOptions = () => {
         boardUrl: boardLinkInputElement.value,
         myIssuesJql: document.getElementById('myIssuesJql').value,
         includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked,
-        useSmartNavigationExtended: document.getElementById('useSmartNavigationExtended').checked
+        useSmartNavigationExtended: document.getElementById('useSmartNavigationExtended').checked,
+        showBoardDebugIndicator: document.getElementById('showBoardDebugIndicator').checked
     }
 
     settingsService.saveSettings(settings);
@@ -65,6 +66,7 @@ const restoreOptions = async () => {
         document.getElementById('myIssuesJql').value = settings.myIssuesJql;
         document.getElementById('includeTodoInDefaultView').checked = settings.includeTodoInDefaultView;
         document.getElementById('useSmartNavigationExtended').checked = settings.useSmartNavigationExtended;
+        document.getElementById('showBoardDebugIndicator').checked = settings.showBoardDebugIndicator;
         updateSmartNavigationExtendedAvailability();
 
         await setBoardLink();
