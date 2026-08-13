@@ -171,18 +171,6 @@
                 </div>
 
                 <div class="card p-3 mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="showBoardDebugIndicator">
-                        <label class="form-check-label" for="showBoardDebugIndicator">
-                            Show board debug indicator <span class="badge bg-secondary">Dev</span>
-                        </label>
-                        <small class="form-text text-muted d-block">
-                            Small on-page badge showing prev/next board card detection status. Diagnostic aid for issue #12.
-                        </small>
-                    </div>
-                </div>
-
-                <div class="card p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <label for="myIssuesJql" class="form-label fw-bold mb-0">My Issues Query (additional JQL conditions)</label>
                         <button type="button" id="resetMyIssuesJql" class="btn btn-outline-secondary btn-sm">Reset to Default</button>
@@ -203,6 +191,18 @@
                     <small class="form-text text-muted">
                         Applies to issues assigned to you that are still in "To Do". Issues with an open tab or marked as favorite are always shown, regardless of this setting.
                     </small>
+                </div>
+
+                <div class="card p-3 mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showBoardDebugIndicator">
+                        <label class="form-check-label" for="showBoardDebugIndicator">
+                            Debug mode <span class="badge bg-secondary">Dev</span>
+                        </label>
+                        <small class="form-text text-muted d-block">
+                            Small on-page badge showing debugging information.
+                        </small>
+                    </div>
                 </div>
 
                 <div class="row mt-3 ms-1 align-items-baseline">
@@ -231,6 +231,7 @@
 
                 <h5 class="mb-3 mt-5">Versions details</h5>
                 <ul>
+                    <li>v2.5.0: (feature) added prev/next navigation arrows for cards on the kanban board</li>
                     <li>v2.4.1: (feature) highlight the issue matching your current tab in the popup list</li>
                     <li>v2.4.0: (feature) added free text search, activated by toggle button</li>
                     <li>v2.3.0: (feature) added experimental Smart Navigation for any link, off by default</li>
