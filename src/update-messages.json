@@ -4,7 +4,7 @@
     "title": "New Version Updated",
     "message": "Free search added",
     "features": [
-      "Toggle \"Free search\" next to the issue box to find issues by text, not just by key or number"
+      "Check \"Free search\" to find issues by text"
     ]
   }
 }

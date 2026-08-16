@@ -173,7 +173,26 @@ footer {
 
 /* Search mode toggle - looks like a button even when inactive */
 
+/* #search-mode-btn is static markup present at first paint, unlike the other filter
+   buttons (cloned in by JS after stylesheets are guaranteed loaded) - relying on the
+   Bootstrap CDN link's .btn-check/.btn classes here meant this row rendered as a plain
+   native checkbox + unstyled label until that network request resolved, then visibly
+   resized once it did. Hide the checkbox and size the label ourselves (locally-loaded
+   CSS, no network dependency) so it's correct on the very first paint regardless. */
+#search-mode-btn {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 label[for="search-mode-btn"] {
+    display: inline-block;
     border: 1px solid #ccc;
     background-color: #fff;
 }
