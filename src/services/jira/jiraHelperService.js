@@ -64,6 +64,33 @@ export class JiraHelperService {
         return await this.jiraHttpService.buildTextSearchJql(text);
     }
 
+    async searchUsers(query) {
+        console.debug("Searching users by query:", query);
+        if (!query) {
+            return [];
+        }
+
+        return await this.jiraHttpService.fetchUserPicker(query);
+    }
+
+    async searchByUser(accountId) {
+        console.debug("Searching issues by user:", accountId);
+        if (!accountId) {
+            return [];
+        }
+
+        const results = await this.jiraHttpService.fetchUserSearch(accountId);
+        return results.map(data => new Issue(data, { searchResults: true }));
+    }
+
+    async buildUserSearchJql(accountId) {
+        return await this.jiraHttpService.buildUserSearchJql(accountId);
+    }
+
+    async fetchFieldExists(fieldId) {
+        return await this.jiraHttpService.fetchFieldExists(fieldId);
+    }
+
     AbortFetch() {
         this.jiraHttpService?.abortFetch();
     }

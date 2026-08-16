@@ -3,6 +3,17 @@ import { SettingsService } from '../settingsService.js';
 import { formatString } from '/common/utils.js';
 import { CONFIG } from '../../config.js';
 
+// Thrown by fetch() only when called with throwOnError=true - lets a caller distinguish
+// "Jira rejected this request" (e.g. an invalid custom field id) from "genuinely no data",
+// without changing behavior for every other call site (which still get null on error).
+export class JiraApiError extends Error {
+    constructor(status, body) {
+        super(`Jira API request failed with status ${status}`);
+        this.status = status;
+        this.body = body;
+    }
+}
+
 export class JiraHttpService {
     abortController = null;
 
@@ -17,7 +28,9 @@ export class JiraHttpService {
     API_PATH = {
         JQL: 'rest/api/3/search/jql?fields=key,summary,status,assignee,created,updated&jql={0}&maxResults={1}',
         ISSUE: 'rest/api/3/issue/{0}',
-        MYSELF: 'rest/api/3/myself'
+        MYSELF: 'rest/api/3/myself',
+        USER_PICKER: 'rest/api/3/user/picker?query={0}&maxResults={1}',
+        FIELD: 'rest/api/3/field',
     };
 
     async init() {
@@ -88,13 +101,74 @@ export class JiraHttpService {
         return await JqlBuilder.jqlTextSearch(text, this.settings.defaultProjectKey);
     }
 
+    async fetchUserPicker(query) {
+        console.debug("Fetching user picker for query:", query);
+        const apiPath = this.getApiPath(this.API_PATH.USER_PICKER, encodeURIComponent(query), CONFIG.MAX_RESULTS);
+        const response = await this.fetch(apiPath, true);
+        return response?.users ?? [];
+    }
+
+    // Full field list for this Jira instance - used to validate a configured custom
+    // field id (e.g. qaAssigneeFieldId) actually exists before it's used in a JQL query.
+    // Cached in memory for the session since it's effectively static per instance.
+    async fetchFieldList() {
+        if (!this._fieldListCache) {
+            const apiPath = this.getApiPath(this.API_PATH.FIELD);
+            this._fieldListCache = await this.fetch(apiPath) ?? [];
+        }
+        return this._fieldListCache;
+    }
+
+    async fetchFieldExists(fieldId) {
+        if (!fieldId) {
+            return false;
+        }
+        const normalizedId = /^\d+$/.test(fieldId) ? `customfield_${fieldId}` : fieldId;
+        const fields = await this.fetchFieldList();
+        return fields.some(field => field.id === normalizedId);
+    }
+
+    async buildUserSearchJql(accountId) {
+        return await JqlBuilder.jqlUserSearch(accountId, this.settings.defaultProjectKey, this._userSearchRoleFields());
+    }
+
+    async fetchUserSearch(accountId) {
+        console.debug("Fetching issues by user:", accountId);
+
+        const jql = await this.buildUserSearchJql(accountId);
+        try {
+            const response = await this.fetch(this.getJqlPath(jql), true, true); // throwOnError
+            return response?.issues ?? [];
+        } catch (error) {
+            if (!this.settings.qaAssigneeFieldId || this._qaFieldBroken) {
+                console.log("Error fetching issues by user:", error);
+                return [];
+            }
+            // The QA field may have gone stale since it was validated in settings
+            // (deleted, permissions revoked, moved off-scope) - retry once without it
+            // rather than letting one bad clause silently blank out assignee/reporter matches.
+            console.warn("QA field query failed, retrying user search without it:", this.settings.qaAssigneeFieldId, error);
+            this._qaFieldBroken = true;
+            const fallbackJql = await JqlBuilder.jqlUserSearch(accountId, this.settings.defaultProjectKey, JqlBuilder.DEFAULT_USER_SEARCH_ROLES);
+            return await this.fetchIssuesForJql(fallbackJql, true);
+        }
+    }
+
+    _userSearchRoleFields() {
+        const fields = [...JqlBuilder.DEFAULT_USER_SEARCH_ROLES];
+        if (this.settings.qaAssigneeFieldId && !this._qaFieldBroken) {
+            fields.push(this.settings.qaAssigneeFieldId);
+        }
+        return fields;
+    }
+
     async fetchIssuesForJql(jql, withAbortController = false) {
         const apiPath = this.getJqlPath(jql);
         const response = await this.fetch(apiPath, withAbortController);
         return response?.issues ?? [];
     }
 
-    async fetch(apiPath, withAbortController = false) {
+    async fetch(apiPath, withAbortController = false, throwOnError = false) {
         console.log(`Fetching ${apiPath}`);
 
         let signal;
@@ -121,6 +195,10 @@ export class JiraHttpService {
 
             if (!response.ok) {
                 console.log(`ERROR: Failed to fetch: ${response.status} ${response.statusText}`);
+                if (throwOnError) {
+                    const errorBody = await response.json().catch(() => null);
+                    throw new JiraApiError(response.status, errorBody);
+                }
                 return null;
             }
 
@@ -132,6 +210,9 @@ export class JiraHttpService {
                 return null;
             }
         } catch (error) {
+            if (error instanceof JiraApiError) {
+                throw error;
+            }
             console.log("Error fetching issue(s):", error, "Path:", apiPath);
             return null;
         }

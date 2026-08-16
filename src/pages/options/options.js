@@ -27,28 +27,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Saves options to chrome.storage
-const saveOptions = () => {
-    const settings = {
-        customDomain: document.getElementById('customDomain').value,
-        defaultProjectKey: document.getElementById('defaultProjectKey').value,
-        useSmartNavigation: document.getElementById('useSmartNavigation').checked,
-        showDueDateAlert: document.getElementById('showDueDateAlert').checked,
-        boardUrl: boardLinkInputElement.value,
-        myIssuesJql: document.getElementById('myIssuesJql').value,
-        includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked,
-        useSmartNavigationExtended: document.getElementById('useSmartNavigationExtended').checked,
-        showBoardDebugIndicator: document.getElementById('showBoardDebugIndicator').checked
+const saveOptions = async () => {
+    const saveButton = document.getElementById('saveButton');
+    const qaAssigneeFieldId = document.getElementById('qaAssigneeFieldId').value.trim();
+
+    saveButton.disabled = true;
+    try {
+        if (!(await validateQaAssigneeFieldId(qaAssigneeFieldId))) {
+            return;
+        }
+
+        const settings = {
+            customDomain: document.getElementById('customDomain').value,
+            defaultProjectKey: document.getElementById('defaultProjectKey').value,
+            useSmartNavigation: document.getElementById('useSmartNavigation').checked,
+            showDueDateAlert: document.getElementById('showDueDateAlert').checked,
+            boardUrl: boardLinkInputElement.value,
+            myIssuesJql: document.getElementById('myIssuesJql').value,
+            includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked,
+            useSmartNavigationExtended: document.getElementById('useSmartNavigationExtended').checked,
+            showBoardDebugIndicator: document.getElementById('showBoardDebugIndicator').checked,
+            qaAssigneeFieldId,
+        }
+
+        settingsService.saveSettings(settings);
+        const status = document.getElementById('status');
+        status.textContent = 'Options saved.';
+        setTimeout(() => {
+            status.textContent = '';
+        }, 3000);
+
+        chrome.runtime.sendMessage({ action: MessageActionTypes.SETTINGS_CHANGED });
+    } finally {
+        saveButton.disabled = false;
+    }
+};
+
+// Verifies a configured QA field id actually exists on this Jira instance before it's
+// saved, so a broken id never reaches a user-search JQL query in the first place.
+const validateQaAssigneeFieldId = async (qaAssigneeFieldId) => {
+    const statusElement = document.getElementById('qaAssigneeFieldIdStatus');
+
+    if (!qaAssigneeFieldId) {
+        statusElement.textContent = '';
+        statusElement.className = 'form-text';
+        return true;
     }
 
-    settingsService.saveSettings(settings);
-    const status = document.getElementById('status');
-    status.textContent = 'Options saved.';
-    setTimeout(() => {
-        status.textContent = '';
-    }, 3000);
+    statusElement.textContent = 'Verifying field...';
+    statusElement.className = 'form-text text-muted';
 
-    chrome.runtime.sendMessage({ action: MessageActionTypes.SETTINGS_CHANGED });
+    const exists = await jiraHelperService.fetchFieldExists(qaAssigneeFieldId);
+    if (!exists) {
+        statusElement.textContent = 'Field ID not found on this Jira instance - check the ID or leave blank to disable.';
+        statusElement.className = 'form-text text-danger';
+        return false;
+    }
 
+    statusElement.textContent = 'Field verified.';
+    statusElement.className = 'form-text text-success';
+    return true;
 };
 
 // Restores select box and checkbox state using the preferences
@@ -64,6 +102,7 @@ const restoreOptions = async () => {
         document.getElementById('showDueDateAlert').checked = settings.showDueDateAlert;
         boardLinkInputElement.value = settings.boardUrl;
         document.getElementById('myIssuesJql').value = settings.myIssuesJql;
+        document.getElementById('qaAssigneeFieldId').value = settings.qaAssigneeFieldId;
         document.getElementById('includeTodoInDefaultView').checked = settings.includeTodoInDefaultView;
         document.getElementById('useSmartNavigationExtended').checked = settings.useSmartNavigationExtended;
         document.getElementById('showBoardDebugIndicator').checked = settings.showBoardDebugIndicator;

@@ -182,6 +182,15 @@
                 </div>
 
                 <div class="card p-3 mb-3">
+                    <label for="qaAssigneeFieldId" class="form-label fw-bold mb-0">QA Field ID (optional)</label>
+                    <input type="text" class="form-control mt-2" id="qaAssigneeFieldId" placeholder="e.g. customfield_12345">
+                    <small class="form-text text-muted">
+                        Search by user also matches this custom field (in addition to Assignee/Reporter) when set - e.g. a "QA Assignee" person-picker field. Leave blank to disable. Verified against your Jira instance when you save.
+                    </small>
+                    <div class="form-text" id="qaAssigneeFieldIdStatus"></div>
+                </div>
+
+                <div class="card p-3 mb-3">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="includeTodoInDefaultView" checked>
                         <label class="form-check-label" for="includeTodoInDefaultView">

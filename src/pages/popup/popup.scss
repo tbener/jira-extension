@@ -51,6 +51,90 @@ main {
     display: flex;
 }
 
+.search-input-wrapper {
+    position: relative;
+}
+
+.user-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 220px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #dde3ea;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.user-picker-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem;
+}
+
+.user-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover,
+    &.is-highlighted {
+        background-color: #e6f1fb;
+    }
+}
+
+.user-suggestion-avatar-wrap {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.user-suggestion-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #eef2f6;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+    &.d-none {
+        display: none;
+    }
+}
+
+.user-suggestion-initials {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+
+    &.is-visible {
+        display: flex;
+    }
+}
+
+.user-suggestion-name {
+    font-size: 0.85rem;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .input-group {
     margin-block-end: unset;
 
@@ -173,13 +257,13 @@ footer {
 
 /* Search mode toggle - looks like a button even when inactive */
 
-/* #search-mode-btn is static markup present at first paint, unlike the other filter
-   buttons (cloned in by JS after stylesheets are guaranteed loaded) - relying on the
-   Bootstrap CDN link's .btn-check/.btn classes here meant this row rendered as a plain
-   native checkbox + unstyled label until that network request resolved, then visibly
-   resized once it did. Hide the checkbox and size the label ourselves (locally-loaded
+/* .search-mode-input radios are static markup present at first paint, unlike the other
+   filter buttons (cloned in by JS after stylesheets are guaranteed loaded) - relying on
+   the Bootstrap CDN link's .btn-check/.btn classes here meant this row rendered as plain
+   native radios + unstyled labels until that network request resolved, then visibly
+   resized once it did. Hide the radios and size the labels ourselves (locally-loaded
    CSS, no network dependency) so it's correct on the very first paint regardless. */
-#search-mode-btn {
+.search-mode-input {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -191,7 +275,7 @@ footer {
     border: 0;
 }
 
-label[for="search-mode-btn"] {
+.search-mode-label {
     display: inline-block;
     border: 1px solid #ccc;
     background-color: #fff;

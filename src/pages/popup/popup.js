@@ -3,6 +3,7 @@ import { fillIssuesTable } from "./fillTable.js";
 import { fetchSettingsFromBackground } from '../../common/utils.js'
 import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
 import { CONFIG } from '../../config.js';
+import { renderUserSuggestions, clearUserSuggestions, moveHighlight, getHighlightedUser, isOpen as isUserPickerOpen, onSuggestionSelected } from './userPicker.js';
 
 const jiraHelperService = new JiraHelperService()
 
@@ -17,7 +18,6 @@ const ELEMENT_IDS = {
     GO_TO_OPTIONS: 'go-to-options',
     CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
     FILTER_BUTTONS_CONTAINER: 'filter-buttons-container',
-    SEARCH_MODE_BUTTON: 'search-mode-btn',
     SEARCH_RESULTS_COUNT: 'search-results-count',
 };
 
@@ -33,9 +33,13 @@ const FILTERS = {
 const SEARCH_MODES = {
     KEY: { id: 'key', placeholder: 'Enter issue number or ID', goTitle: 'Go to issue' },
     TEXT: { id: 'text', placeholder: 'Free text search', goTitle: 'Open search results in Jira' },
+    USER: { id: 'user', placeholder: 'Search by user (@)', goTitle: "Open user's issues in Jira" },
 };
 
+const SEARCH_MODE_BY_ID = Object.fromEntries(Object.values(SEARCH_MODES).map(mode => [mode.id, mode]));
+
 const MIN_TEXT_SEARCH_LENGTH = 2;
+const MIN_USER_SEARCH_LENGTH = 1;
 
 let issuesList = [];
 let typingTimer;
@@ -44,6 +48,7 @@ let originalProjectValue;
 let settings = {};
 let searchMode = SEARCH_MODES.KEY;
 let activeTabIssueKey = null;
+let selectedUserAccountId = null;
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
@@ -53,7 +58,7 @@ const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDER
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
 const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
-const searchModeButtonElement = document.getElementById(ELEMENT_IDS.SEARCH_MODE_BUTTON);
+const searchModeInputs = document.querySelectorAll('input[name="search-mode"]');
 const goButtonElement = document.getElementById(ELEMENT_IDS.GO_BUTTON);
 const searchResultsCountElement = document.getElementById(ELEMENT_IDS.SEARCH_RESULTS_COUNT);
 
@@ -255,23 +260,62 @@ const navigateToSearchFromInput = async (stayInCurrentTab = false) => {
     sendNavigateToSearchMessage(jql, stayInCurrentTab);
 };
 
+const navigateToUserSearchFromInput = async (stayInCurrentTab = false) => {
+    if (!selectedUserAccountId) {
+        return;
+    }
+    const jql = await jiraHelperService.buildUserSearchJql(selectedUserAccountId);
+    sendNavigateToSearchMessage(jql, stayInCurrentTab);
+};
+
+const navigateFromInput = (stayInCurrentTab) => {
+    if (searchMode.id === SEARCH_MODES.KEY.id) {
+        navigateToIssueFromInput(stayInCurrentTab);
+    } else if (searchMode.id === SEARCH_MODES.USER.id) {
+        navigateToUserSearchFromInput(stayInCurrentTab);
+    } else {
+        navigateToSearchFromInput(stayInCurrentTab);
+    }
+};
+
 issueInputElement.addEventListener('keydown', function (event) {
+    if (searchMode.id === SEARCH_MODES.USER.id) {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            moveHighlight(1);
+            return;
+        }
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            moveHighlight(-1);
+            return;
+        }
+        if (event.key === 'Escape') {
+            clearUserSuggestions();
+            return;
+        }
+        if (event.key === 'Enter' && isUserPickerOpen()) {
+            event.preventDefault();
+            const user = getHighlightedUser();
+            if (user) {
+                selectUser(user);
+            }
+            return;
+        }
+    }
+
     if (event.key !== 'Enter') {
         return;
     }
-    if (searchMode.id === SEARCH_MODES.KEY.id) {
-        navigateToIssueFromInput(event.ctrlKey);
-    } else {
-        navigateToSearchFromInput(event.ctrlKey);
-    }
+    navigateFromInput(event.ctrlKey);
+});
+
+issueInputElement.addEventListener('blur', () => {
+    clearUserSuggestions();
 });
 
 goButtonElement.addEventListener('click', () => {
-    if (searchMode.id === SEARCH_MODES.KEY.id) {
-        navigateToIssueFromInput();
-    } else {
-        navigateToSearchFromInput();
-    }
+    navigateFromInput(false);
 });
 
 const handleNoSearchResults = () => {
@@ -321,6 +365,37 @@ const fetchAndDisplayTextSearchResults = async () => {
     }
 };
 
+const fetchAndDisplayUserSuggestions = async () => {
+    const query = issueInputElement.value.trim();
+
+    if (query.length < MIN_USER_SEARCH_LENGTH) {
+        clearUserSuggestions();
+        return;
+    }
+
+    try {
+        const users = await jiraHelperService.searchUsers(query);
+        renderUserSuggestions(users);
+    } catch (error) {
+        console.log('Error fetching user suggestions:', error);
+    }
+};
+
+const selectUser = async (user) => {
+    selectedUserAccountId = user.accountId;
+    issueInputElement.value = user.displayName;
+    clearUserSuggestions();
+
+    try {
+        const issues = await jiraHelperService.searchByUser(user.accountId);
+        updateSearchResults(issues);
+    } catch (error) {
+        console.log('Error searching issues by user:', error);
+    }
+};
+
+onSuggestionSelected(selectUser);
+
 const clearSearchResults = () => {
     issuesList = issuesList.filter(issue => !issue.searchResults);
     if (currentFilter?.id === FILTERS.SEARCH_RESULTS.id) {
@@ -328,14 +403,27 @@ const clearSearchResults = () => {
     }
 };
 
+const getFetchHandlerForMode = (modeId) => {
+    if (modeId === SEARCH_MODES.KEY.id) {
+        return fetchAndDisplayIssueFromInput;
+    }
+    if (modeId === SEARCH_MODES.USER.id) {
+        return fetchAndDisplayUserSuggestions;
+    }
+    return fetchAndDisplayTextSearchResults;
+};
+
 const handleIssueInput = async function () {
     jiraHelperService.AbortFetch();
     clearTimeout(typingTimer);
     clearSearchResults();
 
-    const fetchAndDisplay = searchMode.id === SEARCH_MODES.KEY.id
-        ? fetchAndDisplayIssueFromInput
-        : fetchAndDisplayTextSearchResults;
+    if (searchMode.id === SEARCH_MODES.USER.id) {
+        // Editing the input after a suggestion was already picked starts a new query.
+        selectedUserAccountId = null;
+    }
+
+    const fetchAndDisplay = getFetchHandlerForMode(searchMode.id);
 
     typingTimer = setTimeout(async () => {
         await fetchAndDisplay();
@@ -344,6 +432,12 @@ const handleIssueInput = async function () {
 
 issueInputElement.addEventListener('input', handleIssueInput);
 
+const syncSearchModeInputs = () => {
+    searchModeInputs.forEach(input => {
+        input.checked = input.value === searchMode.id;
+    });
+};
+
 const setSearchMode = (mode) => {
     if (searchMode.id === mode.id) {
         return;
@@ -351,20 +445,21 @@ const setSearchMode = (mode) => {
     searchMode = mode;
     issueInputElement.placeholder = mode.placeholder;
     goButtonElement.title = mode.goTitle;
-    searchModeButtonElement.checked = mode.id === SEARCH_MODES.TEXT.id;
+    syncSearchModeInputs();
     clearTimeout(typingTimer);
     jiraHelperService.AbortFetch();
     clearSearchResults();
+    selectedUserAccountId = null;
+    clearUserSuggestions();
     issueInputElement.focus();
 
-    const fetchAndDisplay = mode.id === SEARCH_MODES.KEY.id
-        ? fetchAndDisplayIssueFromInput
-        : fetchAndDisplayTextSearchResults;
-    fetchAndDisplay();
+    getFetchHandlerForMode(mode.id)();
 };
 
-searchModeButtonElement.addEventListener('click', () => {
-    setSearchMode(searchModeButtonElement.checked ? SEARCH_MODES.TEXT : SEARCH_MODES.KEY);
+searchModeInputs.forEach(input => {
+    input.addEventListener('change', () => {
+        setSearchMode(SEARCH_MODE_BY_ID[input.value]);
+    });
 });
 
 document.querySelector(`#${ELEMENT_IDS.GO_TO_OPTIONS}`).addEventListener('click', function () {
