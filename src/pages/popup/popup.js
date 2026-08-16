@@ -339,12 +339,11 @@ const handleNoSearchResults = () => {
     hideFilter(FILTERS.SEARCH_RESULTS);
 };
 
+// A search actually ran here (unlike handleNoSearchResults, used when the input is too
+// short/invalid to search at all) - so on zero matches, stay on Search Results and show
+// "No issues found" instead of silently reverting to the default view.
 const updateSearchResults = (issues) => {
     issuesList = issuesList.filter(issue => !issue.searchResults);
-    if (issues.length === 0) {
-        handleNoSearchResults();
-        return;
-    }
     issuesList.push(...issues);
     applyFilter(FILTERS.SEARCH_RESULTS, false);
 };
@@ -561,7 +560,10 @@ const applyFilter = (filter, toggle = true) => {
         }
     }
 
-    if (!issuesList?.length > 0) {
+    // Still render Search Results even when the whole list is empty, so "No issues found"
+    // shows up reliably instead of leaving stale count/table state on the rare account
+    // that has no other cached issues at all.
+    if (!issuesList?.length > 0 && filter.id !== FILTERS.SEARCH_RESULTS.id) {
         return;
     }
 
@@ -602,9 +604,11 @@ const applyFilter = (filter, toggle = true) => {
 
 const updateSearchResultsCount = (filter, count) => {
     if (filter.id === FILTERS.SEARCH_RESULTS.id) {
-        searchResultsCountElement.textContent = count >= CONFIG.MAX_RESULTS
-            ? `Showing first ${CONFIG.MAX_RESULTS} results`
-            : `${count} result${count === 1 ? '' : 's'} found`;
+        searchResultsCountElement.textContent = count === 0
+            ? 'No issues found'
+            : count >= CONFIG.MAX_RESULTS
+                ? `Showing first ${CONFIG.MAX_RESULTS} results`
+                : `${count} result${count === 1 ? '' : 's'} found`;
     } else {
         searchResultsCountElement.textContent = `${count} issue${count === 1 ? '' : 's'}`;
     }
