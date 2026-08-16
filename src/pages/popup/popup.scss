@@ -160,6 +160,10 @@ main {
         }
     }
 
+    input.search-input-with-icon {
+        padding-left: 1.75rem;
+    }
+
     button.go-button {
         border-radius: 0 8px 8px 0;
 
@@ -169,6 +173,33 @@ main {
         }
     }
 
+}
+
+/* Scoped tightly around just the icon + input-group (not the wider .search-input-wrapper,
+   which also contains the hint text and dropdown below) - otherwise the icon's "top: 50%"
+   centers against that taller box instead of the input row, landing near the bottom. */
+.search-input-icon-wrap {
+    position: relative;
+}
+
+/* Soft, non-obtrusive mode indicator overlaid on the input's left padding. Positioned
+   as a sibling of .input-group, NOT a child of it - Bootstrap's own .input-group CSS
+   (a) zeroes the border-radius of any "middle" child and (b) bumps a focused
+   .form-control to z-index: 5 (Bootstrap 5.3's actual value - a still-tied z-index: 5
+   here lost the tiebreak to DOM order, since .input-group renders after this icon),
+   so nesting the icon inside .input-group broke the input's rounded corners and made
+   the icon disappear on focus. z-index here is set clearly above that so it wins
+   regardless of focus state or DOM order.
+   Not yet clickable (pointer-events: none) - reserved for forcing a mode later. */
+.search-mode-icon {
+    position: absolute;
+    left: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    color: #a9b4c0;
+    pointer-events: none;
+    user-select: none;
 }
 
 .hint {
@@ -253,32 +284,6 @@ footer {
     &:hover {
         color: #2a72b5;
     }
-}
-
-/* Search mode toggle - looks like a button even when inactive */
-
-/* .search-mode-input radios are static markup present at first paint, unlike the other
-   filter buttons (cloned in by JS after stylesheets are guaranteed loaded) - relying on
-   the Bootstrap CDN link's .btn-check/.btn classes here meant this row rendered as plain
-   native radios + unstyled labels until that network request resolved, then visibly
-   resized once it did. Hide the radios and size the labels ourselves (locally-loaded
-   CSS, no network dependency) so it's correct on the very first paint regardless. */
-.search-mode-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-.search-mode-label {
-    display: inline-block;
-    border: 1px solid #ccc;
-    background-color: #fff;
 }
 
 .filter-buttons .btn-check:checked+label {
