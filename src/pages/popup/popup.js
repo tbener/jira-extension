@@ -48,6 +48,10 @@ let originalProjectValue;
 let settings = {};
 let activeTabIssueKey = null;
 let selectedUserAccountId = null;
+// Which keys are currently showing as search results - tracked separately from issuesList
+// itself (rather than an issue.searchResults flag) so that an issue which is ALSO a real
+// My Issue/open tab/favorite keeps its real, shared state instead of a second, stale copy.
+let searchResultKeys = new Set();
 
 // Mode is auto-detected from the input's content on every keystroke, rather than a
 // manually-toggled state - see detectSearchMode(). The search-mode buttons are now just
@@ -246,10 +250,27 @@ const toggleIssueFavorite = async (issueKey) => {
             return;
         }
 
-        // Update the local issues list
-        issuesList = response.issuesList || issuesList;
+        // The background's issuesList only knows about My Issues/open tabs/favorites - it
+        // has no idea about issues that are only on screen because of a popup-local search,
+        // so merge it in by key instead of replacing issuesList wholesale, or an active
+        // search's results would disappear the moment you favorite one of them.
+        const newIssuesList = response.issuesList || issuesList;
+        const knownKeys = new Set(newIssuesList.map(issue => issue.key));
+        const missingSearchIssues = issuesList.filter(issue => searchResultKeys.has(issue.key) && !knownKeys.has(issue.key));
+
+        missingSearchIssues.forEach(issue => {
+            if (issue.key === issueKey) {
+                // The only reason a search-only issue would still be missing right after a
+                // toggle is that this was its first time being favorited - sync the flag
+                // directly from the response rather than leaving it at its stale value.
+                issue.isFavorite = response.isFavorite;
+            }
+            newIssuesList.push(issue);
+        });
+
+        issuesList = newIssuesList;
         console.debug('Updated issuesList after toggle:', issuesList.map(i => `${i.key}(F:${i.isFavorite})`));
-        
+
         // Re-apply the current filter to refresh the display
         applyFilter(currentFilter, false);
         
@@ -345,8 +366,33 @@ const handleNoSearchResults = () => {
 // short/invalid to search at all) - so on zero matches, stay on Search Results and show
 // "No issues found" instead of silently reverting to the default view.
 const updateSearchResults = (issues) => {
-    issuesList = issuesList.filter(issue => !issue.searchResults);
-    issuesList.push(...issues);
+    const newSearchResultKeys = new Set(issues.map(issue => issue.key));
+
+    // Drop issues that were only ever on screen because of a previous search and aren't
+    // part of this one, so issuesList doesn't grow unbounded across many searches in one
+    // popup session - but never touch anything that's still a real My Issue/open
+    // tab/favorite, regardless of search state.
+    issuesList = issuesList.filter(issue =>
+        newSearchResultKeys.has(issue.key) || issue.hasOpenTab || issue.isFavorite || issue.assignedToMe
+    );
+
+    issues.forEach(issue => {
+        const existing = issuesList.find(existingIssue => existingIssue.key === issue.key);
+        if (existing) {
+            // Preserve real favorite/open-tab/assignment state already known from the
+            // background's merged list - a freshly-fetched search result always starts
+            // these at the Issue model's defaults, which would otherwise show stale icons.
+            Object.assign(existing, issue, {
+                isFavorite: existing.isFavorite,
+                hasOpenTab: existing.hasOpenTab,
+                assignedToMe: existing.assignedToMe,
+            });
+        } else {
+            issuesList.push(issue);
+        }
+    });
+
+    searchResultKeys = newSearchResultKeys;
     applyFilter(FILTERS.SEARCH_RESULTS, false);
 };
 
@@ -359,7 +405,7 @@ const fetchAndDisplayIssueFromInput = async () => {
     }
 
     try {
-        const issue = await jiraHelperService.fetchIssue(issueKey, { searchResults: true });
+        const issue = await jiraHelperService.fetchIssue(issueKey);
         updateSearchResults(issue ? [issue] : []);
     } catch (error) {
         console.log('Error updating search results from input:', error);
@@ -416,7 +462,10 @@ const selectUser = async (user) => {
 onSuggestionSelected(selectUser);
 
 const clearSearchResults = () => {
-    issuesList = issuesList.filter(issue => !issue.searchResults);
+    // No "new" search results to preserve against here, so drop every search-only issue -
+    // but again, never one that's a real My Issue/open tab/favorite in its own right.
+    issuesList = issuesList.filter(issue => issue.hasOpenTab || issue.isFavorite || issue.assignedToMe);
+    searchResultKeys = new Set();
     if (currentFilter?.id === FILTERS.SEARCH_RESULTS.id) {
         applyFilter(currentFilter);
     }
@@ -579,7 +628,7 @@ const applyFilter = (filter, toggle = true) => {
             );
             break;
         case FILTERS.SEARCH_RESULTS.id:
-            filteredIssues = issuesList.filter(issue => issue.searchResults);
+            filteredIssues = issuesList.filter(issue => searchResultKeys.has(issue.key));
             break;
         case FILTERS.OPEN_TABS.id:
             filteredIssues = issuesList.filter(issue => issue.hasOpenTab);

@@ -57,7 +57,7 @@ export class JiraHelperService {
         }
 
         const results = await this.jiraHttpService.fetchTextSearch(text);
-        return results.map(data => new Issue(data, { searchResults: true }));
+        return results.map(data => new Issue(data));
     }
 
     async buildTextSearchJql(text) {
@@ -80,7 +80,7 @@ export class JiraHelperService {
         }
 
         const results = await this.jiraHttpService.fetchUserSearch(accountId);
-        return results.map(data => new Issue(data, { searchResults: true }));
+        return results.map(data => new Issue(data));
     }
 
     async buildUserSearchJql(accountId) {

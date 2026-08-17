@@ -14,6 +14,7 @@ export class Issue {
         this.updated = issue.fields?.updated || null;
         this.assignedToMe = false;
         this.hasOpenTab = false;
+        this.isFavorite = false;
         this.isUpdated = true;
 
         // Override fields if provided
