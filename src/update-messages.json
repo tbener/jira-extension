@@ -1,10 +1,10 @@
 {
   "latest": {
-    "version": "2.4.0",
+    "version": "2.6.0",
     "title": "New Version Updated",
-    "message": "Free search added",
+    "message": "Search just got a lot smarter!",
     "features": [
-      "Check \"Free search\" to find issues by text"
+      "Find issues faster - by key, free text, or user, right from the popup"
     ]
   }
 }
