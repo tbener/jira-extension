@@ -182,12 +182,26 @@
                 </div>
 
                 <div class="card p-3 mb-3">
-                    <label for="qaAssigneeFieldId" class="form-label fw-bold mb-0">QA Field ID (optional)</label>
-                    <input type="text" class="form-control mt-2" id="qaAssigneeFieldId" placeholder="e.g. customfield_12345">
-                    <small class="form-text text-muted">
-                        Search by user also matches this custom field (in addition to Assignee/Reporter) when set - e.g. a "QA Assignee" person-picker field. Leave blank to disable. Verified against your Jira instance when you save.
+                    <label class="form-label fw-bold mb-0">Additional user custom fields (up to 3)</label>
+                    <small class="form-text text-muted d-block mt-1 mb-2">
+                        Search by user also matches these fields, in addition to Assignee/Reporter -
+                        e.g. a "QA Assignee" person-picker field. Enter a field ID (e.g.
+                        customfield_12345); the field name is looked up automatically. Leave a row
+                        blank to disable it. Verified against your Jira instance when you save.
                     </small>
-                    <div class="form-text" id="qaAssigneeFieldIdStatus"></div>
+                    <div class="additional-user-field-row d-flex align-items-center gap-2 mb-2" data-field-index="0">
+                        <input type="text" class="form-control form-control-sm" placeholder="customfield_12345" data-role="field-id">
+                        <span class="text-muted small" data-role="field-name" style="min-width: 9rem;"></span>
+                    </div>
+                    <div class="additional-user-field-row d-flex align-items-center gap-2 mb-2" data-field-index="1">
+                        <input type="text" class="form-control form-control-sm" placeholder="customfield_12345" data-role="field-id">
+                        <span class="text-muted small" data-role="field-name" style="min-width: 9rem;"></span>
+                    </div>
+                    <div class="additional-user-field-row d-flex align-items-center gap-2" data-field-index="2">
+                        <input type="text" class="form-control form-control-sm" placeholder="customfield_12345" data-role="field-id">
+                        <span class="text-muted small" data-role="field-name" style="min-width: 9rem;"></span>
+                    </div>
+                    <div class="form-text" id="additionalUserFieldsStatus"></div>
                 </div>
 
                 <div class="card p-3 mb-3">

@@ -26,14 +26,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+const ADDITIONAL_USER_FIELD_COUNT = 3;
+
+const getAdditionalUserFieldRow = (index) => {
+    const row = document.querySelector(`.additional-user-field-row[data-field-index="${index}"]`);
+    return {
+        input: row.querySelector('[data-role="field-id"]'),
+        nameSpan: row.querySelector('[data-role="field-name"]'),
+    };
+};
+
+// Looks up one row's field id and shows the resolved name inline (fetched from Jira, not
+// user-entered) or an inline error - returns { id, name } for a valid non-empty row,
+// { invalid: true } for one that doesn't resolve, or null for an empty row.
+const resolveAdditionalUserFieldRow = async (index) => {
+    const { input, nameSpan } = getAdditionalUserFieldRow(index);
+    const id = input.value.trim();
+
+    if (!id) {
+        nameSpan.textContent = '';
+        nameSpan.className = 'text-muted small';
+        return null;
+    }
+
+    nameSpan.textContent = 'Checking...';
+    nameSpan.className = 'text-muted small';
+
+    const field = await jiraHelperService.fetchFieldInfo(id);
+    if (!field) {
+        nameSpan.textContent = 'Not found';
+        nameSpan.className = 'text-danger small';
+        return { invalid: true };
+    }
+
+    nameSpan.textContent = field.name;
+    nameSpan.className = 'text-muted small';
+    return { id, name: field.name };
+};
+
+// Resolves all 3 rows in parallel for save-time validation - returns the final
+// additionalUserFields array (empty rows dropped), or null if any non-empty row is invalid.
+const resolveAdditionalUserFields = async () => {
+    const statusElement = document.getElementById('additionalUserFieldsStatus');
+    const results = await Promise.all(
+        Array.from({ length: ADDITIONAL_USER_FIELD_COUNT }, (_, index) => resolveAdditionalUserFieldRow(index))
+    );
+
+    if (results.some(result => result?.invalid)) {
+        statusElement.textContent = 'One or more field IDs were not found on this Jira instance - check them or leave blank to disable.';
+        statusElement.className = 'form-text text-danger';
+        return null;
+    }
+
+    statusElement.textContent = '';
+    statusElement.className = 'form-text';
+    return results.filter(Boolean);
+};
+
+document.querySelectorAll('.additional-user-field-row [data-role="field-id"]').forEach(input => {
+    input.addEventListener('blur', () => {
+        const index = Number(input.closest('.additional-user-field-row').dataset.fieldIndex);
+        resolveAdditionalUserFieldRow(index);
+    });
+});
+
 // Saves options to chrome.storage
 const saveOptions = async () => {
     const saveButton = document.getElementById('saveButton');
-    const qaAssigneeFieldId = document.getElementById('qaAssigneeFieldId').value.trim();
 
     saveButton.disabled = true;
     try {
-        if (!(await validateQaAssigneeFieldId(qaAssigneeFieldId))) {
+        const additionalUserFields = await resolveAdditionalUserFields();
+        if (additionalUserFields === null) {
             return;
         }
 
@@ -47,7 +111,7 @@ const saveOptions = async () => {
             includeTodoInDefaultView: document.getElementById('includeTodoInDefaultView').checked,
             useSmartNavigationExtended: document.getElementById('useSmartNavigationExtended').checked,
             showBoardDebugIndicator: document.getElementById('showBoardDebugIndicator').checked,
-            qaAssigneeFieldId,
+            additionalUserFields,
         }
 
         settingsService.saveSettings(settings);
@@ -63,32 +127,6 @@ const saveOptions = async () => {
     }
 };
 
-// Verifies a configured QA field id actually exists on this Jira instance before it's
-// saved, so a broken id never reaches a user-search JQL query in the first place.
-const validateQaAssigneeFieldId = async (qaAssigneeFieldId) => {
-    const statusElement = document.getElementById('qaAssigneeFieldIdStatus');
-
-    if (!qaAssigneeFieldId) {
-        statusElement.textContent = '';
-        statusElement.className = 'form-text';
-        return true;
-    }
-
-    statusElement.textContent = 'Verifying field...';
-    statusElement.className = 'form-text text-muted';
-
-    const exists = await jiraHelperService.fetchFieldExists(qaAssigneeFieldId);
-    if (!exists) {
-        statusElement.textContent = 'Field ID not found on this Jira instance - check the ID or leave blank to disable.';
-        statusElement.className = 'form-text text-danger';
-        return false;
-    }
-
-    statusElement.textContent = 'Field verified.';
-    statusElement.className = 'form-text text-success';
-    return true;
-};
-
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 const restoreOptions = async () => {
@@ -102,7 +140,12 @@ const restoreOptions = async () => {
         document.getElementById('showDueDateAlert').checked = settings.showDueDateAlert;
         boardLinkInputElement.value = settings.boardUrl;
         document.getElementById('myIssuesJql').value = settings.myIssuesJql;
-        document.getElementById('qaAssigneeFieldId').value = settings.qaAssigneeFieldId;
+        for (let index = 0; index < ADDITIONAL_USER_FIELD_COUNT; index++) {
+            const field = settings.additionalUserFields?.[index];
+            const { input, nameSpan } = getAdditionalUserFieldRow(index);
+            input.value = field?.id ?? '';
+            nameSpan.textContent = field?.name ?? '';
+        }
         document.getElementById('includeTodoInDefaultView').checked = settings.includeTodoInDefaultView;
         document.getElementById('useSmartNavigationExtended').checked = settings.useSmartNavigationExtended;
         document.getElementById('showBoardDebugIndicator').checked = settings.showBoardDebugIndicator;

@@ -87,8 +87,8 @@ export class JiraHelperService {
         return await this.jiraHttpService.buildUserSearchJql(accountId);
     }
 
-    async fetchFieldExists(fieldId) {
-        return await this.jiraHttpService.fetchFieldExists(fieldId);
+    async fetchFieldInfo(fieldId) {
+        return await this.jiraHttpService.fetchFieldInfo(fieldId);
     }
 
     AbortFetch() {

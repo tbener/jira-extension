@@ -119,9 +119,9 @@ export class JiraHttpService {
         return await this.fetch(apiPath, true) ?? [];
     }
 
-    // Full field list for this Jira instance - used to validate a configured custom
-    // field id (e.g. qaAssigneeFieldId) actually exists before it's used in a JQL query.
-    // Cached in memory for the session since it's effectively static per instance.
+    // Full field list for this Jira instance - used to validate a configured additional
+    // user field (see additionalUserFields) actually exists before it's used in a JQL
+    // query. Cached in memory for the session since it's effectively static per instance.
     async fetchFieldList() {
         if (!this._fieldListCache) {
             const apiPath = this.getApiPath(this.API_PATH.FIELD);
@@ -130,13 +130,16 @@ export class JiraHttpService {
         return this._fieldListCache;
     }
 
-    async fetchFieldExists(fieldId) {
+    // Resolves a field id to its Jira field object (which includes .name) or null if it
+    // doesn't exist on this instance - lets options.js auto-fill the field's display name
+    // instead of asking the user to type it in themselves.
+    async fetchFieldInfo(fieldId) {
         if (!fieldId) {
-            return false;
+            return null;
         }
         const normalizedId = /^\d+$/.test(fieldId) ? `customfield_${fieldId}` : fieldId;
         const fields = await this.fetchFieldList();
-        return fields.some(field => field.id === normalizedId);
+        return fields.find(field => field.id === normalizedId) ?? null;
     }
 
     async buildUserSearchJql(accountId) {
@@ -151,15 +154,18 @@ export class JiraHttpService {
             const response = await this.fetch(this.getJqlPath(jql), true, true); // throwOnError
             return response?.issues ?? [];
         } catch (error) {
-            if (!this.settings.qaAssigneeFieldId || this._qaFieldBroken) {
+            const additionalFields = this.settings.additionalUserFields ?? [];
+            if (additionalFields.length === 0 || this._additionalFieldsBroken) {
                 console.log("Error fetching issues by user:", error);
                 return [];
             }
-            // The QA field may have gone stale since it was validated in settings
-            // (deleted, permissions revoked, moved off-scope) - retry once without it
-            // rather than letting one bad clause silently blank out assignee/reporter matches.
-            console.warn("QA field query failed, retrying user search without it:", this.settings.qaAssigneeFieldId, error);
-            this._qaFieldBroken = true;
+            // One of the additional fields may have gone stale since it was validated in
+            // settings (deleted, permissions revoked, moved off-scope) - retry once with
+            // just assignee/reporter rather than letting a bad clause silently blank out
+            // those matches too. Drops ALL additional fields at once rather than trying to
+            // bisect which one broke it - simpler, and still correct either way.
+            console.warn("Additional user field(s) query failed, retrying without them:", additionalFields, error);
+            this._additionalFieldsBroken = true;
             const fallbackJql = await JqlBuilder.jqlUserSearch(accountId, this.settings.defaultProjectKey, JqlBuilder.DEFAULT_USER_SEARCH_ROLES);
             return await this.fetchIssuesForJql(fallbackJql, true);
         }
@@ -167,8 +173,12 @@ export class JiraHttpService {
 
     _userSearchRoleFields() {
         const fields = [...JqlBuilder.DEFAULT_USER_SEARCH_ROLES];
-        if (this.settings.qaAssigneeFieldId && !this._qaFieldBroken) {
-            fields.push(this.settings.qaAssigneeFieldId);
+        if (!this._additionalFieldsBroken) {
+            (this.settings.additionalUserFields ?? []).forEach(field => {
+                if (field?.id) {
+                    fields.push(field.id);
+                }
+            });
         }
         return fields;
     }
