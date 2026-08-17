@@ -29,7 +29,7 @@ export class JiraHttpService {
         JQL: 'rest/api/3/search/jql?fields=key,summary,status,assignee,created,updated&jql={0}&maxResults={1}',
         ISSUE: 'rest/api/3/issue/{0}',
         MYSELF: 'rest/api/3/myself',
-        USER_PICKER: 'rest/api/3/user/picker?query={0}&maxResults={1}',
+        USER_ASSIGNABLE_SEARCH: 'rest/api/3/user/assignable/search?project={0}&query={1}&maxResults={2}',
         FIELD: 'rest/api/3/field',
     };
 
@@ -101,11 +101,22 @@ export class JiraHttpService {
         return await JqlBuilder.jqlTextSearch(text, this.settings.defaultProjectKey);
     }
 
-    async fetchUserPicker(query) {
-        console.debug("Fetching user picker for query:", query);
-        const apiPath = this.getApiPath(this.API_PATH.USER_PICKER, encodeURIComponent(query), CONFIG.MAX_RESULTS);
-        const response = await this.fetch(apiPath, true);
-        return response?.users ?? [];
+    // Scoped to defaultProjectKey (like the issue search itself) rather than the global
+    // user directory - only returns users who currently hold assign permission on that
+    // project, which naturally filters out departed/unrelated accounts that a global
+    // picker would otherwise surface. Trade-off: someone who's only ever a *reporter*
+    // (not assignable) on this project's issues won't show up here even though a
+    // user-search would find their issues - acceptable default, but worth knowing.
+    async fetchAssignableUsers(query) {
+        console.debug("Fetching assignable users for query:", query);
+        const apiPath = this.getApiPath(
+            this.API_PATH.USER_ASSIGNABLE_SEARCH,
+            encodeURIComponent(this.settings.defaultProjectKey),
+            encodeURIComponent(query),
+            CONFIG.MAX_RESULTS
+        );
+        // Response is a plain array of user objects (not wrapped like /user/picker's {users: [...]}).
+        return await this.fetch(apiPath, true) ?? [];
     }
 
     // Full field list for this Jira instance - used to validate a configured custom

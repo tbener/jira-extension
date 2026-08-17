@@ -34,7 +34,7 @@ export function onSuggestionSelected(callback) {
 
 export function renderUserSuggestions(users) {
     clearRows();
-    currentUsers = users || [];
+    currentUsers = dedupeByAccountId(users || []);
 
     if (currentUsers.length === 0) {
         dropdownElement.classList.add('d-none');
@@ -57,10 +57,11 @@ export function renderUserSuggestions(users) {
             initials.classList.add('is-visible');
         };
 
-        if (user.avatarUrl) {
+        const avatarUrl = user.avatarUrls?.['16x16'];
+        if (avatarUrl) {
             avatar.alt = user.displayName || '';
             avatar.onerror = showInitialsFallback;
-            avatar.src = user.avatarUrl;
+            avatar.src = avatarUrl;
         } else {
             showInitialsFallback();
         }
@@ -97,6 +98,19 @@ export function moveHighlight(direction) {
 
 export function getHighlightedUser() {
     return currentUsers[highlightedIndex] ?? null;
+}
+
+// Defensive safety net regardless of API behavior - Jira's picker endpoints have been
+// known to return the same account twice (e.g. once via direct match, once via a group).
+function dedupeByAccountId(users) {
+    const seen = new Set();
+    return users.filter(user => {
+        if (seen.has(user.accountId)) {
+            return false;
+        }
+        seen.add(user.accountId);
+        return true;
+    });
 }
 
 function clearRows() {

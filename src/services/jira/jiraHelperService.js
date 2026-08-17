@@ -70,7 +70,7 @@ export class JiraHelperService {
             return [];
         }
 
-        return await this.jiraHttpService.fetchUserPicker(query);
+        return await this.jiraHttpService.fetchAssignableUsers(query);
     }
 
     async searchByUser(accountId) {
