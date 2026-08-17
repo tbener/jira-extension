@@ -12,6 +12,7 @@ const ELEMENT_IDS = {
     DEFAULT_PROJECT: 'default-project',
     LINK_TO_BOARD: 'link-to-board',
     ISSUES_TABLE: 'issues-table',
+    ISSUES_EMPTY_STATE: 'issues-empty-state',
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
     GO_BUTTON: 'goButton',
@@ -68,6 +69,7 @@ const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
 const linkToBoardElement = document.getElementById(ELEMENT_IDS.LINK_TO_BOARD);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
+const issuesEmptyStateElement = document.getElementById(ELEMENT_IDS.ISSUES_EMPTY_STATE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
@@ -594,6 +596,11 @@ const applyFilter = (filter, toggle = true) => {
 
     updateSearchResultsCount(filter, filteredIssues.length);
 
+    // A real empty state in the grid itself, rather than just a small text line below it.
+    const showEmptyState = filter.id === FILTERS.SEARCH_RESULTS.id && filteredIssues.length === 0;
+    issuesTableElement.classList.toggle('d-none', showEmptyState);
+    issuesEmptyStateElement.classList.toggle('d-none', !showEmptyState);
+
     filteredIssues.forEach(issue => {
         issue.isActiveTab = issue.key === activeTabIssueKey;
     });
@@ -604,8 +611,10 @@ const applyFilter = (filter, toggle = true) => {
 
 const updateSearchResultsCount = (filter, count) => {
     if (filter.id === FILTERS.SEARCH_RESULTS.id) {
+        // The empty state itself (see applyFilter) already says "No issues found" - no
+        // need to repeat it in this small count line too.
         searchResultsCountElement.textContent = count === 0
-            ? 'No issues found'
+            ? ''
             : count >= CONFIG.MAX_RESULTS
                 ? `Showing first ${CONFIG.MAX_RESULTS} results`
                 : `${count} result${count === 1 ? '' : 's'} found`;
