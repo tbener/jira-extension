@@ -43,8 +43,8 @@ export class JiraHttpService {
         return formatString(`${this.baseUrl}/${apiPath}`, ...args);
     }
 
-    getJqlPath(jql) {
-        return this.getApiPath(this.API_PATH.JQL, encodeURIComponent(jql), CONFIG.MAX_RESULTS);
+    getJqlPath(jql, maxResults = CONFIG.MAX_RESULTS) {
+        return this.getApiPath(this.API_PATH.JQL, encodeURIComponent(jql), maxResults);
     }
 
     getIssueLink(issueKey) {
@@ -73,7 +73,7 @@ export class JiraHttpService {
             return [];
         }
         const jql = await JqlBuilder.jqlByKeyList(keys);
-        return await this.fetchIssuesForJql(jql);
+        return await this.fetchIssuesForJql(jql, false, CONFIG.MAX_KNOWN_ISSUES);
     }
 
     async fetchTextSearch(text) {
@@ -88,8 +88,8 @@ export class JiraHttpService {
         return await JqlBuilder.jqlTextSearch(text, this.settings.defaultProjectKey);
     }
 
-    async fetchIssuesForJql(jql, withAbortController = false) {
-        const apiPath = this.getJqlPath(jql);
+    async fetchIssuesForJql(jql, withAbortController = false, maxResults = CONFIG.MAX_RESULTS) {
+        const apiPath = this.getJqlPath(jql, maxResults);
         const response = await this.fetch(apiPath, withAbortController);
         return response?.issues ?? [];
     }
