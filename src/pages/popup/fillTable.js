@@ -38,8 +38,12 @@ export function fillIssuesTable(issuesList, containerElement, mode = 'refresh') 
             if (!issueElement) {
                 issueElement = createIssueElement(issueTemplate);
                 issueElement.setAttribute("data-issue-key", issue.key);
-                tbody.appendChild(issueElement);
             }
+            // Re-appending an already-attached node moves it rather than duplicating it -
+            // doing this unconditionally (not just for new rows) keeps the DOM order in
+            // sync with issuesList's order every refresh, instead of leaving previously-
+            // rendered rows stuck wherever they first appeared.
+            tbody.appendChild(issueElement);
             updateIssueElement(issueElement, issue);
         });
     }

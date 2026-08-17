@@ -3,6 +3,7 @@ import { fillIssuesTable } from "./fillTable.js";
 import { fetchSettingsFromBackground } from '../../common/utils.js'
 import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
 import { CONFIG } from '../../config.js';
+import { renderUserSuggestions, clearUserSuggestions, moveHighlight, getHighlightedUser, isOpen as isUserPickerOpen, onSuggestionSelected } from './userPicker.js';
 
 const jiraHelperService = new JiraHelperService()
 
@@ -11,14 +12,15 @@ const ELEMENT_IDS = {
     DEFAULT_PROJECT: 'default-project',
     LINK_TO_BOARD: 'link-to-board',
     ISSUES_TABLE: 'issues-table',
+    ISSUES_EMPTY_STATE: 'issues-empty-state',
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
     GO_BUTTON: 'goButton',
     GO_TO_OPTIONS: 'go-to-options',
     CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
     FILTER_BUTTONS_CONTAINER: 'filter-buttons-container',
-    SEARCH_MODE_BUTTON: 'search-mode-btn',
     SEARCH_RESULTS_COUNT: 'search-results-count',
+    SEARCH_MODE_ICON: 'search-mode-icon',
 };
 
 const FILTERS = {
@@ -31,29 +33,48 @@ const FILTERS = {
 };
 
 const SEARCH_MODES = {
-    KEY: { id: 'key', placeholder: 'Enter issue number or ID', goTitle: 'Go to issue' },
-    TEXT: { id: 'text', placeholder: 'Free text search', goTitle: 'Open search results in Jira' },
+    KEY: { id: 'key', icon: 'hash', placeholder: 'Type a key, free text, or @ for a user', goTitle: 'Go to issue' },
+    TEXT: { id: 'text', icon: 'search', placeholder: 'Search issues by free text', goTitle: 'Open search results in Jira' },
+    USER: { id: 'user', icon: 'avatar', placeholder: 'Search by user - start typing a name', goTitle: "Open user's issues in Jira" },
 };
 
 const MIN_TEXT_SEARCH_LENGTH = 2;
+const MIN_USER_SEARCH_LENGTH = 1;
 
 let issuesList = [];
 let typingTimer;
 let currentFilter = null;
 let originalProjectValue;
 let settings = {};
-let searchMode = SEARCH_MODES.KEY;
 let activeTabIssueKey = null;
+let selectedUserAccountId = null;
+
+// Mode is auto-detected from the input's content on every keystroke, rather than a
+// manually-toggled state - see detectSearchMode(). The search-mode buttons are now just
+// a read-only indicator of what was detected (this is a first pass, not a final design).
+const detectSearchMode = (rawValue) => {
+    if (!rawValue) {
+        return SEARCH_MODES.KEY;
+    }
+    if (rawValue.startsWith('@')) {
+        return SEARCH_MODES.USER;
+    }
+    if (jiraHelperService.getIssueKey(rawValue.trim()) !== '') {
+        return SEARCH_MODES.KEY;
+    }
+    return SEARCH_MODES.TEXT;
+};
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
 const linkToBoardElement = document.getElementById(ELEMENT_IDS.LINK_TO_BOARD);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
+const issuesEmptyStateElement = document.getElementById(ELEMENT_IDS.ISSUES_EMPTY_STATE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
 const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
-const searchModeButtonElement = document.getElementById(ELEMENT_IDS.SEARCH_MODE_BUTTON);
+const searchModeIconUseElement = document.querySelector(`#${ELEMENT_IDS.SEARCH_MODE_ICON} use`);
 const goButtonElement = document.getElementById(ELEMENT_IDS.GO_BUTTON);
 const searchResultsCountElement = document.getElementById(ELEMENT_IDS.SEARCH_RESULTS_COUNT);
 
@@ -67,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clipboard check for jira issue format, and auto-fill input
     issueInputElement.addEventListener('focus', async function handleClipboardPasteOnce() {
         console.debug(`Checking clipboard for number input... secureContext: ${window.isSecureContext}`);
-        if (searchMode.id !== SEARCH_MODES.KEY.id) {
+        if (detectSearchMode(issueInputElement.value).id !== SEARCH_MODES.KEY.id) {
             issueInputElement.removeEventListener('focus', handleClipboardPasteOnce);
             return;
         }
@@ -255,23 +276,64 @@ const navigateToSearchFromInput = async (stayInCurrentTab = false) => {
     sendNavigateToSearchMessage(jql, stayInCurrentTab);
 };
 
+const navigateToUserSearchFromInput = async (stayInCurrentTab = false) => {
+    if (!selectedUserAccountId) {
+        return;
+    }
+    const jql = await jiraHelperService.buildUserSearchJql(selectedUserAccountId);
+    sendNavigateToSearchMessage(jql, stayInCurrentTab);
+};
+
+const navigateFromInput = (stayInCurrentTab, mode) => {
+    if (mode.id === SEARCH_MODES.KEY.id) {
+        navigateToIssueFromInput(stayInCurrentTab);
+    } else if (mode.id === SEARCH_MODES.USER.id) {
+        navigateToUserSearchFromInput(stayInCurrentTab);
+    } else {
+        navigateToSearchFromInput(stayInCurrentTab);
+    }
+};
+
 issueInputElement.addEventListener('keydown', function (event) {
+    const mode = detectSearchMode(issueInputElement.value);
+
+    if (mode.id === SEARCH_MODES.USER.id) {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            moveHighlight(1);
+            return;
+        }
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            moveHighlight(-1);
+            return;
+        }
+        if (event.key === 'Escape') {
+            clearUserSuggestions();
+            return;
+        }
+        if (event.key === 'Enter' && isUserPickerOpen()) {
+            event.preventDefault();
+            const user = getHighlightedUser();
+            if (user) {
+                selectUser(user);
+            }
+            return;
+        }
+    }
+
     if (event.key !== 'Enter') {
         return;
     }
-    if (searchMode.id === SEARCH_MODES.KEY.id) {
-        navigateToIssueFromInput(event.ctrlKey);
-    } else {
-        navigateToSearchFromInput(event.ctrlKey);
-    }
+    navigateFromInput(event.ctrlKey, mode);
+});
+
+issueInputElement.addEventListener('blur', () => {
+    clearUserSuggestions();
 });
 
 goButtonElement.addEventListener('click', () => {
-    if (searchMode.id === SEARCH_MODES.KEY.id) {
-        navigateToIssueFromInput();
-    } else {
-        navigateToSearchFromInput();
-    }
+    navigateFromInput(false, detectSearchMode(issueInputElement.value));
 });
 
 const handleNoSearchResults = () => {
@@ -279,12 +341,11 @@ const handleNoSearchResults = () => {
     hideFilter(FILTERS.SEARCH_RESULTS);
 };
 
+// A search actually ran here (unlike handleNoSearchResults, used when the input is too
+// short/invalid to search at all) - so on zero matches, stay on Search Results and show
+// "No issues found" instead of silently reverting to the default view.
 const updateSearchResults = (issues) => {
     issuesList = issuesList.filter(issue => !issue.searchResults);
-    if (issues.length === 0) {
-        handleNoSearchResults();
-        return;
-    }
     issuesList.push(...issues);
     applyFilter(FILTERS.SEARCH_RESULTS, false);
 };
@@ -321,6 +382,39 @@ const fetchAndDisplayTextSearchResults = async () => {
     }
 };
 
+const fetchAndDisplayUserSuggestions = async () => {
+    // Input shows the full "@query" - only the part after "@" is the actual search text.
+    const query = issueInputElement.value.slice(1).trim();
+
+    if (query.length < MIN_USER_SEARCH_LENGTH) {
+        clearUserSuggestions();
+        return;
+    }
+
+    try {
+        const users = await jiraHelperService.searchUsers(query);
+        renderUserSuggestions(users);
+    } catch (error) {
+        console.log('Error fetching user suggestions:', error);
+    }
+};
+
+const selectUser = async (user) => {
+    selectedUserAccountId = user.accountId;
+    // Keep the "@" prefix so continued editing still auto-detects as user-search mode.
+    issueInputElement.value = `@${user.displayName}`;
+    clearUserSuggestions();
+
+    try {
+        const issues = await jiraHelperService.searchByUser(user.accountId);
+        updateSearchResults(issues);
+    } catch (error) {
+        console.log('Error searching issues by user:', error);
+    }
+};
+
+onSuggestionSelected(selectUser);
+
 const clearSearchResults = () => {
     issuesList = issuesList.filter(issue => !issue.searchResults);
     if (currentFilter?.id === FILTERS.SEARCH_RESULTS.id) {
@@ -328,14 +422,39 @@ const clearSearchResults = () => {
     }
 };
 
+const getFetchHandlerForMode = (modeId) => {
+    if (modeId === SEARCH_MODES.KEY.id) {
+        return fetchAndDisplayIssueFromInput;
+    }
+    if (modeId === SEARCH_MODES.USER.id) {
+        return fetchAndDisplayUserSuggestions;
+    }
+    return fetchAndDisplayTextSearchResults;
+};
+
+// Read-only indicator of the currently-detected mode - not the trigger for it
+// (see detectSearchMode). Not yet clickable to force a mode; see .search-mode-icon.
+const updateSearchModeIndicator = (mode) => {
+    searchModeIconUseElement.setAttribute('href', `sprite.svg#${mode.icon}`);
+    issueInputElement.placeholder = mode.placeholder;
+    goButtonElement.title = mode.goTitle;
+};
+
 const handleIssueInput = async function () {
     jiraHelperService.AbortFetch();
     clearTimeout(typingTimer);
     clearSearchResults();
+    // Editing the input after a suggestion was picked (or at all) starts a fresh query -
+    // selectUser() sets this programmatically, which never fires an 'input' event itself.
+    selectedUserAccountId = null;
 
-    const fetchAndDisplay = searchMode.id === SEARCH_MODES.KEY.id
-        ? fetchAndDisplayIssueFromInput
-        : fetchAndDisplayTextSearchResults;
+    const mode = detectSearchMode(issueInputElement.value);
+    updateSearchModeIndicator(mode);
+    if (mode.id !== SEARCH_MODES.USER.id) {
+        clearUserSuggestions();
+    }
+
+    const fetchAndDisplay = getFetchHandlerForMode(mode.id);
 
     typingTimer = setTimeout(async () => {
         await fetchAndDisplay();
@@ -343,29 +462,6 @@ const handleIssueInput = async function () {
 };
 
 issueInputElement.addEventListener('input', handleIssueInput);
-
-const setSearchMode = (mode) => {
-    if (searchMode.id === mode.id) {
-        return;
-    }
-    searchMode = mode;
-    issueInputElement.placeholder = mode.placeholder;
-    goButtonElement.title = mode.goTitle;
-    searchModeButtonElement.checked = mode.id === SEARCH_MODES.TEXT.id;
-    clearTimeout(typingTimer);
-    jiraHelperService.AbortFetch();
-    clearSearchResults();
-    issueInputElement.focus();
-
-    const fetchAndDisplay = mode.id === SEARCH_MODES.KEY.id
-        ? fetchAndDisplayIssueFromInput
-        : fetchAndDisplayTextSearchResults;
-    fetchAndDisplay();
-};
-
-searchModeButtonElement.addEventListener('click', () => {
-    setSearchMode(searchModeButtonElement.checked ? SEARCH_MODES.TEXT : SEARCH_MODES.KEY);
-});
 
 document.querySelector(`#${ELEMENT_IDS.GO_TO_OPTIONS}`).addEventListener('click', function () {
     if (chrome.runtime.openOptionsPage) {
@@ -466,7 +562,10 @@ const applyFilter = (filter, toggle = true) => {
         }
     }
 
-    if (!issuesList?.length > 0) {
+    // Still render Search Results even when the whole list is empty, so "No issues found"
+    // shows up reliably instead of leaving stale count/table state on the rare account
+    // that has no other cached issues at all.
+    if (!issuesList?.length > 0 && filter.id !== FILTERS.SEARCH_RESULTS.id) {
         return;
     }
 
@@ -497,6 +596,11 @@ const applyFilter = (filter, toggle = true) => {
 
     updateSearchResultsCount(filter, filteredIssues.length);
 
+    // A real empty state in the grid itself, rather than just a small text line below it.
+    const showEmptyState = filter.id === FILTERS.SEARCH_RESULTS.id && filteredIssues.length === 0;
+    issuesTableElement.classList.toggle('d-none', showEmptyState);
+    issuesEmptyStateElement.classList.toggle('d-none', !showEmptyState);
+
     filteredIssues.forEach(issue => {
         issue.isActiveTab = issue.key === activeTabIssueKey;
     });
@@ -507,9 +611,13 @@ const applyFilter = (filter, toggle = true) => {
 
 const updateSearchResultsCount = (filter, count) => {
     if (filter.id === FILTERS.SEARCH_RESULTS.id) {
-        searchResultsCountElement.textContent = count >= CONFIG.MAX_RESULTS
-            ? `Showing first ${CONFIG.MAX_RESULTS} results`
-            : `${count} result${count === 1 ? '' : 's'} found`;
+        // The empty state itself (see applyFilter) already says "No issues found" - no
+        // need to repeat it in this small count line too.
+        searchResultsCountElement.textContent = count === 0
+            ? ''
+            : count >= CONFIG.MAX_RESULTS
+                ? `Showing first ${CONFIG.MAX_RESULTS} results`
+                : `${count} result${count === 1 ? '' : 's'} found`;
     } else {
         searchResultsCountElement.textContent = `${count} issue${count === 1 ? '' : 's'}`;
     }
