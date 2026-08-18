@@ -14,16 +14,20 @@ import { CopyIssueIcon } from './copy-issue-icon.js';
 import { PrevNextArrows } from '../modal/prev-next-arrows.js';
 import { fetchSettingsFromBackground } from '../../common/utils.js';
 
+const isInjectedContentPresent = () => !!document.querySelector('.extension-copy-link-button');
+
 const data = {
     page: {
         targetElementSelector: 'div[data-component-selector="breadcrumbs-wrapper"] > nav',
         callbackFunction: elementReady,
         keepMonitorSelector: 'body',
+        isInjectedContentPresent,
     },
     modal: {
         targetElementSelector: 'div[data-component-selector="breadcrumbs-wrapper"] > nav',
         callbackFunction: elementReady,
         keepMonitorSelector: 'div.atlaskit-portal-container',
+        isInjectedContentPresent,
     }
 }
 
@@ -39,7 +43,7 @@ export default async function watchPageToAddElements(pageType) {
         const pageData = data[pageType];
         console.debug('pageData:', pageData);
         const observer = new ElementObserver2();
-        observer.waitForElement(pageData.targetElementSelector, pageData.callbackFunction, pageData.keepMonitorSelector);
+        observer.waitForElement(pageData.targetElementSelector, pageData.callbackFunction, pageData.keepMonitorSelector, pageData.isInjectedContentPresent);
     };
 
     if (document.readyState === 'complete') {
