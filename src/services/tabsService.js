@@ -55,17 +55,36 @@ function renderSwitchToTabToast(existingTabId, switchActionType) {
     });
     toast.appendChild(switchBtn);
 
+    const FADE_OUT_MS = 300;
+    const dismiss = () => {
+        clearTimeout(autoFadeTimer);
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), FADE_OUT_MS);
+    };
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.textContent = '✕';
+    dismissBtn.setAttribute('aria-label', 'Dismiss');
+    dismissBtn.style.cssText = `
+        border: none;
+        background: transparent;
+        color: #6b778c;
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 4px;
+    `;
+    dismissBtn.addEventListener('click', dismiss);
+    toast.appendChild(dismissBtn);
+
     document.body.appendChild(toast);
 
     const FADE_IN_DELAY_MS = 10;
     const VISIBLE_MS = 5000;
-    const FADE_OUT_MS = 300;
 
     setTimeout(() => { toast.style.opacity = '1'; }, FADE_IN_DELAY_MS);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), FADE_OUT_MS);
-    }, VISIBLE_MS);
+    const autoFadeTimer = setTimeout(dismiss, VISIBLE_MS);
 }
 
 export class TabsService {
