@@ -37,8 +37,12 @@ const getAdditionalUserFieldRow = (index) => {
 };
 
 // Looks up one row's field id and shows the resolved name inline (fetched from Jira, not
-// user-entered) or an inline error - returns { id, name } for a valid non-empty row,
-// { invalid: true } for one that doesn't resolve, or null for an empty row.
+// user-entered) or an inline warning - returns null for an empty row, otherwise { id, name }
+// (name is '' if the field couldn't be resolved). This is informational only and never
+// blocks saving: a field id you didn't type in yourself (e.g. the shipped-in-default QA
+// Assignee field) shouldn't be able to hold up every other setting on this page just
+// because it doesn't happen to exist on your instance, and a wrong/unreachable id already
+// fails safely at search time (falls back to Assignee/Reporter - see fetchUserSearch).
 const resolveAdditionalUserFieldRow = async (index) => {
     const { input, nameSpan } = getAdditionalUserFieldRow(index);
     const id = input.value.trim();
@@ -52,11 +56,19 @@ const resolveAdditionalUserFieldRow = async (index) => {
     nameSpan.textContent = 'Checking...';
     nameSpan.className = 'text-muted small';
 
+    // Validate against whatever domain/project is currently typed in, not whatever was
+    // saved when the page opened - matters most on first-time setup, when those fields
+    // are still blank/placeholder until this same save.
+    jiraHelperService.updateConnectionSettings(
+        document.getElementById('customDomain').value.trim(),
+        document.getElementById('defaultProjectKey').value.trim()
+    );
+
     const field = await jiraHelperService.fetchFieldInfo(id);
     if (!field) {
         nameSpan.textContent = 'Not found';
         nameSpan.className = 'text-danger small';
-        return { invalid: true };
+        return { id, name: '' };
     }
 
     nameSpan.textContent = field.name;
@@ -64,22 +76,13 @@ const resolveAdditionalUserFieldRow = async (index) => {
     return { id, name: field.name };
 };
 
-// Resolves all 3 rows in parallel for save-time validation - returns the final
-// additionalUserFields array (empty rows dropped), or null if any non-empty row is invalid.
+// Resolves all 3 rows in parallel - returns the final additionalUserFields array, with
+// empty rows dropped. Invalid ones are kept (flagged inline by resolveAdditionalUserFieldRow)
+// rather than blocking the save.
 const resolveAdditionalUserFields = async () => {
-    const statusElement = document.getElementById('additionalUserFieldsStatus');
     const results = await Promise.all(
         Array.from({ length: ADDITIONAL_USER_FIELD_COUNT }, (_, index) => resolveAdditionalUserFieldRow(index))
     );
-
-    if (results.some(result => result?.invalid)) {
-        statusElement.textContent = 'One or more field IDs were not found on this Jira instance - check them or leave blank to disable.';
-        statusElement.className = 'form-text text-danger';
-        return null;
-    }
-
-    statusElement.textContent = '';
-    statusElement.className = 'form-text';
     return results.filter(Boolean);
 };
 
@@ -97,9 +100,6 @@ const saveOptions = async () => {
     saveButton.disabled = true;
     try {
         const additionalUserFields = await resolveAdditionalUserFields();
-        if (additionalUserFields === null) {
-            return;
-        }
 
         const settings = {
             customDomain: document.getElementById('customDomain').value,

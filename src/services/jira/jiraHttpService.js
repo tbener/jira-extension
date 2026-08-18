@@ -44,6 +44,19 @@ export class JiraHttpService {
         console.debug(`JiraHttpService initialized!!!`);
     }
 
+    // Lets the options page validate against whatever domain/project is currently typed
+    // in, rather than whatever was in storage when the page opened - otherwise, on first
+    // install (before customDomain/defaultProjectKey have ever been saved), any field-id
+    // validation would run against the placeholder domain and always fail, blocking the
+    // very first save. Also drops the cached field list, since it would be for the wrong
+    // Jira instance once the domain changes.
+    updateConnectionSettings(customDomain, defaultProjectKey) {
+        this.settings.customDomain = customDomain;
+        this.settings.defaultProjectKey = defaultProjectKey;
+        this.baseUrl = `https://${customDomain}.atlassian.net`;
+        this._fieldListCache = null;
+    }
+
     // Cached so _mapIssue can tell whether an issue is actually assigned to the current user,
     // independent of which query (my-issues JQL, open tabs, favorites) fetched it.
     async fetchCurrentUser() {

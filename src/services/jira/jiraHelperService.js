@@ -91,6 +91,10 @@ export class JiraHelperService {
         return await this.jiraHttpService.fetchFieldInfo(fieldId);
     }
 
+    updateConnectionSettings(customDomain, defaultProjectKey) {
+        this.jiraHttpService.updateConnectionSettings(customDomain, defaultProjectKey);
+    }
+
     AbortFetch() {
         this.jiraHttpService?.abortFetch();
     }
