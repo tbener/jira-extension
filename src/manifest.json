@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "TalTool Jira Extension",
-    "version": "2.6.1",
+    "version": "2.6.2",
     "description": "Extension for Jira, by Tal Bener",
     "author": "tbener@gmail.com",
     "background": {
@@ -62,8 +62,8 @@
     "icons": {
         "16": "images/icon-16.png",
         "32": "images/icon-32.png",
-        "48": "images/icon-96.png",
-        "128": "images/icon-96.png"
+        "48": "images/icon-48.png",
+        "128": "images/icon-128.png"
     },
     "permissions": [
         "scripting",

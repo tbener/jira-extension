@@ -38,7 +38,6 @@ header {
         height: auto;
         filter: sepia(0.2) brightness(0.8);
         transition: transform 0.3s ease, filter 0.3s ease;
-        border-radius: 50%;
 
         &:hover {
             transform: scale(1.1);
