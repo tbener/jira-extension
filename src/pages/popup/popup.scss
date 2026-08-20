@@ -19,27 +19,76 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-    color: #333;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(135deg, #dbeafe 0%, #a8d3f7 100%);
+    border-bottom: 2px solid #7fbcf0;
     border-radius: 12px 12px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75),
+                0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* soft light sweep out of the top-right corner */
+    &::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -20px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+                    rgba(255, 255, 255, 0.55),
+                    rgba(255, 255, 255, 0));
+        pointer-events: none;
+    }
+
+    .icon-tile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        position: relative;
+        width: 46px;
+        height: 46px;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(16, 48, 122, 0.18),
+                    0 0 0 1px rgba(144, 202, 249, 0.9);
+        transition: transform 0.3s ease;
+    }
+
+    &:hover .icon-tile {
+        transform: scale(1.06);
+    }
+
+    .icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .header-text {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        position: relative;
+    }
 
     h1 {
         font-size: 1.5rem;
         font-weight: 600;
-        color: #1e3a8a;
-        margin-bottom: 0;
+        letter-spacing: -0.01em;
+        color: #10307a;
+        margin: 0;
     }
 
-    .icon {
-        width: 32px;
-        height: auto;
-        transition: transform 0.3s ease;
-
-        &:hover {
-            transform: scale(1.1);
-        }
+    .tagline {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #33538f;
     }
 }
 
