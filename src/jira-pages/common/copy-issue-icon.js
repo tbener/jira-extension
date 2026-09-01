@@ -1,11 +1,19 @@
 
 const parentElementSelector = 'div[data-component-selector="breadcrumbs-wrapper"] > nav > ol > div:last-child .issue_view_permalink_button_wrapper span[role="presentation"]';
 
+// Candidates for the issue's summary heading, tried in order. Kept as a list (rather than
+// a single selector) since Jira can change/vary its data-testid, and getting this wrong
+// falls back to the summary fetched via the API instead of throwing.
+const summaryHeadingSelectors = [
+    'h1[data-testid="issue.views.issue-base.foundation.summary.heading"]',
+    '[data-testid$="summary.heading"]',
+];
+
 export class CopyIssueIcon {
 
     copyLinkSvg = this.buildCopyLinkSvg(jiraLinkSvg);
 
-    createButton(refElement, issue, issueLink) {
+    createButton(refElement, issueKey, issueLink, issuePromise) {
         const parentElement = document.querySelector(parentElementSelector);
         const existingElement = parentElement.querySelector('.extension-copy-link-button');
         if (existingElement) {
@@ -21,13 +29,36 @@ export class CopyIssueIcon {
         parentElement.appendChild(this.iconButton);
 
         this.iconButton?.addEventListener('click', () => {
-            this.copyLinkToClipboard(issueLink, issue.key, issue.fields.summary);
+            this.copyLinkToClipboard(issueLink, issueKey, issuePromise);
         });
 
         console.debug('Copy-link button created');
     }
 
-    copyLinkToClipboard(issueLink, issueKey, issueSummary) {
+    // Reads the summary straight from the DOM (rather than from a value fetched via the
+    // API when the button was created) so a rename is always reflected, and so this
+    // doesn't depend on a fetch that could resolve after the user has navigated to a
+    // different issue. Falls back to the API-fetched issue if none of the known selectors
+    // match - logged as an error since that means Jira's markup has changed and the
+    // selectors above need updating.
+    async getIssueSummary(issueKey, issuePromise) {
+        for (const selector of summaryHeadingSelectors) {
+            const text = document.querySelector(selector)?.textContent?.trim();
+            if (text) return text;
+        }
+
+        console.error('Copy-link: summary heading not found in DOM for', issueKey, '- tried selectors:', summaryHeadingSelectors, '- falling back to the fetched issue. Jira\'s markup may have changed and these selectors need updating.');
+        try {
+            const issue = await issuePromise;
+            return issue?.fields?.summary ?? '';
+        } catch (error) {
+            console.error('Copy-link: fallback issue fetch also failed for', issueKey, error);
+            return '';
+        }
+    }
+
+    async copyLinkToClipboard(issueLink, issueKey, issuePromise) {
+        const issueSummary = await this.getIssueSummary(issueKey, issuePromise);
         const htmlContent = `<a href="${issueLink}">${issueKey}</a> - ${issueSummary}`;
         const textContent = `${issueKey} - ${issueSummary}`;
 
