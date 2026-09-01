@@ -3,6 +3,7 @@ export class ElementObserver2 {
         this.callbackWhenFound = null;
         this.keepMonitorSelector = null;
         this.targetSelector = null;
+        this.isInjectedContentPresent = null;
         this.issueKey = null;
         this.saveUrl = null;
         this.observer = null;
@@ -19,19 +20,25 @@ export class ElementObserver2 {
      * @param {string} targetSelector - The selector of the element to observe.
      * @param {function} callbackWhenFound - The callback function to execute when the element is found.
      * @param {string|null} keepMonitorSelector - The selector of the element to keep monitoring (optional).
-     * 
+     * @param {function|null} isInjectedContentPresent - Optional check that returns whether the content
+     *              previously injected by callbackWhenFound is still present in the DOM. When the host
+     *              page (e.g. a React app) re-renders and silently drops injected elements without
+     *              replacing the observed target element itself, this lets checkTargetElement detect
+     *              that and re-run the callback instead of assuming it's already handled.
+     *
      * @description Initializes the ElementObserver2 to monitor for a specific element in the DOM.
      *              If the element is found, it executes the provided callback function.
      *              Optionally, it can keep monitoring another element.
      *              This version handles dynamic page changes better by continuously monitoring.
      */
-    waitForElement(targetSelector, callbackWhenFound, keepMonitorSelector = null) {
+    waitForElement(targetSelector, callbackWhenFound, keepMonitorSelector = null, isInjectedContentPresent = null) {
         console.debug('ElementObserver2 - initializing...');
 
         try {
             this.callbackWhenFound = callbackWhenFound;
             this.keepMonitorSelector = keepMonitorSelector;
             this.targetSelector = targetSelector;
+            this.isInjectedContentPresent = isInjectedContentPresent;
             this.issueKey = this.getIssueKeyFromUrl();
             this.saveUrl = window.location.href;
 
@@ -124,11 +131,17 @@ export class ElementObserver2 {
 
         const foundElement = document.querySelector(this.targetSelector);
         if (foundElement) {
-            // Check if this is the same element we already processed
-            if (this.lastProcessedElement === foundElement) {
+            // Check if this is the same element we already processed. A host page (e.g. React)
+            // can re-render and drop previously injected content without replacing this element
+            // itself, so also confirm the injected content is still there before skipping.
+            const injectedContentStillPresent = !this.isInjectedContentPresent || this.isInjectedContentPresent();
+            if (this.lastProcessedElement === foundElement && injectedContentStillPresent) {
                 console.debug('Same element already processed, skipping');
                 this.stopPolling(); // Still need to stop polling even if already processed
                 return;
+            }
+            if (this.lastProcessedElement === foundElement) {
+                console.debug('Same element already processed, but injected content is missing - reprocessing');
             }
 
             console.log(`✅✅✅ Target element found!! (${this.pollAttempts} polling attempts)`, foundElement);

@@ -1,10 +1,10 @@
 {
   "latest": {
-    "version": "2.2.1",
+    "version": "2.6.0",
     "title": "New Version Updated",
-    "message": "Favorites feature added",
+    "message": "Search just got a lot smarter!",
     "features": [
-      "Use the ⭐ to keep key issues always visible"
+      "Find issues faster - by key, free text, or user"
     ]
   }
 }

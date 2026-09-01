@@ -76,10 +76,34 @@ async function listenToMessages() {
 
         switch (message.action) {
             case MessageActionTypes.NAVIGATE_TO_ISSUE:
-                console.debug("Navigation request accepted to ", message.issueKey);
-                navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
-                sendResponse({ status: "navigation_started" });
-                break;
+                (async () => {
+                    try {
+                        console.debug("Navigation request accepted to ", message.issueKey);
+                        await ensureInitialized();
+                        navigationService.navigateToIssue(message.issueKey, message.stayInCurrentTab);
+                        sendResponse({ status: "navigation_started" });
+                    } catch (error) {
+                        console.warn("Error navigating to issue:", error);
+                        sendResponse({ status: "error", error: "Failed to navigate to issue" });
+                    }
+                })();
+
+                return true; // Indicate an async response
+
+            case MessageActionTypes.NAVIGATE_TO_SEARCH:
+                (async () => {
+                    try {
+                        console.debug("Search navigation request accepted:", message.jql);
+                        await ensureInitialized();
+                        navigationService.navigateToSearch(message.jql, message.stayInCurrentTab);
+                        sendResponse({ status: "navigation_started" });
+                    } catch (error) {
+                        console.warn("Error navigating to search:", error);
+                        sendResponse({ status: "error", error: "Failed to navigate to search" });
+                    }
+                })();
+
+                return true; // Indicate an async response
             case MessageActionTypes.GET_SETTINGS:
                 (async () => {
                     try {
@@ -128,6 +152,19 @@ async function listenToMessages() {
                 const openTabsIssues = navigationService.tabsService.getIssuesList();
                 sendResponse({ issueKeys: openTabsIssues });
                 break;
+            case MessageActionTypes.GET_ACTIVE_TAB_ISSUE_KEY:
+                (async () => {
+                    try {
+                        await ensureInitialized();
+                        const issueKey = navigationService.tabsService.extractIssueFromUrl(message.url);
+                        sendResponse({ issueKey });
+                    } catch (error) {
+                        console.warn("Error resolving active tab issue key:", error);
+                        sendResponse({ issueKey: null, error: "Failed to resolve active tab issue key" });
+                    }
+                })();
+
+                return true; // Indicate an async response
             case MessageActionTypes.GET_ISSUES_LIST:
                 (async () => {
                     try {
@@ -193,6 +230,20 @@ async function listenToMessages() {
 
                 return true; // Indicate an async response
             
+            case MessageActionTypes.SWITCH_TO_EXISTING_TAB:
+                console.debug("Closing this tab, switching to existing tab:", message.existingTabId);
+                if (sender.tab?.id) {
+                    chrome.tabs.remove(sender.tab.id);
+                }
+                chrome.tabs.update(message.existingTabId, { active: true }, () => {
+                    chrome.tabs.get(message.existingTabId, (existingTab) => {
+                        if (existingTab) {
+                            chrome.windows.update(existingTab.windowId, { focused: true });
+                        }
+                    });
+                });
+                break;
+
             case "markUpdateAsSeen":
                 (async () => {
                     try {

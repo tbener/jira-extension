@@ -7,6 +7,20 @@
   overflow: auto;
 }
 
+.issues-empty-state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa5b1;
+  font-size: 0.85rem;
+  transform: translateY(-25px);
+
+  &.d-none {
+    display: none;
+  }
+}
+
 .jira-issues {
   font-size: 12px;
   width: 100%;
@@ -74,6 +88,17 @@
 
 .has-open-tab .jira-tab-icon .tab-icon {
   visibility: visible;
+}
+
+.jira-issue.is-active-tab .jira-key::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #2e8b57;
+  vertical-align: middle;
 }
 
 .jira-favorite-icon .favorite-icon {

@@ -38,8 +38,12 @@ export function fillIssuesTable(issuesList, containerElement, mode = 'refresh') 
             if (!issueElement) {
                 issueElement = createIssueElement(issueTemplate);
                 issueElement.setAttribute("data-issue-key", issue.key);
-                tbody.appendChild(issueElement);
             }
+            // Re-appending an already-attached node moves it rather than duplicating it -
+            // doing this unconditionally (not just for new rows) keeps the DOM order in
+            // sync with issuesList's order every refresh, instead of leaving previously-
+            // rendered rows stuck wherever they first appeared.
+            tbody.appendChild(issueElement);
             updateIssueElement(issueElement, issue);
         });
     }
@@ -60,12 +64,20 @@ function updateIssueElement(issueElement, issue) {
         assigneeElement.classList.remove("d-none");
     }
 
+    const titleTags = [];
+
+    if (issue.isActiveTab) {
+        issueElement.classList.add("is-active-tab");
+        titleTags.push("Currently viewing");
+    } else {
+        issueElement.classList.remove("is-active-tab");
+    }
+
     if (issue.assignedToMe) {
         issueElement.classList.add("jira-my-issue");
-        issueElement.setAttribute("title", `${issue.summary} | (Assigned to you)`);
+        titleTags.push("Assigned to you");
     } else {
         issueElement.classList.remove("jira-my-issue");
-        issueElement.setAttribute("title", issue.summary);
     }
 
     if (issue.hasOpenTab) {
@@ -73,6 +85,8 @@ function updateIssueElement(issueElement, issue) {
     } else {
         issueElement.classList.remove("has-open-tab");
     }
+
+    issueElement.setAttribute("title", titleTags.length ? `${issue.summary} | (${titleTags.join(", ")})` : issue.summary);
 
     // Handle favorite icon
     const favoriteElement = issueElement.querySelector(".favorite-icon");

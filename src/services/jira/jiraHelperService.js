@@ -50,6 +50,51 @@ export class JiraHelperService {
 
     }
 
+    async searchByText(text) {
+        console.debug("Searching issues by text:", text);
+        if (!text) {
+            return [];
+        }
+
+        const results = await this.jiraHttpService.fetchTextSearch(text);
+        return results.map(data => new Issue(data));
+    }
+
+    async buildTextSearchJql(text) {
+        return await this.jiraHttpService.buildTextSearchJql(text);
+    }
+
+    async searchUsers(query) {
+        console.debug("Searching users by query:", query);
+        if (!query) {
+            return [];
+        }
+
+        return await this.jiraHttpService.fetchAssignableUsers(query);
+    }
+
+    async searchByUser(accountId) {
+        console.debug("Searching issues by user:", accountId);
+        if (!accountId) {
+            return [];
+        }
+
+        const results = await this.jiraHttpService.fetchUserSearch(accountId);
+        return results.map(data => new Issue(data));
+    }
+
+    async buildUserSearchJql(accountId) {
+        return await this.jiraHttpService.buildUserSearchJql(accountId);
+    }
+
+    async fetchFieldInfo(fieldId) {
+        return await this.jiraHttpService.fetchFieldInfo(fieldId);
+    }
+
+    updateConnectionSettings(customDomain, defaultProjectKey) {
+        this.jiraHttpService.updateConnectionSettings(customDomain, defaultProjectKey);
+    }
+
     AbortFetch() {
         this.jiraHttpService?.abortFetch();
     }

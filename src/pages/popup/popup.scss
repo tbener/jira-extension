@@ -19,36 +19,165 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-    color: #333;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border-bottom: 2px solid #90caf9;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(135deg, #dbeafe 0%, #a8d3f7 100%);
+    border-bottom: 2px solid #7fbcf0;
     border-radius: 12px 12px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75),
+                0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* soft light sweep out of the top-right corner */
+    &::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -20px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+                    rgba(255, 255, 255, 0.55),
+                    rgba(255, 255, 255, 0));
+        pointer-events: none;
+    }
+
+    .icon-tile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        position: relative;
+        width: 46px;
+        height: 46px;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(16, 48, 122, 0.18),
+                    0 0 0 1px rgba(144, 202, 249, 0.9);
+        transition: transform 0.3s ease;
+    }
+
+    &:hover .icon-tile {
+        transform: scale(1.06);
+    }
+
+    .icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .header-text {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        position: relative;
+    }
 
     h1 {
         font-size: 1.5rem;
         font-weight: 600;
-        color: #1e3a8a;
-        margin-bottom: 0;
+        letter-spacing: -0.01em;
+        color: #10307a;
+        margin: 0;
     }
 
-    .icon {
-        width: 32px;
-        height: auto;
-        filter: sepia(0.2) brightness(0.8);
-        transition: transform 0.3s ease, filter 0.3s ease;
-        border-radius: 50%;
-
-        &:hover {
-            transform: scale(1.1);
-            filter: sepia(0.4) brightness(1);
-        }
+    .tagline {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #33538f;
     }
 }
 
 main {
     display: flex;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.user-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 220px;
+    overflow-y: auto;
+    background-color: #fff;
+    border: 1px solid #dde3ea;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.user-picker-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem;
+}
+
+.user-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover,
+    &.is-highlighted {
+        background-color: #e6f1fb;
+    }
+}
+
+.user-suggestion-avatar-wrap {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.user-suggestion-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #eef2f6;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+    &.d-none {
+        display: none;
+    }
+}
+
+.user-suggestion-initials {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+
+    &.is-visible {
+        display: flex;
+    }
+}
+
+.user-suggestion-name {
+    font-size: 0.85rem;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .input-group {
@@ -76,6 +205,10 @@ main {
         }
     }
 
+    input.search-input-with-icon {
+        padding-left: 1.75rem;
+    }
+
     button.go-button {
         border-radius: 0 8px 8px 0;
 
@@ -84,11 +217,43 @@ main {
             box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
         }
     }
+
+}
+
+/* Scoped tightly around just the icon + input-group (not the wider .search-input-wrapper,
+   which also contains the hint text and dropdown below) - otherwise the icon's "top: 50%"
+   centers against that taller box instead of the input row, landing near the bottom. */
+.search-input-icon-wrap {
+    position: relative;
+}
+
+/* Soft, non-obtrusive mode indicator overlaid on the input's left padding. Positioned
+   as a sibling of .input-group, NOT a child of it - Bootstrap's own .input-group CSS
+   (a) zeroes the border-radius of any "middle" child and (b) bumps a focused
+   .form-control to z-index: 5 (Bootstrap 5.3's actual value - a still-tied z-index: 5
+   here lost the tiebreak to DOM order, since .input-group renders after this icon),
+   so nesting the icon inside .input-group broke the input's rounded corners and made
+   the icon disappear on focus. z-index here is set clearly above that so it wins
+   regardless of focus state or DOM order.
+   Not yet clickable (pointer-events: none) - reserved for forcing a mode later. */
+.search-mode-icon {
+    position: absolute;
+    left: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    color: #a9b4c0;
+    pointer-events: none;
+    user-select: none;
 }
 
 .hint {
     margin-top: 0.25rem !important;
     font-size: 0.8rem;
+}
+
+#search-results-count {
+    font-size: 0.7rem;
 }
 
 a {

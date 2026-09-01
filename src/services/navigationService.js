@@ -6,7 +6,7 @@ export class NavigationService {
 
     init = async (settingsService) => {
         this.settingsService = settingsService;
-        await this.tabsService.readTabs(this.baseUrl);
+        await this.tabsService.readTabs(this.baseUrl, this.settingsService);
     }
 
     get settings() {
@@ -21,15 +21,20 @@ export class NavigationService {
         return `${this.baseUrl}/browse/${issueKey}`;
     }
 
-    openIssueTab = (issueKey, stayInCurrentTab = false) => {
-        const url = this.getIssueLink(issueKey);
+    getSearchLink = (jql) => {
+        return `${this.baseUrl}/issues/?jql=${encodeURIComponent(jql)}`;
+    }
 
-        // Navigate to the Jira issue page
+    openTab = (url, stayInCurrentTab = false) => {
         if (stayInCurrentTab) {
             chrome.tabs.update({url});
         } else {
             chrome.tabs.create({url});
         }
+    };
+
+    openIssueTab = (issueKey, stayInCurrentTab = false) => {
+        this.openTab(this.getIssueLink(issueKey), stayInCurrentTab);
     };
 
     navigateToIssue = (issueKey, stayInCurrentTab = false) => {
@@ -41,5 +46,9 @@ export class NavigationService {
         }
 
         this.openIssueTab(issueKey, stayInCurrentTab);
+    };
+
+    navigateToSearch = (jql, stayInCurrentTab = false) => {
+        this.openTab(this.getSearchLink(jql), stayInCurrentTab);
     };
 }

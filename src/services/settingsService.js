@@ -7,6 +7,15 @@ export class SettingsService {
         showDueDateAlert: true,
         myIssuesJql: 'statusCategory != Done AND status != Rejected',
         includeTodoInDefaultView: true,
+        // Extra fields "search by user" also matches (in addition to Assignee/Reporter),
+        // e.g. a "QA Assignee" person-picker field - up to 3, { id, name } each. name is
+        // resolved automatically from the field id (see JiraHttpService.fetchFieldInfo),
+        // not user-entered.
+        additionalUserFields: [
+            { id: 'customfield_12986', name: 'QA Assignee' },
+        ],
+        useSmartNavigationExtended: false,
+        showBoardDebugIndicator: false,
         dueDateOptions: {
             messageTemplate: {
                 with: '{status} due date: {date}',

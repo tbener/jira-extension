@@ -2,6 +2,8 @@ import { MessageActionTypes } from '../../enum/message-action-types.enum.js';
 import { fillIssuesTable } from "./fillTable.js";
 import { fetchSettingsFromBackground } from '../../common/utils.js'
 import { JiraHelperService } from '../../services/jira/jiraHelperService.js';
+import { CONFIG } from '../../config.js';
+import { renderUserSuggestions, clearUserSuggestions, moveHighlight, getHighlightedUser, isOpen as isUserPickerOpen, onSuggestionSelected } from './userPicker.js';
 
 const jiraHelperService = new JiraHelperService()
 
@@ -10,12 +12,15 @@ const ELEMENT_IDS = {
     DEFAULT_PROJECT: 'default-project',
     LINK_TO_BOARD: 'link-to-board',
     ISSUES_TABLE: 'issues-table',
+    ISSUES_EMPTY_STATE: 'issues-empty-state',
     PLACEHOLDERS_TABLE: 'issues-table-placeholders',
     VERSION: 'version',
     GO_BUTTON: 'goButton',
     GO_TO_OPTIONS: 'go-to-options',
     CHK_SHOW_DUE_DATE_ALERT: 'showDueDateAlert',
     FILTER_BUTTONS_CONTAINER: 'filter-buttons-container',
+    SEARCH_RESULTS_COUNT: 'search-results-count',
+    SEARCH_MODE_ICON: 'search-mode-icon',
 };
 
 const FILTERS = {
@@ -27,20 +32,55 @@ const FILTERS = {
     SEARCH_RESULTS: { id: 'search-results', label: 'Search Results', icon: 'search', hidden: 'auto' }
 };
 
+const SEARCH_MODES = {
+    KEY: { id: 'key', icon: 'hash', placeholder: 'Type a key, free text, or @ for a user', goTitle: 'Go to issue' },
+    TEXT: { id: 'text', icon: 'search', placeholder: 'Search issues by free text', goTitle: 'Open search results in Jira' },
+    USER: { id: 'user', icon: 'avatar', placeholder: 'Search by user - start typing a name', goTitle: "Open user's issues in Jira" },
+};
+
+const MIN_TEXT_SEARCH_LENGTH = 2;
+const MIN_USER_SEARCH_LENGTH = 1;
+
 let issuesList = [];
 let typingTimer;
 let currentFilter = null;
 let originalProjectValue;
 let settings = {};
+let activeTabIssueKey = null;
+let selectedUserAccountId = null;
+// Which keys are currently showing as search results - tracked separately from issuesList
+// itself (rather than an issue.searchResults flag) so that an issue which is ALSO a real
+// My Issue/open tab/favorite keeps its real, shared state instead of a second, stale copy.
+let searchResultKeys = new Set();
+
+// Mode is auto-detected from the input's content on every keystroke, rather than a
+// manually-toggled state - see detectSearchMode(). The search-mode buttons are now just
+// a read-only indicator of what was detected (this is a first pass, not a final design).
+const detectSearchMode = (rawValue) => {
+    if (!rawValue) {
+        return SEARCH_MODES.KEY;
+    }
+    if (rawValue.startsWith('@')) {
+        return SEARCH_MODES.USER;
+    }
+    if (jiraHelperService.getIssueKey(rawValue.trim()) !== '') {
+        return SEARCH_MODES.KEY;
+    }
+    return SEARCH_MODES.TEXT;
+};
 
 const issueInputElement = document.getElementById(ELEMENT_IDS.ISSUE_INPUT);
 const defaultProjectElement = document.getElementById(ELEMENT_IDS.DEFAULT_PROJECT);
 const linkToBoardElement = document.getElementById(ELEMENT_IDS.LINK_TO_BOARD);
 const issuesTableElement = document.getElementById(ELEMENT_IDS.ISSUES_TABLE);
+const issuesEmptyStateElement = document.getElementById(ELEMENT_IDS.ISSUES_EMPTY_STATE);
 const placeholdersTableElement = document.getElementById(ELEMENT_IDS.PLACEHOLDERS_TABLE);
 const versionElement = document.getElementById(ELEMENT_IDS.VERSION);
 const showDueDateElement = document.getElementById(ELEMENT_IDS.CHK_SHOW_DUE_DATE_ALERT);
 const filterButtonsContainer = document.getElementById(ELEMENT_IDS.FILTER_BUTTONS_CONTAINER);
+const searchModeIconUseElement = document.querySelector(`#${ELEMENT_IDS.SEARCH_MODE_ICON} use`);
+const goButtonElement = document.getElementById(ELEMENT_IDS.GO_BUTTON);
+const searchResultsCountElement = document.getElementById(ELEMENT_IDS.SEARCH_RESULTS_COUNT);
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.debug('--- Start loading popup');
@@ -52,6 +92,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clipboard check for jira issue format, and auto-fill input
     issueInputElement.addEventListener('focus', async function handleClipboardPasteOnce() {
         console.debug(`Checking clipboard for number input... secureContext: ${window.isSecureContext}`);
+        if (detectSearchMode(issueInputElement.value).id !== SEARCH_MODES.KEY.id) {
+            issueInputElement.removeEventListener('focus', handleClipboardPasteOnce);
+            return;
+        }
         if (issueInputElement && navigator.clipboard && window.isSecureContext) {
             try {
                 const text = await navigator.clipboard.readText();
@@ -79,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupIssuesTableEventListeners();
         await loadIssuesFromCache(); // Load cache data but don't display it
         await loadSettings();
+        await resolveActiveTabIssueKey();
         console.debug('Call Promise All: refreshIssuesTableFromServer(), resolveBoardLink()');
         await Promise.all([
             refreshIssuesTableFromServer(),
@@ -113,6 +158,31 @@ const loadSettings = async () => {
         originalProjectValue = defaultProjectElement.textContent;
     } catch (error) {
         console.log('Error fetching settings:', error);
+    }
+};
+
+// Identifies the issue in the tab the user was on before opening the popup, so it can be
+// highlighted in the list (e.g. to make it easy to favorite the issue you're currently viewing).
+const resolveActiveTabIssueKey = async () => {
+    try {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!activeTab?.url) {
+            return;
+        }
+
+        const response = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: MessageActionTypes.GET_ACTIVE_TAB_ISSUE_KEY, url: activeTab.url }, response => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        activeTabIssueKey = response?.issueKey || null;
+    } catch (error) {
+        console.log('Error resolving active tab issue key:', error);
     }
 };
 
@@ -157,6 +227,11 @@ const sendNavigateToIssueMessage = (issueKey, stayInCurrentTab = false) => {
     window.close();
 };
 
+const sendNavigateToSearchMessage = (jql, stayInCurrentTab = false) => {
+    chrome.runtime.sendMessage({ action: MessageActionTypes.NAVIGATE_TO_SEARCH, jql, stayInCurrentTab });
+    window.close();
+};
+
 const toggleIssueFavorite = async (issueKey) => {
     try {
         console.debug(`Toggling favorite for issue: ${issueKey}`);
@@ -175,10 +250,27 @@ const toggleIssueFavorite = async (issueKey) => {
             return;
         }
 
-        // Update the local issues list
-        issuesList = response.issuesList || issuesList;
+        // The background's issuesList only knows about My Issues/open tabs/favorites - it
+        // has no idea about issues that are only on screen because of a popup-local search,
+        // so merge it in by key instead of replacing issuesList wholesale, or an active
+        // search's results would disappear the moment you favorite one of them.
+        const newIssuesList = response.issuesList || issuesList;
+        const knownKeys = new Set(newIssuesList.map(issue => issue.key));
+        const missingSearchIssues = issuesList.filter(issue => searchResultKeys.has(issue.key) && !knownKeys.has(issue.key));
+
+        missingSearchIssues.forEach(issue => {
+            if (issue.key === issueKey) {
+                // The only reason a search-only issue would still be missing right after a
+                // toggle is that this was its first time being favorited - sync the flag
+                // directly from the response rather than leaving it at its stale value.
+                issue.isFavorite = response.isFavorite;
+            }
+            newIssuesList.push(issue);
+        });
+
+        issuesList = newIssuesList;
         console.debug('Updated issuesList after toggle:', issuesList.map(i => `${i.key}(F:${i.isFavorite})`));
-        
+
         // Re-apply the current filter to refresh the display
         applyFilter(currentFilter, false);
         
@@ -190,62 +282,231 @@ const toggleIssueFavorite = async (issueKey) => {
 
 const navigateToIssueFromInput = (stayInCurrentTab = false) => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
+    if (issueKey === '') {
+        return;
+    }
     sendNavigateToIssueMessage(issueKey, stayInCurrentTab);
 };
 
-issueInputElement.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter') {
-        navigateToIssueFromInput(event.ctrlKey);
+const navigateToSearchFromInput = async (stayInCurrentTab = false) => {
+    const text = issueInputElement.value.trim();
+    if (!text) {
+        return;
     }
+    const jql = await jiraHelperService.buildTextSearchJql(text);
+    sendNavigateToSearchMessage(jql, stayInCurrentTab);
+};
+
+const navigateToUserSearchFromInput = async (stayInCurrentTab = false) => {
+    if (!selectedUserAccountId) {
+        return;
+    }
+    const jql = await jiraHelperService.buildUserSearchJql(selectedUserAccountId);
+    sendNavigateToSearchMessage(jql, stayInCurrentTab);
+};
+
+const navigateFromInput = (stayInCurrentTab, mode) => {
+    if (mode.id === SEARCH_MODES.KEY.id) {
+        navigateToIssueFromInput(stayInCurrentTab);
+    } else if (mode.id === SEARCH_MODES.USER.id) {
+        navigateToUserSearchFromInput(stayInCurrentTab);
+    } else {
+        navigateToSearchFromInput(stayInCurrentTab);
+    }
+};
+
+issueInputElement.addEventListener('keydown', function (event) {
+    const mode = detectSearchMode(issueInputElement.value);
+
+    if (mode.id === SEARCH_MODES.USER.id) {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            moveHighlight(1);
+            return;
+        }
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            moveHighlight(-1);
+            return;
+        }
+        if (event.key === 'Escape') {
+            clearUserSuggestions();
+            return;
+        }
+        if (event.key === 'Enter' && isUserPickerOpen()) {
+            event.preventDefault();
+            const user = getHighlightedUser();
+            if (user) {
+                selectUser(user);
+            }
+            return;
+        }
+    }
+
+    if (event.key !== 'Enter') {
+        return;
+    }
+    navigateFromInput(event.ctrlKey, mode);
 });
 
-document.getElementById(ELEMENT_IDS.GO_BUTTON).addEventListener('click', () => navigateToIssueFromInput());
+issueInputElement.addEventListener('blur', () => {
+    clearUserSuggestions();
+});
+
+goButtonElement.addEventListener('click', () => {
+    navigateFromInput(false, detectSearchMode(issueInputElement.value));
+});
+
+const handleNoSearchResults = () => {
+    applyFilter(FILTERS.DEFAULT);
+    hideFilter(FILTERS.SEARCH_RESULTS);
+};
+
+// A search actually ran here (unlike handleNoSearchResults, used when the input is too
+// short/invalid to search at all) - so on zero matches, stay on Search Results and show
+// "No issues found" instead of silently reverting to the default view.
+const updateSearchResults = (issues) => {
+    const newSearchResultKeys = new Set(issues.map(issue => issue.key));
+
+    // Drop issues that were only ever on screen because of a previous search and aren't
+    // part of this one, so issuesList doesn't grow unbounded across many searches in one
+    // popup session - but never touch anything that's still a real My Issue/open
+    // tab/favorite, regardless of search state.
+    issuesList = issuesList.filter(issue =>
+        newSearchResultKeys.has(issue.key) || issue.hasOpenTab || issue.isFavorite || issue.assignedToMe
+    );
+
+    issues.forEach(issue => {
+        const existing = issuesList.find(existingIssue => existingIssue.key === issue.key);
+        if (existing) {
+            // Preserve real favorite/open-tab/assignment state already known from the
+            // background's merged list - a freshly-fetched search result always starts
+            // these at the Issue model's defaults, which would otherwise show stale icons.
+            Object.assign(existing, issue, {
+                isFavorite: existing.isFavorite,
+                hasOpenTab: existing.hasOpenTab,
+                assignedToMe: existing.assignedToMe,
+            });
+        } else {
+            issuesList.push(issue);
+        }
+    });
+
+    searchResultKeys = newSearchResultKeys;
+    applyFilter(FILTERS.SEARCH_RESULTS, false);
+};
 
 const fetchAndDisplayIssueFromInput = async () => {
     const issueKey = jiraHelperService.getIssueKey(issueInputElement.value.trim());
 
-    const handleNoResults = () => {
-        applyFilter(FILTERS.DEFAULT);
-        hideFilter(FILTERS.SEARCH_RESULTS);
-    };
-
     if (issueKey === '') {
-        handleNoResults();
+        handleNoSearchResults();
         return;
     }
 
     try {
-        const issue = await jiraHelperService.fetchIssue(issueKey, { searchResults: true });
-        if (issue) {
-            console.log('Issue fetched by input:', issue);
-            issuesList = issuesList.filter(issue => !issue.searchResults);
-            console.log('Filtered issuesList:', issuesList);
-            issuesList.push({ ...issue });
-            console.log('Updated issuesList:', issuesList);
-            applyFilter(FILTERS.SEARCH_RESULTS, false);
-        }
-        else {
-            handleNoResults();
-        }
+        const issue = await jiraHelperService.fetchIssue(issueKey);
+        updateSearchResults(issue ? [issue] : []);
     } catch (error) {
         console.log('Error updating search results from input:', error);
     }
 };
 
+const fetchAndDisplayTextSearchResults = async () => {
+    const text = issueInputElement.value.trim();
+
+    if (text.length < MIN_TEXT_SEARCH_LENGTH) {
+        handleNoSearchResults();
+        return;
+    }
+
+    try {
+        const issues = await jiraHelperService.searchByText(text);
+        updateSearchResults(issues);
+    } catch (error) {
+        console.log('Error updating text search results from input:', error);
+    }
+};
+
+const fetchAndDisplayUserSuggestions = async () => {
+    // Input shows the full "@query" - only the part after "@" is the actual search text.
+    const query = issueInputElement.value.slice(1).trim();
+
+    if (query.length < MIN_USER_SEARCH_LENGTH) {
+        clearUserSuggestions();
+        return;
+    }
+
+    try {
+        const users = await jiraHelperService.searchUsers(query);
+        renderUserSuggestions(users);
+    } catch (error) {
+        console.log('Error fetching user suggestions:', error);
+    }
+};
+
+const selectUser = async (user) => {
+    selectedUserAccountId = user.accountId;
+    // Keep the "@" prefix so continued editing still auto-detects as user-search mode.
+    issueInputElement.value = `@${user.displayName}`;
+    clearUserSuggestions();
+
+    try {
+        const issues = await jiraHelperService.searchByUser(user.accountId);
+        updateSearchResults(issues);
+    } catch (error) {
+        console.log('Error searching issues by user:', error);
+    }
+};
+
+onSuggestionSelected(selectUser);
+
 const clearSearchResults = () => {
-    issuesList = issuesList.filter(issue => !issue.searchResults);
+    // No "new" search results to preserve against here, so drop every search-only issue -
+    // but again, never one that's a real My Issue/open tab/favorite in its own right.
+    issuesList = issuesList.filter(issue => issue.hasOpenTab || issue.isFavorite || issue.assignedToMe);
+    searchResultKeys = new Set();
     if (currentFilter?.id === FILTERS.SEARCH_RESULTS.id) {
         applyFilter(currentFilter);
     }
+};
+
+const getFetchHandlerForMode = (modeId) => {
+    if (modeId === SEARCH_MODES.KEY.id) {
+        return fetchAndDisplayIssueFromInput;
+    }
+    if (modeId === SEARCH_MODES.USER.id) {
+        return fetchAndDisplayUserSuggestions;
+    }
+    return fetchAndDisplayTextSearchResults;
+};
+
+// Read-only indicator of the currently-detected mode - not the trigger for it
+// (see detectSearchMode). Not yet clickable to force a mode; see .search-mode-icon.
+const updateSearchModeIndicator = (mode) => {
+    searchModeIconUseElement.setAttribute('href', `sprite.svg#${mode.icon}`);
+    issueInputElement.placeholder = mode.placeholder;
+    goButtonElement.title = mode.goTitle;
 };
 
 const handleIssueInput = async function () {
     jiraHelperService.AbortFetch();
     clearTimeout(typingTimer);
     clearSearchResults();
+    // Editing the input after a suggestion was picked (or at all) starts a fresh query -
+    // selectUser() sets this programmatically, which never fires an 'input' event itself.
+    selectedUserAccountId = null;
+
+    const mode = detectSearchMode(issueInputElement.value);
+    updateSearchModeIndicator(mode);
+    if (mode.id !== SEARCH_MODES.USER.id) {
+        clearUserSuggestions();
+    }
+
+    const fetchAndDisplay = getFetchHandlerForMode(mode.id);
 
     typingTimer = setTimeout(async () => {
-        await fetchAndDisplayIssueFromInput();
+        await fetchAndDisplay();
     }, 200);
 };
 
@@ -350,7 +611,10 @@ const applyFilter = (filter, toggle = true) => {
         }
     }
 
-    if (!issuesList?.length > 0) {
+    // Still render Search Results even when the whole list is empty, so "No issues found"
+    // shows up reliably instead of leaving stale count/table state on the rare account
+    // that has no other cached issues at all.
+    if (!issuesList?.length > 0 && filter.id !== FILTERS.SEARCH_RESULTS.id) {
         return;
     }
 
@@ -364,7 +628,7 @@ const applyFilter = (filter, toggle = true) => {
             );
             break;
         case FILTERS.SEARCH_RESULTS.id:
-            filteredIssues = issuesList.filter(issue => issue.searchResults);
+            filteredIssues = issuesList.filter(issue => searchResultKeys.has(issue.key));
             break;
         case FILTERS.OPEN_TABS.id:
             filteredIssues = issuesList.filter(issue => issue.hasOpenTab);
@@ -379,8 +643,33 @@ const applyFilter = (filter, toggle = true) => {
         // No filter applied, show all issues
     }
 
+    updateSearchResultsCount(filter, filteredIssues.length);
+
+    // A real empty state in the grid itself, rather than just a small text line below it.
+    const showEmptyState = filter.id === FILTERS.SEARCH_RESULTS.id && filteredIssues.length === 0;
+    issuesTableElement.classList.toggle('d-none', showEmptyState);
+    issuesEmptyStateElement.classList.toggle('d-none', !showEmptyState);
+
+    filteredIssues.forEach(issue => {
+        issue.isActiveTab = issue.key === activeTabIssueKey;
+    });
+
     console.debug('Applying filter, filteredIssues:', filteredIssues.map(i => `${i.key}(F:${i.isFavorite})`));
     fillIssuesTable(filteredIssues, issuesTableElement, 'refresh');
+};
+
+const updateSearchResultsCount = (filter, count) => {
+    if (filter.id === FILTERS.SEARCH_RESULTS.id) {
+        // The empty state itself (see applyFilter) already says "No issues found" - no
+        // need to repeat it in this small count line too.
+        searchResultsCountElement.textContent = count === 0
+            ? ''
+            : count >= CONFIG.MAX_RESULTS
+                ? `Showing first ${CONFIG.MAX_RESULTS} results`
+                : `${count} result${count === 1 ? '' : 's'} found`;
+    } else {
+        searchResultsCountElement.textContent = `${count} issue${count === 1 ? '' : 's'}`;
+    }
 };
 
 const checkAndShowUpdateMessage = async () => {
